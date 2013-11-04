@@ -1,0 +1,9 @@
+Building and installing the Plant Mock-Up Converter
+===================================================
+
+This project uses the cross-platform CMake build system to generate its build environment, in version 2.8 or newer.
+
+http://www.cmake.org
+
+This build system can be used either from command line or a GUI tool and will check the project dependencies.
+
