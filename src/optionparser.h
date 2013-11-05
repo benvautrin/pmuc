@@ -219,6 +219,7 @@ namespace option
 {
 
 #ifdef _MSC_VER
+/* // For some strange reason, fails with MS VC 2010.
 #include <intrin.h>
 #pragma intrinsic(_BitScanReverse)
 struct MSC_Builtin_CLZ
@@ -231,6 +232,26 @@ struct MSC_Builtin_CLZ
   }
 };
 #define __builtin_clz(x) MSC_Builtin_CLZ::builtin_clz(x)
+*/
+static unsigned __int32 __inline popcnt( unsigned __int32 x )
+{
+    x -= ((x >> 1) & 0x55555555);
+    x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+    x = (((x >> 4) + x) & 0x0f0f0f0f);
+    x += (x >> 8);
+    x += (x >> 16);
+    return x & 0x0000003f;
+}
+static unsigned __int32 __inline clz( unsigned __int32 x )
+{
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+    return 32 - popcnt(x);
+}
+#define __builtin_clz(x) clz(x)
 #endif
 
 class Option;

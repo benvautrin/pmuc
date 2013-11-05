@@ -143,7 +143,7 @@ void COLLADAConverter::endModel() {
     m_writer->openElement("library_effects");
     for (set<int>::iterator it = m_model->materialIds().begin(); it != m_model->materialIds().end(); it++) {
         m_writer->openElement("effect");
-        m_writer->appendAttribute("id", "E" + to_string(*it));
+        m_writer->appendAttribute("id", "E" + to_string((long long)*it));
         m_writer->openElement("profile_COMMON");
         m_writer->openElement("technique");
         m_writer->appendAttribute("sid", "COMMON");
@@ -165,9 +165,9 @@ void COLLADAConverter::endModel() {
     m_writer->openElement("library_materials");
     for (set<int>::iterator it = m_model->materialIds().begin(); it != m_model->materialIds().end(); it++) {
         m_writer->openElement("material");
-        m_writer->appendAttribute("id", "M" + to_string(*it));
+        m_writer->appendAttribute("id", "M" + to_string((long long)*it));
         m_writer->openElement("instance_effect");
-        m_writer->appendAttribute("url", "#E" + to_string(*it));
+        m_writer->appendAttribute("url", "#E" + to_string((long long)*it));
         m_writer->closeElement(); // instance_effect
         m_writer->closeElement(); // material
     }

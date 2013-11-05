@@ -210,9 +210,7 @@ bool RVMParser::readGroup(std::istream& is) {
                 return false;
             }
         } else {
-            char buffer[256];
-            sprintf(buffer, "Unknown or invalid identifier found. %d", (int)is.tellg());
-            m_lastError = buffer;
+            m_lastError = "Unknown or invalid identifier found.";
             return false;
         }
     }
@@ -456,7 +454,7 @@ string RVMParser::readString(istream& is)
     unsigned int size = readInt(is) * 4;
     if (size == 0)
         return "";
-    char buffer[size + 1];
+    char buffer[1024];
     buffer[size] = 0;
     is.read(buffer, size);
     return buffer;
@@ -466,7 +464,7 @@ vector<float> RVMParser::readMatrix(istream& is) {
     vector<float> res;
     for (int i = 0; i < 12; i++) {
         // Why do we have to multiply by 1000. ?
-        res.push_back(readFloat(is) * 1000.);
+        res.push_back(readFloat(is) * 1000.f);
     }
     return res;
 }
@@ -493,7 +491,7 @@ std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > RVMParse
     for (unsigned int k = 0; k < pc; k++) {
         std::vector<std::vector<std::pair<Vector3F, Vector3F> > > p;
         unsigned int gc = readInt(is);
-        for (int j = 0; j < gc; j++) {
+        for (unsigned int j = 0; j < gc; j++) {
             std::vector<std::pair<Vector3F, Vector3F> > g;
             unsigned int vc = readInt(is);
             for (unsigned int i = 0; i < vc; i++) {

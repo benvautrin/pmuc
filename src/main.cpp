@@ -1,4 +1,4 @@
-#include <time.h>
+#include <ctime>
 
 #include <iostream>
 
@@ -8,6 +8,10 @@
 #include "converters/x3dconverter.h"
 #include "converters/colladaconverter.h"
 #include "converters/dslconverter.h"
+
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES // For PI under VC++
+#endif
 
 #include <math.h>
 
@@ -96,7 +100,7 @@ int main(int argc, char** argv)
 
     float maxSideSize = 10.;
     if (options[SIDESIZE].count() > 0) {
-        maxSideSize = atof(options[SIDESIZE].arg);
+        maxSideSize = (float)atof(options[SIDESIZE].arg);
         if (maxSideSize <= 0) {
             cout << "\n--maxsidesize option should be > 0.\n";
             option::printUsage(std::cout, usage);
@@ -106,7 +110,7 @@ int main(int argc, char** argv)
 
     int forcedColor = -1;
     if (options[COLOR].count()) {
-        forcedColor = atof(options[COLOR].arg);
+        forcedColor = atoi(options[COLOR].arg);
         if (forcedColor < 0 || forcedColor > 255) {
             cout << "\n--color option should be >= 0 and <= 255.\n";
             option::printUsage(std::cout, usage);
@@ -158,8 +162,8 @@ int main(int argc, char** argv)
                     if (minSides) {
                         reader->setMinSides(minSides);
                     }
-                    reader->setUsePrimitives(options[PRIMITIVES].count());
-                    reader->setSplit(options[SPLIT].count());
+                    reader->setUsePrimitives(options[PRIMITIVES].count() > 0);
+                    reader->setSplit(options[SPLIT].count() > 0);
                     vector<float> translation;
                     for (int j = 0; j < 3; j++) translation.push_back(0);
                     vector<float> matrix;
@@ -188,11 +192,11 @@ int main(int argc, char** argv)
                             reader->endSphere();
                         } break;
                         case CIRCULARTORUS: {
-                            reader->startCircularTorus(matrix, 4, 2, M_PI);
+                            reader->startCircularTorus(matrix, 4, 2, (float)M_PI);
                             reader->endCircularTorus();
                         } break;
                         case RECTANGULARTORUS: {
-                            reader->startRectangularTorus(matrix, 2, 3, 0.5, M_PI*3/4);
+                            reader->startRectangularTorus(matrix, 2, 3, 0.5, (float)M_PI*3/4);
                             reader->endRectangularTorus();
                         } break;
                         case PYRAMID: {
@@ -263,17 +267,17 @@ int main(int argc, char** argv)
                 if (minSides) {
                     reader->setMinSides(minSides);
                 }
-                reader->setUsePrimitives(options[PRIMITIVES].count());
-                reader->setSplit(options[SPLIT].count());
+                reader->setUsePrimitives(options[PRIMITIVES].count() > 0);
+                reader->setSplit(options[SPLIT].count() > 0);
                 cout << "\nConverting file " << filename << " to " << formatnames[format] << "...\n";
                 RVMParser parser(reader);
-                if (options[OBJECT].count()) {
+                if (options[OBJECT].count() > 0) {
                     parser.setObjectName(options[OBJECT].arg);
                 }
                 if (forcedColor != -1) {
                     parser.setForcedColor(forcedColor);
                 }
-                bool res = parser.readFile(filename, options[SKIPATT].count());
+                bool res = parser.readFile(filename, options[SKIPATT].count() > 0);
                 delete reader;
                 if (!res) {
                     cout << "Conversion failed:" << endl;

@@ -269,8 +269,8 @@ RVMColorHelper::RVMColorHelper()
 
 const vector<float> RVMColorHelper::color(unsigned char index) {
     vector<float> c;
-    c.push_back((float)navisworks_colors[index][0] / 100.);
-    c.push_back((float)navisworks_colors[index][1] / 100.);
-    c.push_back((float)navisworks_colors[index][2] / 100.);
+    c.push_back((float)navisworks_colors[index][0] / 100.f);
+    c.push_back((float)navisworks_colors[index][1] / 100.f);
+    c.push_back((float)navisworks_colors[index][2] / 100.f);
     return c;
 }

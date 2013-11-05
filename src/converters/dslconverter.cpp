@@ -1,6 +1,11 @@
 #include "dslconverter.h"
 
 #include <sstream>
+
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES // For PI under VC++
+#endif
+
 #include <math.h>
 
 using namespace std;
@@ -218,11 +223,11 @@ void DSLConverter::writeShapeTransforms(const string& shapeid, const std::vector
     float rx, ry, rz;
     if (matrix[4] > 0.998) {
         ry = atan2(matrix[2], matrix[10]);
-        rz = M_PI / 2;
+        rz = (float)M_PI / 2;
         rx = 0;
     } else if (matrix[4] < -0.998) {
         ry = atan2(matrix[2], matrix[10]);
-        rz = -M_PI / 2;
+        rz = (float)-M_PI / 2;
         rx = 0;
     } else {
         ry = atan2(-matrix[8], matrix[0]);
