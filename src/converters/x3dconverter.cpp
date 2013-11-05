@@ -86,7 +86,7 @@ void X3DConverter::startModel(const string& projectName, const string& name) {
     }
     m_writers.back()->endNode();
     m_writers.back()->startNode(ID::Background);
-    m_writers.back()->setSFColor(ID::skyColor, .9, .9, .9);
+    m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
     m_writers.back()->endNode();
 }
 
@@ -121,7 +121,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
         meta.insert(pair<string, string>("generator", "RVMConverter 0.1"));
         m_writers.back()->startX3DDocument(Immersive, VERSION_3_0, &meta, false);
         m_writers.back()->startNode(ID::Background);
-        m_writers.back()->setSFColor(ID::skyColor, .9, .9, .9);
+        m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
         m_writers.back()->endNode();
     }
     m_writers.back()->startNode(ID::Group);
@@ -179,13 +179,13 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
     pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
-    for (int i = 0; i < c.first.size(); i++) {
-        for (int j = 0; j < c.first[i].size(); j++) {
+    for (unsigned int i = 0; i < c.first.size(); i++) {
+        for (unsigned int j = 0; j < c.first[i].size(); j++) {
             coordinates.push_back(c.first[i][j]);
         }
     }
-    for (int i = 0; i < c.second.size(); i++) {
-        for (int j = 0; j < c.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.second.size(); i++) {
+        for (unsigned int j = 0; j < c.second[i].size(); j++) {
             index.push_back(c.second[i][j]);
         }
         index.push_back(-1);
@@ -214,13 +214,13 @@ void X3DConverter::startBox(const vector<float>& matrix,
         pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
-        for (int i = 0; i < c.first.size(); i++) {
-            for (int j = 0; j < 3; j++) {
+        for (unsigned int i = 0; i < c.first.size(); i++) {
+            for (unsigned int j = 0; j < 3; j++) {
                 coordinates.push_back(c.first[i][j]);
             }
         }
-        for (int i = 0; i < c.second.size(); i++) {
-            for (int j = 0; j < c.second[i].size(); j++) {
+        for (unsigned int i = 0; i < c.second.size(); i++) {
+            for (unsigned int j = 0; j < c.second[i].size(); j++) {
                 index.push_back(c.second[i][j]);
             }
             index.push_back(-1);
@@ -247,26 +247,26 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
-    for (int i = 0; i < c.first.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.first.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             coordinates.push_back(c.first.first[i][j]);
         }
     }
-    for (int i = 0; i < c.first.second.size(); i++) {
-        for (int j = 0; j < c.first.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.first.second.size(); i++) {
+        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
         index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
-    for (int i = 0; i < c.second.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.second.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             normals.push_back(c.second.first[i][j]);
         }
     }
-    for (int i = 0; i < c.second.second.size(); i++) {
-        for (int j = 0; j < c.second.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.second.second.size(); i++) {
+        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
         normalindex.push_back(-1);
@@ -295,26 +295,26 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
-    for (int i = 0; i < c.first.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.first.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             coordinates.push_back(c.first.first[i][j]);
         }
     }
-    for (int i = 0; i < c.first.second.size(); i++) {
-        for (int j = 0; j < c.first.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.first.second.size(); i++) {
+        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
         index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
-    for (int i = 0; i < c.second.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.second.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             normals.push_back(c.second.first[i][j]);
         }
     }
-    for (int i = 0; i < c.second.second.size(); i++) {
-        for (int j = 0; j < c.second.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.second.second.size(); i++) {
+        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
         normalindex.push_back(-1);
@@ -342,26 +342,26 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
-    for (int i = 0; i < c.first.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.first.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             coordinates.push_back(c.first.first[i][j]);
         }
     }
-    for (int i = 0; i < c.first.second.size(); i++) {
-        for (int j = 0; j < c.first.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.first.second.size(); i++) {
+        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
         index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
-    for (int i = 0; i < c.second.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.second.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             normals.push_back(c.second.first[i][j]);
         }
     }
-    for (int i = 0; i < c.second.second.size(); i++) {
-        for (int j = 0; j < c.second.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.second.second.size(); i++) {
+        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
         normalindex.push_back(-1);
@@ -390,26 +390,26 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
-    for (int i = 0; i < c.first.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.first.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             coordinates.push_back(c.first.first[i][j]);
         }
     }
-    for (int i = 0; i < c.first.second.size(); i++) {
-        for (int j = 0; j < c.first.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.first.second.size(); i++) {
+        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
         index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
-    for (int i = 0; i < c.second.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.second.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             normals.push_back(c.second.first[i][j]);
         }
     }
-    for (int i = 0; i < c.second.second.size(); i++) {
-        for (int j = 0; j < c.second.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.second.second.size(); i++) {
+        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
         normalindex.push_back(-1);
@@ -445,26 +445,26 @@ void X3DConverter::startSnout(const vector<float>& matrix,
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
-    for (int i = 0; i < c.first.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.first.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             coordinates.push_back(c.first.first[i][j]);
         }
     }
-    for (int i = 0; i < c.first.second.size(); i++) {
-        for (int j = 0; j < c.first.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.first.second.size(); i++) {
+        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
         index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
-    for (int i = 0; i < c.second.first.size(); i++) {
-        for (int j = 0; j < 3; j++) {
+    for (unsigned int i = 0; i < c.second.first.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
             normals.push_back(c.second.first[i][j]);
         }
     }
-    for (int i = 0; i < c.second.second.size(); i++) {
-        for (int j = 0; j < c.second.second[i].size(); j++) {
+    for (unsigned int i = 0; i < c.second.second.size(); i++) {
+        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
         normalindex.push_back(-1);
@@ -498,26 +498,26 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
         pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCylinder(diameter, height, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
-        for (int i = 0; i < c.first.first.size(); i++) {
-            for (int j = 0; j < 3; j++) {
+        for (unsigned int i = 0; i < c.first.first.size(); i++) {
+            for (unsigned int j = 0; j < 3; j++) {
                 coordinates.push_back(c.first.first[i][j]);
             }
         }
-        for (int i = 0; i < c.first.second.size(); i++) {
-            for (int j = 0; j < c.first.second[i].size(); j++) {
+        for (unsigned int i = 0; i < c.first.second.size(); i++) {
+            for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
                 index.push_back(c.first.second[i][j]);
             }
             index.push_back(-1);
         }
         vector<int> normalindex;
         vector<float> normals;
-        for (int i = 0; i < c.second.first.size(); i++) {
-            for (int j = 0; j < 3; j++) {
+        for (unsigned int i = 0; i < c.second.first.size(); i++) {
+            for (unsigned int j = 0; j < 3; j++) {
                 normals.push_back(c.second.first[i][j]);
             }
         }
-        for (int i = 0; i < c.second.second.size(); i++) {
-            for (int j = 0; j < c.second.second[i].size(); j++) {
+        for (unsigned int i = 0; i < c.second.second.size(); i++) {
+            for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
                 normalindex.push_back(c.second.second[i][j]);
             }
             normalindex.push_back(-1);
@@ -549,26 +549,26 @@ void X3DConverter::startSphere(const vector<float>& matrix,
         pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
-        for (int i = 0; i < c.first.first.size(); i++) {
-            for (int j = 0; j < 3; j++) {
+        for (unsigned int i = 0; i < c.first.first.size(); i++) {
+            for (unsigned int j = 0; j < 3; j++) {
                 coordinates.push_back(c.first.first[i][j]);
             }
         }
-        for (int i = 0; i < c.first.second.size(); i++) {
-            for (int j = 0; j < c.first.second[i].size(); j++) {
+        for (unsigned int i = 0; i < c.first.second.size(); i++) {
+            for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
                 index.push_back(c.first.second[i][j]);
             }
             index.push_back(-1);
         }
         vector<int> normalindex;
         vector<float> normals;
-        for (int i = 0; i < c.second.first.size(); i++) {
-            for (int j = 0; j < 3; j++) {
+        for (unsigned int i = 0; i < c.second.first.size(); i++) {
+            for (unsigned int j = 0; j < 3; j++) {
                 normals.push_back(c.second.first[i][j]);
             }
         }
-        for (int i = 0; i < c.second.second.size(); i++) {
-            for (int j = 0; j < c.second.second[i].size(); j++) {
+        for (unsigned int i = 0; i < c.second.second.size(); i++) {
+            for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
                 normalindex.push_back(c.second.second[i][j]);
             }
             normalindex.push_back(-1);
@@ -633,7 +633,7 @@ bool intersect(const Vector3F& p1, const Vector3F& p2, const Vector3F& p3, const
     }
     double numer = d1343 * d4321 - d1321 * d4343;
 
-    float x1 = numer / denom;
+    float x1 = float(numer / denom);
     float x2 = (d1343 + d4321 * x1) / d4343;
     if (x1 > 1 || x1 < 0 || x2 > 1 || x2 < 0)
         return false;
@@ -659,23 +659,23 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
     vector<int> normalindexes;
     vector<float> normals;
 
-    for (int i = 0; i < vertexes.size(); i++) { // Patches
+    for (unsigned int i = 0; i < vertexes.size(); i++) { // Patches
         if (vertexes[i].size() == 1) {
             int j = 0;
-            for (int k = 0; k < vertexes[i][j].size(); k++) { // Vertexes
+            for (unsigned int k = 0; k < vertexes[i][j].size(); k++) { // Vertexes
                 int ci = -1;
                 int ni = -1;
                 vector<float> c(3, 0); c[0] = vertexes[i][j][k].first[0]; c[1] = vertexes[i][j][k].first[1]; c[2] = vertexes[i][j][k].first[2];
                 vector<float> n(3, 0); n[0] = vertexes[i][j][k].second[0]; n[1] = vertexes[i][j][k].second[1]; n[2] = vertexes[i][j][k].second[2];
                 // Try to find a corresponding point or insert the new one.
-                for (int l = 0; l < coordinates.size(); l += 3) {
+                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
                     if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
                         ci = l/3;
                         continue;
                     }
                 }
                 if (ci == -1) {
-                    for (int l = 0; l < 3; l++) {
+                    for (unsigned int l = 0; l < 3; l++) {
                         coordinates.push_back(c[l]);
                     }
                     indexes.push_back(coordinates.size()/3-1);
@@ -683,14 +683,14 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                     indexes.push_back(ci);
                 }
                 // Try to find a corresponding vector or insert the new one.
-                for (int l = 0; l < normals.size(); l += 3) {
+                for (unsigned int l = 0; l < normals.size(); l += 3) {
                     if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
                         ni = l/3;
                         continue;
                     }
                 }
                 if (ni == -1) {
-                    for (int l = 0; l < 3; l++) {
+                    for (unsigned int l = 0; l < 3; l++) {
                         normals.push_back(n[l]);
                     }
                     normalindexes.push_back(normals.size()/3-1);
@@ -704,7 +704,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
             int reorder = 0;
             // Close shapes
             polygon.push_back(vertexes[i][0][0]);
-            for (int j = 1; j < vertexes[i].size(); j++) {
+            for (unsigned int j = 1; j < vertexes[i].size(); j++) {
                 shapes.push_back(vertexes[i][j]);
             }
             // Find non-crossing links and insert sub shapes
@@ -712,13 +712,13 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                 vector<pair<Vector3F, Vector3F> > shape(shapes.back());
                 bool noncrossing = true;
                 int pi, si;
-                for (int k = 0; k < (polygon.size()-1) * (shape.size()); k++) {
+                for (unsigned int k = 0; k < (polygon.size()-1) * (shape.size()); k++) {
                     noncrossing = true;
                     // Choose one segment between the polygon and the shape
                     pi = k % (polygon.size()-1);
                     si = k / (polygon.size()-1);
                     // And test for collision with polygon
-                    for (int l = 0; l < polygon.size()-1; l++) {
+                    for (unsigned int l = 0; l < polygon.size()-1; l++) {
                         // Double check, probably for computing errors... How can we fix that ?
                         if (intersect(polygon[pi].first, shape[si].first, polygon[l].first, polygon[l+1].first) ||
                                 intersect(shape[si].first, polygon[pi].first, polygon[l].first, polygon[l+1].first)) {
@@ -728,8 +728,8 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                     }
                     // And with shapes
                     if (noncrossing && shapes.size()) {
-                        for (int l = 0; l < shapes.size(); l++) {
-                            for (int m = 0; m < shapes[l].size(); m++) {
+                        for (unsigned int l = 0; l < shapes.size(); l++) {
+                            for (unsigned int m = 0; m < shapes[l].size(); m++) {
                                 if (intersect(polygon[pi].first, shape[si].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first) ||
                                         intersect(shape[si].first, polygon[pi].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first)) {
                                     noncrossing = false;
@@ -759,7 +759,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                         polygon.insert(polygon.begin() + pi, polygon[pi]);
                         ins = true;
                     }
-                    for (int k = 0; k < shape.size() + 1; k++) {
+                    for (unsigned int k = 0; k < shape.size() + 1; k++) {
                         polygon.insert(polygon.begin() + (pi + k + (ins ? 1 : 0)), shape[(k + si) % shape.size()]);
                     }
                 }
@@ -767,8 +767,8 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
             }
             // Check polygon -- For debugging purposes.
             /*
-            for (int k = 0; k < polygon.size() - 1; k++) {
-                for (int l = k; l < polygon.size(); l++) {
+            for (unsigned int k = 0; k < polygon.size() - 1; k++) {
+                for (unsigned int l = k; l < polygon.size(); l++) {
                     if (intersect(polygon[k].first, polygon[k+1].first, polygon[l].first, polygon[l == polygon.size()-1 ? 0 : l+1].first)) {
                         // Should never show !
                         cout << "Collision on " << m_groups.back() << ": " << k << " " << l << endl;
@@ -777,33 +777,33 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
             }
             */
             // Then, insert polygon.
-            for (int k = 0; k < polygon.size(); k++) { // Vertexes
+            for (unsigned int k = 0; k < polygon.size(); k++) { // Vertexes
                 int ci = -1;
                 int ni = -1;
                 vector<float> c(3, 0); c[0] = polygon[k].first[0]; c[1] = polygon[k].first[1]; c[2] = polygon[k].first[2];
                 vector<float> n(3, 0); n[0] = polygon[k].second[0]; n[1] = polygon[k].second[1]; n[2] = polygon[k].second[2];
-                for (int l = 0; l < coordinates.size(); l += 3) {
+                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
                     if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
                         ci = l/3;
                         continue;
                     }
                 }
                 if (ci == -1) {
-                    for (int l = 0; l < 3; l++) {
+                    for (unsigned int l = 0; l < 3; l++) {
                         coordinates.push_back(c[l]);
                     }
                     indexes.push_back(coordinates.size()/3-1);
                 } else {
                     indexes.push_back(ci);
                 }
-                for (int l = 0; l < normals.size(); l += 3) {
+                for (unsigned int l = 0; l < normals.size(); l += 3) {
                     if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
                         ni = l/3;
                         continue;
                     }
                 }
                 if (ni == -1) {
-                    for (int l = 0; l < 3; l++) {
+                    for (unsigned int l = 0; l < 3; l++) {
                         normals.push_back(n[l]);
                     }
                     normalindexes.push_back(normals.size()/3-1);
@@ -818,7 +818,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
 
     m_writers.back()->setSFBool(ID::solid, false);
     m_writers.back()->setSFBool(ID::convex, false);
-    m_writers.back()->setSFFloat(ID::creaseAngle, 1.1);
+    m_writers.back()->setSFFloat(ID::creaseAngle, 1.1f);
     m_writers.back()->setMFInt32(ID::coordIndex, indexes);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindexes);
     m_writers.back()->startNode(ID::Coordinate);
@@ -840,8 +840,8 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
     // Finding axis/angle from matrix using Eigen for its bullet proof implementation.
     Transform<float, 3, Affine> t;
     t.setIdentity();
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 4; j++) {
+    for (unsigned int i = 0; i < 3; i++) {
+        for (unsigned int j = 0; j < 4; j++) {
             t(i, j) = matrix[i+j*3];
         }
     }

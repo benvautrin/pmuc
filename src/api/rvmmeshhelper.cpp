@@ -1,6 +1,11 @@
 #include "rvmmeshhelper.h"
 
 #include <iostream>
+
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES // For PI under VC++
+#endif
+
 #include <math.h>
 
 using namespace std;
@@ -11,9 +16,9 @@ RVMMeshHelper::RVMMeshHelper()
 
 static vector<float> midpoint(const vector<float>& p1, const vector<float>& p2) {
     vector<float> mp;
-    mp.push_back((p1[0] + p2[0]) / 2.);
-    mp.push_back((p1[1] + p2[1]) / 2.);
-    mp.push_back((p1[2] + p2[2]) / 2.);
+    mp.push_back((p1[0] + p2[0]) / 2.f);
+    mp.push_back((p1[1] + p2[1]) / 2.f);
+    mp.push_back((p1[2] + p2[2]) / 2.f);
     return mp;
 }
 
@@ -22,9 +27,9 @@ static vector<float> normalize(const vector<float>& v) {
     double mag = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
     if (mag != 0) {
         mag = 1. / sqrt(mag);
-        n[0] = v[0] * mag;
-        n[1] = v[1] * mag;
-        n[2] = v[2] * mag;
+        n[0] = float(v[0] * mag);
+        n[1] = float(v[1] * mag);
+        n[2] = float(v[2] * mag);
     }
     return n;
 }
@@ -95,7 +100,7 @@ static const float sphere[] = {
     0, 0, -1,
 };
 
-static const float sphereindex[] = {
+static const int sphereindex[] = {
     0, 1, 2,
     0, 2, 3,
     0, 3, 4,
@@ -130,7 +135,7 @@ const pair<
     while (s < minSides || 2 * M_PI * radius / s > maxSideSize) {
         s *= 2;
         vector<vector<int> > newindex;
-        for (int i = 0; i < index.size(); i++) {
+        for (unsigned int i = 0; i < index.size(); i++) {
             vector<int> t = index[i];
             int npi = vectors.size();
             vectors.push_back(normalize(midpoint(vectors[t[0]], vectors[t[1]])));
@@ -160,7 +165,7 @@ const pair<
         index.swap(newindex);
     }
     vector<vector<float> > points;
-    for (int i = 0; i < vectors.size(); i++) {
+    for (unsigned int i = 0; i < vectors.size(); i++) {
         vector<float> p;
         for (int j = 0; j < 3; j++) {
             p.push_back(vectors[i][j] * radius);
@@ -198,13 +203,13 @@ const pair<
     for (int i = 0; i < sides+1; i++) {
         float c = cos(angle / sides * i);
         float s = sin(angle / sides * i);
-        v[0] = rinside * c; v[1] = rinside * s; v[2] = -height/2.;
+        v[0] = rinside * c; v[1] = rinside * s; v[2] = -height/2.f;
         points.push_back(v);
-        v[0] = routside * c; v[1] = routside * s; v[2] = -height/2.;
+        v[0] = routside * c; v[1] = routside * s; v[2] = -height/2.f;
         points.push_back(v);
-        v[0] = routside * c; v[1] = routside * s; v[2] = height/2.;
+        v[0] = routside * c; v[1] = routside * s; v[2] = height/2.f;
         points.push_back(v);
-        v[0] = rinside * c; v[1] = rinside * s; v[2] = height/2.;
+        v[0] = rinside * c; v[1] = rinside * s; v[2] = height/2.f;
         points.push_back(v);
         n[0] = c; n[1] = s; n[2] = 0;
         vectors.push_back(n);
@@ -292,8 +297,8 @@ const pair<
         float c = cos(angle / tsides * i);
         float s = sin(angle / tsides * i);
         for (int j = 0; j < csides; j++) {
-            float C = cos(2 * M_PI / csides * j);
-            float S = sin(2 * M_PI / csides * j);
+            float C = (float)cos(2 * M_PI / csides * j);
+            float S = (float)sin(2 * M_PI / csides * j);
             v[0] = (rcenter * C + center) * c;
             v[1] = (rcenter * C + center) * s;
             v[2] = rcenter * S;
@@ -433,8 +438,8 @@ const pair<
     float r = radius;
     for (int i = 0; i < s; i++) {
         vector<float> point;
-        point.push_back(cos(2*M_PI*i/s));
-        point.push_back(sin(2*M_PI*i/s));
+        point.push_back((float)cos(2*M_PI*i/s));
+        point.push_back((float)sin(2*M_PI*i/s));
         point.push_back(0);
         vectors.push_back(point);
         vectors.push_back(point);
@@ -507,8 +512,8 @@ const pair<
     vector<float> v(3, 0);
     vector<float> n(3, 0);
     for (int i = 0; i < sides; i++) {
-        float c = cos(2*M_PI / sides * i);
-        float s = sin(2*M_PI / sides * i);
+        float c = (float)cos(2*M_PI / sides * i);
+        float s = (float)sin(2*M_PI / sides * i);
         v[0] = rbottom * c; v[1] = rbottom * s; v[2] = -hh;
         points.push_back(v);
         v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh;
@@ -586,11 +591,11 @@ const pair<
     vector<float> v(3, 0);
     vector<float> n(3, 0);
     for (int i = 0; i < sides; i++) {
-        float c = cos(M_PI / 2 / sides * i);
-        float s = sin(M_PI / 2 / sides * i);
+        float c = (float)cos(M_PI / 2 / sides * i);
+        float s = (float)sin(M_PI / 2 / sides * i);
         for (int j = 0; j < csides; j++) {
-            float C = cos(2*M_PI / csides * j);
-            float S = sin(2*M_PI / csides * j);
+            float C = (float)cos(2*M_PI / csides * j);
+            float S = (float)sin(2*M_PI / csides * j);
             v[0] = hd * C * c; v[1] = hd * S * c; v[2] = -radius * s;
             points.push_back(v);
             n[0] = radius * C * c; n[1] = radius * S * c; n[2] = -hd * s;
@@ -647,11 +652,11 @@ const pair<
     vector<float> v(3, 0);
     vector<float> n(3, 0);
     for (int i = 0; i < sides; i++) {
-        float c = cos(angle + (M_PI/2 - angle) / sides * i);
-        float s = sin(angle + (M_PI/2 - angle) / sides * i);
+        float c = (float)cos(angle + (M_PI/2 - angle) / sides * i);
+        float s = (float)sin(angle + (M_PI/2 - angle) / sides * i);
         for (int j = 0; j < csides; j++) {
-            float C = cos(2*M_PI / csides * j);
-            float S = sin(2*M_PI / csides * j);
+            float C = (float)cos(2*M_PI / csides * j);
+            float S = (float)sin(2*M_PI / csides * j);
             v[0] = radius * C * c; v[1] = radius * S * c; v[2] = radius - height -radius * s;
             points.push_back(v);
             n[0] = radius * C * c; n[1] = radius * S * c; n[2] = -radius * s;

@@ -91,7 +91,7 @@ void COLLADAConverter::endModel() {
     m_writer->openElement("library_effects");
     for (set<int>::iterator it = m_model->materialIds().begin(); it != m_model->materialIds().end(); it++) {
         m_writer->openElement("effect");
-        m_writer->appendAttribute("id", "E" + to_string(*it));
+        m_writer->appendAttribute("id", "E" + to_string((long long)*it));
         m_writer->openElement("profile_COMMON");
         m_writer->openElement("technique");
         m_writer->appendAttribute("sid", "COMMON");
@@ -113,9 +113,9 @@ void COLLADAConverter::endModel() {
     m_writer->openElement("library_materials");
     for (set<int>::iterator it = m_model->materialIds().begin(); it != m_model->materialIds().end(); it++) {
         m_writer->openElement("material");
-        m_writer->appendAttribute("id", "M" + to_string(*it));
+        m_writer->appendAttribute("id", "M" + to_string((long long)*it));
         m_writer->openElement("instance_effect");
-        m_writer->appendAttribute("url", "#E" + to_string(*it));
+        m_writer->appendAttribute("url", "#E" + to_string((long long)*it));
         m_writer->closeElement(); // instance_effect
         m_writer->closeElement(); // material
     }
@@ -156,7 +156,7 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
                           const float& yoffset) {
 
     m_writer->openElement("geometry");
-    string gid = "G" + to_string(m_model->geometryId()++);
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute("id", gid);
     m_writer->openElement("mesh");
     pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
@@ -165,8 +165,8 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
     m_writer->openElement("float_array");
     m_writer->appendAttribute("id", gid + "CA");
     vector<float> a;
-    for (int i = 0; i < c.first.size(); i++)
-        for (int j = 0; j < c.first[i].size(); j++)
+    for (unsigned int i = 0; i < c.first.size(); i++)
+        for (unsigned int j = 0; j < c.first[i].size(); j++)
             a.push_back(c.first[i][j]);
     m_writer->appendAttribute("count", a.size());
     m_writer->appendValues(a);
@@ -193,8 +193,8 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
     m_writer->closeElement(); // source
     m_writer->openElement("triangles");
     vector<unsigned long> na;
-    for (int i = 0; i < c.second.size(); i++)
-        for (int j = 0; j < c.second[i].size(); j++)
+    for (unsigned int i = 0; i < c.second.size(); i++)
+        for (unsigned int j = 0; j < c.second[i].size(); j++)
             na.push_back(c.second[i][j]);
     m_writer->appendAttribute("count", na.size()/3);
     m_writer->openElement("input");

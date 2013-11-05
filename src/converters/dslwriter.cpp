@@ -1,7 +1,12 @@
 #include "dslwriter.h"
 
 #include <stdlib.h>
+
+#ifdef _MSC_VER
+#include <stdio.h>
+#else
 #include <sys/ioctl.h>
+#endif
 
 using namespace std;
 
@@ -10,7 +15,7 @@ DSLWriter::DSLWriter() {
 
 bool DSLWriter::open(const string& filename){
     fp = fopen(filename.data(), "w");
-    return fp;
+    return fp == 0;
 }
 
 void DSLWriter::close(){
@@ -76,7 +81,7 @@ void DSLWriter::writeLine(const string& id, float x1, float y1, float z1, float 
 
 void DSLWriter::writeGroup(const string& id, const vector<string>& children){
     fprintf(fp, "%s = ", id.data());
-    for (int i = 0; i < children.size(); i++) {
+    for (unsigned int i = 0; i < children.size(); i++) {
         fprintf(fp, "%s %s", i == 0 ? "" : " +", children[i].data());
     }
     fprintf(fp, "\n");
