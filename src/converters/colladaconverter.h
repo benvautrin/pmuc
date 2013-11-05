@@ -100,8 +100,15 @@ class COLLADAConverter : public RVMReader
                                      const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes);
         virtual void endFacetGroup();
 
-    private:
+    private:        
+        void writeGeometryWithoutNormals(const std::vector<float>& matrix,
+                                         const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >& vertexes);
+
+        void writeGeometryWithNormals(const std::vector<float>& matrix,
+                                      const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > >& vertexes);
+
         COLLADASW::StreamWriter* m_writer;
+        std::vector<std::vector<float> > m_translations;
 
         CCModel* m_model;
 };
