@@ -1,0 +1,31 @@
+# - Find Iconv
+# Find the iconv includes and library
+#
+#  ICONV_INCLUDE_DIR - Where to find iconv include sub-directory.
+#  ICONV_LIBRARIES   - List of libraries when using iconv.
+#  ICONV_FOUND       - True if iconv is found.
+
+IF (ICONV_INCLUDE_DIR)
+  # Already in cache, be silent
+  SET(ICONV_FIND_QUIETLY TRUE)
+ENDIF (ICONV_INCLUDE_DIR)
+
+FIND_PATH(ICONV_INCLUDE_DIR iconv.h)
+
+FIND_LIBRARY(ICONV_LIBRARY NAMES iconv libiconv)
+
+IF (ICONV_INCLUDE_DIR AND ICONV_LIBRARY)
+   SET(ICONV_FOUND TRUE)
+ENDIF (ICONV_INCLUDE_DIR AND ICONV_LIBRARY)
+
+IF (ICONV_FOUND)
+   IF (NOT ICONV_FIND_QUIETLY)
+      MESSAGE(STATUS "Found Iconv: ${ICONV_LIBRARY}")
+   ENDIF (NOT ICONV_FIND_QUIETLY)
+ELSE (ICONV_FOUND)
+   IF (ICONV_FIND_REQUIRED)
+      MESSAGE(FATAL_ERROR "Could not find Iconv")
+   ENDIF (ICONV_FIND_REQUIRED)
+ENDIF (ICONV_FOUND)
+
+MARK_AS_ADVANCED( ICONV_LIBRARY ICONV_INCLUDE_DIR )

@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <iconv.h>
+
 #include "vector3f.h"
 
 class RVMReader;
@@ -37,6 +39,13 @@ class RVMParser
          * @return true if the parsing was a success.
          */
         bool readFile(const std::string& filename, bool ignoreAttributes);
+        /**
+         * @brief Reads from a series of files.
+         * @param filenames a vector of filenames
+         * @param ignoreAttributes if set to true, allows to ignore the .att companion files
+         * @return true if the parsing was a success.
+         */
+        bool readFiles(const std::vector<std::string>& filenames, const std::string& name, bool ignoreAttributes);
         /**
          * @brief Reads from a character buffer.
          * @param buffer the character buffer containing RVM data.
@@ -147,7 +156,9 @@ class RVMParser
         float readFloat(std::istream &is);
         char readChar(std::istream& is);
 
-        RVMReader* m_reader;
+        RVMReader*  m_reader;
+        std::string m_encoding;
+        iconv_t     m_cd;
         std::string m_lastError;
 
         std::istream*   m_attributeStream;
@@ -157,6 +168,7 @@ class RVMParser
         std::string     m_objectName;
         int             m_objectFound;
         int             m_forcedColor;
+        bool            m_aggregation;
 
         int             m_nbGroups;
         int             m_nbPyramids;

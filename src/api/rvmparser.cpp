@@ -36,8 +36,9 @@ RVMParser::RVMParser(RVMReader* reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
-    m_attributes(0)
-{
+    m_attributes(0),
+    m_cd(0),
+    m_aggregation(false) {
 }
 
 bool RVMParser::readFile(const string& filename, bool ignoreAttributes) {
@@ -79,6 +80,28 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes) {
     return success;
 }
 
+bool RVMParser::readFiles(const vector<string>& filenames, const string& name, bool ignoreAttributes) {
+    bool success = true;
+
+    m_reader->startDocument();
+    m_reader->startHeader("PMUC - Plant Mock-Up Converter", "Aggregation file", "", "", "");
+    m_reader->endHeader();
+    m_reader->startModel(name, "Aggreagation");
+
+    m_aggregation = true;
+    for (int i = 0; i < filenames.size(); i++) {
+        success = readFile(filenames[i], ignoreAttributes);
+        if (!success) {
+            break;
+        }
+    }
+
+    m_reader->endModel();
+    m_reader->endDocument();
+
+    return success;
+}
+
 bool RVMParser::readBuffer(const char* buffer) {
     m_lastError = "";
 
@@ -102,7 +125,10 @@ bool RVMParser::readStream(istream& is) {
         m_lastError = "File header not found.";
         return false;
     }
-    m_reader->startDocument();
+
+    if (!m_aggregation) {
+        m_reader->startDocument();
+    }
 
     readInt(is); // Garbage ?
     readInt(is); // Garbage ?
@@ -111,9 +137,14 @@ bool RVMParser::readStream(istream& is) {
     string fileNote = readString(is);
     string date = readString(is);
     string user = readString(is);
-    string encoding = version >= 2 ? readString(is) : "";
-    m_reader->startHeader(banner, fileNote, date, user, encoding);
-    m_reader->endHeader();
+
+    m_encoding = version >= 2 ? readString(is) : "UTF-8";
+    m_cd = iconv_open("UTF-8", m_encoding.data());
+
+    if (!m_aggregation) {
+        m_reader->startHeader(banner, fileNote, date, user, m_encoding);
+        m_reader->endHeader();
+    }
 
     id = readIdentifier(is);
     if (id == "") {
@@ -129,7 +160,9 @@ bool RVMParser::readStream(istream& is) {
     version = readInt(is);
     string projectName = readString(is);
     string name = readString(is);
-    m_reader->startModel(projectName, name);
+    if (!m_aggregation) {
+        m_reader->startModel(projectName, name);
+    }
 
     while ((id = readIdentifier(is)) != "END") {
         if (id == "CNTB") {
@@ -145,9 +178,14 @@ bool RVMParser::readStream(istream& is) {
             return false;
         }
     }
-    m_reader->endModel();
-    // Garbage data ??
-    m_reader->endDocument();
+
+    if (!m_aggregation) {
+        m_reader->endModel();
+        // Garbage data ??
+        m_reader->endDocument();
+    }
+
+    iconv_close(m_cd);
 
     return true;
 }
@@ -177,6 +215,13 @@ bool RVMParser::readGroup(std::istream& is) {
             string p;
             while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
                 std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                char buffer[1056];
+                size_t inb = m_currentAttributeLine.size();
+                size_t outb = 1056;
+                char* bp = buffer;
+                char* sp = const_cast<char*>(m_currentAttributeLine.data());
+                iconv(m_cd, &sp, &inb, &bp, &outb);
+                m_currentAttributeLine = buffer;
             }
             if (p == "NEW " + name ) {
                 m_reader->startMetaData();
@@ -191,6 +236,13 @@ bool RVMParser::readGroup(std::istream& is) {
                      m_attributes++;
 
                      std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                     char buffer[1056];
+                     size_t inb = m_currentAttributeLine.size();
+                     size_t outb = 1056;
+                     char* bp = buffer;
+                     char* sp = const_cast<char*>(m_currentAttributeLine.data());
+                     iconv(m_cd, &sp, &inb, &bp, &outb);
+                     m_currentAttributeLine = buffer;
                      p = trim(m_currentAttributeLine);
                 }
                 m_reader->endMetaData();
@@ -455,9 +507,30 @@ string RVMParser::readString(istream& is)
     if (size == 0)
         return "";
     char buffer[1024];
-    buffer[size] = 0;
     is.read(buffer, size);
+    buffer[size] = 0;
+    // Since I've never been able to find why there sometimes are strange characters at the end of some names, ignore them and truncate the string.
+    for (unsigned int i = 0; i < size; i++) {
+        if ((unsigned char)buffer[i] > 0x7E) {
+            buffer[i] = 0;
+            break;
+        }
+    }
     return buffer;
+
+    /* Attempt to use encoding... Failed.
+    if (!m_cd) {
+        return buffer;
+    }
+
+    char cbuffer[1056];
+    size_t inb = strlen(buffer);
+    size_t outb = 1056;
+    char* bp = cbuffer;
+    char* sp = buffer;
+    iconv(m_cd, &sp, &inb, &bp, &outb);
+    return cbuffer;
+    */
 }
 
 vector<float> RVMParser::readMatrix(istream& is) {

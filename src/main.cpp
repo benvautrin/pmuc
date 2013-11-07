@@ -23,9 +23,9 @@
 
 using namespace std;
 
-enum optionIndex { UNKNOWN, HELP, TEST, X3D, X3DB, COLLADA, DSL, DUMMY, SKIPATT, SPLIT, PRIMITIVES, SIDESIZE, MINSIDES, OBJECT, COLOR };
+enum optionIndex { UNKNOWN, HELP, TEST, X3D, X3DB, COLLADA, DSL, DUMMY, SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE, MINSIDES, OBJECT, COLOR };
 const option::Descriptor usage[] = {
-    { UNKNOWN,      0, "",  "",              option::Arg::None,      "\nusage: RVMConverter [options] <rvm file 1> ...\n\nChoose at least one format and one file to convert.\nOptions:" },
+    { UNKNOWN,      0, "",  "",              option::Arg::None,      "\nusage: pmuc [options] <rvm file 1> ...\n\nChoose at least one format and one file to convert.\nOptions:" },
     { HELP,         0, "h", "help",          option::Arg::None,      "  --help, -h \tPrint usage and exit." },
     { X3D,          0, "",  "x3d",           option::Arg::None,      "  --x3d  \tConvert to X3D XML format." },
     { X3DB,         0, "",  "x3db",          option::Arg::None,      "  --x3db  \tConvert to X3D binary format." },
@@ -34,6 +34,7 @@ const option::Descriptor usage[] = {
     { DUMMY,        0, "",  "dummy",         option::Arg::None,      "  --dummy\tPrint out the file structure." },
     { SKIPATT,      0, "",  "skipattributes",option::Arg::None,      "  --skipattributes \tIgnore attribute file." },
     { SPLIT,        0, "",  "split",         option::Arg::None,      "  --split \tIf possible split in sub files (Only X3D)." },
+    { AGGREGATE,    0, "",  "aggregate",     option::Arg::Optional,  "  --aggregate=<name> \tCombine input files in one export file." },
     { PRIMITIVES,   0, "",  "primitives",    option::Arg::None,      "  --primitives  \tIf possible use native primitives." },
     { SIDESIZE ,    0, "",  "maxsidesize",   option::Arg::Optional,  "  --maxsidesize=<length>  \tUsed for tesselation. Default 10." },
     { MINSIDES ,    0, "",  "minsides",      option::Arg::Optional,  "  --minsides=<nb>  \tUsed for tesselation. Default 8." },
@@ -58,7 +59,7 @@ const string primitiveNames[] = { "box", "snout", "cylinder", "sphere", "circula
 
 int main(int argc, char** argv)
 {
-    cout << "RVM Converter 0.1\nCopyright (C) EDF 2013" << endl;
+    cout << "Plant Mock-Up Converter 0.1\nCopyright (C) EDF 2013" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
@@ -226,14 +227,13 @@ int main(int argc, char** argv)
         cout << "done." << endl;
     }
 
-
     // File conversions.
-    for (int file = 0; file < parse.nonOptionsCount(); file++) {
-        string filename = parse.nonOption(file);
+    if (options[AGGREGATE].count() > 0) {
         for (int format = X3D; format <= DUMMY; format++) {
             if (options[format].count() > 0) {
                 time_t start = time(0);
                 RVMReader* reader;
+                string name = options[AGGREGATE].arg;
                 switch (format) {
                     case DUMMY: {
                         reader = new DummyReader;
@@ -241,24 +241,18 @@ int main(int argc, char** argv)
 
                     case X3D:
                     case X3DB: {
-                        string name = !objectName.empty() ? objectName : filename;
-                        name = name.substr(0, name.rfind(".")) + ".x3d" + (format == X3D ? "" : "b");
-                        name = name.substr(name.rfind(PATHSEP) + 1);
+                        string x3dname = name + ".x3d" + (format == X3D ? "" : "b");
                         reader = new X3DConverter(name, format == X3DB);
                     } break;
 
                     case COLLADA: {
-                        string name = !objectName.empty() ? objectName : filename;
-                        name = name.substr(0, name.rfind(".")) + ".dae";
-                        name = name.substr(name.rfind(PATHSEP) + 1);
-                        reader = new COLLADAConverter(name);
+                        string colladaname = name + ".dae";
+                        reader = new COLLADAConverter(colladaname);
                     } break;
 
                     case DSL: {
-                        string name = !objectName.empty() ? objectName : filename;
-                        name = name.substr(0, name.rfind(".")) + ".dsl3d";
-                        name = name.substr(name.rfind(PATHSEP) + 1);
-                        reader = new DSLConverter(name);
+                        string dslname = name + ".dsl3d";
+                        reader = new DSLConverter(dslname);
                     } break;
                 }
                 if (maxSideSize) {
@@ -269,7 +263,7 @@ int main(int argc, char** argv)
                 }
                 reader->setUsePrimitives(options[PRIMITIVES].count() > 0);
                 reader->setSplit(options[SPLIT].count() > 0);
-                cout << "\nConverting file " << filename << " to " << formatnames[format] << "...\n";
+                cout << "\nConverting files to " << formatnames[format] << "...\n";
                 RVMParser parser(reader);
                 if (options[OBJECT].count() > 0) {
                     parser.setObjectName(options[OBJECT].arg);
@@ -277,7 +271,12 @@ int main(int argc, char** argv)
                 if (forcedColor != -1) {
                     parser.setForcedColor(forcedColor);
                 }
-                bool res = parser.readFile(filename, options[SKIPATT].count() > 0);
+                vector<string> files;
+                for (unsigned int file = 0; file < parse.nonOptionsCount(); file++) {
+                    string filename = parse.nonOption(file);
+                    files.push_back(filename);
+                }
+                bool res = parser.readFiles(files, name, options[SKIPATT].count() > 0);
                 delete reader;
                 if (!res) {
                     cout << "Conversion failed:" << endl;
@@ -303,7 +302,85 @@ int main(int argc, char** argv)
                 }
             }
         }
+    } else {
+        for (int file = 0; file < parse.nonOptionsCount(); file++) {
+            string filename = parse.nonOption(file);
+            for (int format = X3D; format <= DUMMY; format++) {
+                if (options[format].count() > 0) {
+                    time_t start = time(0);
+                    RVMReader* reader;
+                    switch (format) {
+                        case DUMMY: {
+                            reader = new DummyReader;
+                        } break;
+
+                        case X3D:
+                        case X3DB: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".x3d" + (format == X3D ? "" : "b");
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new X3DConverter(name, format == X3DB);
+                        } break;
+
+                        case COLLADA: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".dae";
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new COLLADAConverter(name);
+                        } break;
+
+                        case DSL: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".dsl3d";
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new DSLConverter(name);
+                        } break;
+                    }
+                    if (maxSideSize) {
+                        reader->setMaxSideSize(maxSideSize);
+                    }
+                    if (minSides) {
+                        reader->setMinSides(minSides);
+                    }
+                    reader->setUsePrimitives(options[PRIMITIVES].count() > 0);
+                    reader->setSplit(options[SPLIT].count() > 0);
+                    cout << "\nConverting file " << filename << " to " << formatnames[format] << "...\n";
+                    RVMParser parser(reader);
+                    if (options[OBJECT].count() > 0) {
+                        parser.setObjectName(options[OBJECT].arg);
+                    }
+                    if (forcedColor != -1) {
+                        parser.setForcedColor(forcedColor);
+                    }
+                    bool res = parser.readFile(filename, options[SKIPATT].count() > 0);
+                    delete reader;
+                    if (!res) {
+                        cout << "Conversion failed:" << endl;
+                        cout << "  " << parser.lastError() << endl;
+                        return 1;
+                    } else {
+                        cout << "Statistics:" << endl;
+                        cout << "  " << parser.nbGroups() << " groups(s)" << endl;
+                        cout << "  " << parser.nbPyramids() << " pyramids(s)" << endl;
+                        cout << "  " << parser.nbBoxes() << " boxes(s)" << endl;
+                        cout << "  " << parser.nbRectangularToruses() << " rectangular torus(es)" << endl;
+                        cout << "  " << parser.nbCircularToruses() << " circular torus(es)" << endl;
+                        cout << "  " << parser.nbEllipticalDishes() << " elliptical dish(es)" << endl;
+                        cout << "  " << parser.nbSphericalDishes() << " spherical dish(es)" << endl;
+                        cout << "  " << parser.nbSnouts() << " snout(s)" << endl;
+                        cout << "  " << parser.nbCylinders() << " cylinder(s)" << endl;
+                        cout << "  " << parser.nbSpheres() << " sphere(s)" << endl;
+                        cout << "  " << parser.nbLines() << " lines(s)" << endl;
+                        cout << "  " << parser.nbFacetGroups() << " facet group(s)" << endl;
+                        cout << "  " << parser.nbAttributes() << " attribute(s)" << endl;
+                        time_t duration = time(0) - start;
+                        cout << "Conversion done in " << (duration) << " second" << (duration > 1 ? "s" : "") << "." << endl;
+                    }
+                }
+            }
+        }
     }
+
     return 0;
 }
 
