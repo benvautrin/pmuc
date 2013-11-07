@@ -171,7 +171,7 @@ int main(int argc, char** argv)
                     for (int j = 0; j < 12; j++) matrix.push_back(0);
                     matrix[0] = 1; matrix[4] = 1; matrix[8] = 1;
                     reader->startDocument();
-                    reader->startHeader("RVMConverter", "Primitive example file", "", "", "");
+                    reader->startHeader("Plant Mock-Up Converter", "Primitive example file", "", "", "");
                     reader->endHeader();
                     reader->startModel("Primitive examples", primitiveNames[i]);
                     reader->startGroup(primitiveNames[i], translation, forcedColor != -1 ? forcedColor : 2);
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
                     case X3D:
                     case X3DB: {
                         string x3dname = name + ".x3d" + (format == X3D ? "" : "b");
-                        reader = new X3DConverter(name, format == X3DB);
+                        reader = new X3DConverter(x3dname, format == X3DB);
                     } break;
 
                     case COLLADA: {
