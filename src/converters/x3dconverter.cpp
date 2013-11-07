@@ -124,9 +124,8 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
         m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
         m_writers.back()->endNode();
     }
-    m_writers.back()->startNode(ID::Group);
-    m_writers.back()->setSFString(ID::DEF, x3dName);
     m_writers.back()->startNode(ID::Transform);
+    m_writers.back()->setSFString(ID::DEF, x3dName);
     m_writers.back()->setSFVec3f(ID::translation,
                                  (translation[0] - m_translations.back()[0]),
                                  (translation[1] - m_translations.back()[1]),
@@ -139,7 +138,6 @@ void X3DConverter::endGroup() {
     m_materials.pop_back();
     m_groups.pop_back();
     m_writers.back()->endNode(); // Transform
-    m_writers.back()->endNode(); // Group
     if (m_split) {
         m_writers.back()->endX3DDocument();
         m_writers.back()->flush();
