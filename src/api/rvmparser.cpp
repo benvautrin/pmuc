@@ -9,6 +9,12 @@
 
 using namespace std;
 
+#ifdef _WIN32
+#define PATHSEP '\\'
+#else
+#define PATHSEP '/'
+#endif
+
 string trim(const string& s) {
     size_t si = s.find_first_not_of(" \n\r\t");
     if (si == string::npos) {
@@ -86,14 +92,17 @@ bool RVMParser::readFiles(const vector<string>& filenames, const string& name, b
     m_reader->startDocument();
     m_reader->startHeader("PMUC - Plant Mock-Up Converter", "Aggregation file", "", "", "");
     m_reader->endHeader();
-    m_reader->startModel(name, "Aggreagation");
+    m_reader->startModel(name, "Aggregation");
 
     m_aggregation = true;
     for (int i = 0; i < filenames.size(); i++) {
+        string groupname = filenames[i].substr(filenames[i].rfind(PATHSEP) + 1, filenames[i].find_last_of("."));
+        m_reader->startGroup(groupname, vector<float>(3, 0), 0);
         success = readFile(filenames[i], ignoreAttributes);
         if (!success) {
             break;
         }
+        m_reader->endGroup();
     }
 
     m_reader->endModel();
