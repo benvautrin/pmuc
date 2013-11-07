@@ -118,7 +118,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
         writer->openFile((x3dName + ".x3d").data());
         m_writers.push_back(writer);
         multimap<std::string, std::string> meta;
-        meta.insert(pair<string, string>("generator", "RVMConverter 0.1"));
+        meta.insert(pair<string, string>("generator", "Plant Mock-Up Converter 0.1"));
         m_writers.back()->startX3DDocument(Immersive, VERSION_3_0, &meta, false);
         m_writers.back()->startNode(ID::Background);
         m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
