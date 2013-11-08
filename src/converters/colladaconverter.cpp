@@ -39,7 +39,7 @@ class CCGroup {
                 writer->openElement("node");
                 writer->openElement("matrix");
                 vector<float> m = m_geometries[i].second;
-                m.insert(m.begin()+12, 1); m.insert(m.begin()+9, 0); m.insert(m.begin()+6, 0); m.insert(m.begin()+3, 0);
+                m.insert(m.begin()+12, 1.f); m.insert(m.begin()+9, 0.f); m.insert(m.begin()+6, 0.f); m.insert(m.begin()+3, 0.f);
                 writer->appendValues(m);
                 writer->closeElement(); // matrix
                 writer->openElement("instance_geometry");
@@ -331,7 +331,7 @@ void COLLADAConverter::startLine(const vector<float>& matrix,
                        const float& endx) {
 
     m_writer->openElement("geometry");
-    string gid = "G" + to_string(m_model->geometryId()++);
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute("id", gid);
     m_writer->openElement("mesh");
     m_writer->openElement("source");
@@ -406,7 +406,7 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
         }
     }
     m_writer->openElement("geometry");
-    string gid = "G" + to_string(m_model->geometryId()++);
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute("id", gid);
     m_writer->openElement("mesh");
     // Write coordinates source
@@ -517,7 +517,7 @@ void COLLADAConverter::endFacetGroup() {
 
 void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >& vertexes) {
     m_writer->openElement("geometry");
-    string gid = "G" + to_string(m_model->geometryId()++);
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute("id", gid);
     m_writer->openElement("mesh");
     pair<vector<vector<float> >, vector<vector<int> > > c = vertexes;
@@ -526,8 +526,8 @@ void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, 
     m_writer->openElement("float_array");
     m_writer->appendAttribute("id", gid + "CA");
     vector<float> a;
-    for (int i = 0; i < c.first.size(); i++)
-        for (int j = 0; j < c.first[i].size(); j++)
+    for (unsigned int i = 0; i < c.first.size(); i++)
+        for (unsigned int j = 0; j < c.first[i].size(); j++)
             a.push_back(c.first[i][j]);
     m_writer->appendAttribute("count", a.size());
     m_writer->appendValues(a);
@@ -554,8 +554,8 @@ void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, 
     m_writer->closeElement(); // source
     m_writer->openElement("triangles");
     vector<unsigned long> na;
-    for (int i = 0; i < c.second.size(); i++)
-        for (int j = 0; j < c.second[i].size(); j++)
+    for (unsigned int i = 0; i < c.second.size(); i++)
+        for (unsigned int j = 0; j < c.second[i].size(); j++)
             na.push_back(c.second[i][j]);
     m_writer->appendAttribute("count", na.size()/3);
     m_writer->openElement("input");
@@ -579,7 +579,7 @@ void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, 
 
 void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix, const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > >& vertexes) {
     m_writer->openElement("geometry");
-    string gid = "G" + to_string(m_model->geometryId()++);
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute("id", gid);
     m_writer->openElement("mesh");
     pair<vector<vector<float> >, vector<vector<int> > > c = vertexes.first;

@@ -272,7 +272,7 @@ int main(int argc, char** argv)
                     parser.setForcedColor(forcedColor);
                 }
                 vector<string> files;
-                for (unsigned int file = 0; file < parse.nonOptionsCount(); file++) {
+                for (int file = 0; file < parse.nonOptionsCount(); file++) {
                     string filename = parse.nonOption(file);
                     files.push_back(filename);
                 }

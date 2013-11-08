@@ -51,12 +51,11 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes) {
     m_lastError = "";
 
     // Open RVM file
-    filebuf fb;
-    if (!fb.open(filename.data(), ios::in)) {
+    ifstream is(filename.data(), ios::binary);
+    if (!is.is_open()) {
         m_lastError = "Could not open file";
         return false;
     }
-    istream is(&fb);
 
     // Try to find ATT companion file
     m_attributeStream = 0;
@@ -80,7 +79,7 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes) {
 
     bool success = readStream(is);
 
-    fb.close();
+    is.close();
     afb.close();
 
     return success;
@@ -95,7 +94,7 @@ bool RVMParser::readFiles(const vector<string>& filenames, const string& name, b
     m_reader->startModel(name, "Aggregation");
 
     m_aggregation = true;
-    for (int i = 0; i < filenames.size(); i++) {
+    for (unsigned int i = 0; i < filenames.size(); i++) {
         string groupname = filenames[i].substr(filenames[i].rfind(PATHSEP) + 1, filenames[i].find_last_of("."));
         m_reader->startGroup(groupname, vector<float>(3, 0), 0);
         success = readFile(filenames[i], ignoreAttributes);
@@ -228,7 +227,11 @@ bool RVMParser::readGroup(std::istream& is) {
                 size_t inb = m_currentAttributeLine.size();
                 size_t outb = 1056;
                 char* bp = buffer;
+#ifdef __APPLE__
                 char* sp = const_cast<char*>(m_currentAttributeLine.data());
+#else
+                const char* sp = m_currentAttributeLine.data();
+#endif
                 iconv(m_cd, &sp, &inb, &bp, &outb);
                 m_currentAttributeLine = buffer;
             }
@@ -249,7 +252,11 @@ bool RVMParser::readGroup(std::istream& is) {
                      size_t inb = m_currentAttributeLine.size();
                      size_t outb = 1056;
                      char* bp = buffer;
-                     char* sp = const_cast<char*>(m_currentAttributeLine.data());
+#ifdef __APPLE__
+		             char* sp = const_cast<char*>(m_currentAttributeLine.data());
+#else
+	                 const char* sp = m_currentAttributeLine.data();
+#endif
                      iconv(m_cd, &sp, &inb, &bp, &outb);
                      m_currentAttributeLine = buffer;
                      p = trim(m_currentAttributeLine);
@@ -577,7 +584,10 @@ std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > RVMParse
             std::vector<std::pair<Vector3F, Vector3F> > g;
             unsigned int vc = readInt(is);
             for (unsigned int i = 0; i < vc; i++) {
-                g.push_back(pair<Vector3F, Vector3F>(Vector3F(readFloat(is), readFloat(is), readFloat(is)), Vector3F(readFloat(is), readFloat(is), readFloat(is))));
+				Vector3F c(readFloat(is), readFloat(is), readFloat(is));
+				Vector3F n(readFloat(is), readFloat(is), readFloat(is));
+				pair<Vector3F, Vector3F> v(c, n);
+                g.push_back(v);
             }
             p.push_back(g);
         }
