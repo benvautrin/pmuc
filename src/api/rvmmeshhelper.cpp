@@ -598,7 +598,7 @@ const pair<
     vector<vector<int> > normalindex;
     vector<vector<float> > vectors;
 
-    float hd = diameter / 2;
+    float hd = diameter;
     int sides = int(2*M_PI * radius / maxSideSize);
     if (sides < minSides / 2) {
         sides = minSides / 2;
@@ -617,15 +617,15 @@ const pair<
         for (int j = 0; j < csides; j++) {
             float C = (float)cos(2*M_PI / csides * j);
             float S = (float)sin(2*M_PI / csides * j);
-            v[0] = hd * C * c; v[1] = hd * S * c; v[2] = -radius * s;
+            v[0] = hd * C * c; v[1] = hd * S * c; v[2] = radius * s;
             points.push_back(v);
-            n[0] = radius * C * c; n[1] = radius * S * c; n[2] = -hd * s;
+            n[0] = radius * C * c; n[1] = radius * S * c; n[2] = hd * s;
             vectors.push_back(normalize(n));
         }
     }
-    v[0] = 0; v[1] = 0; v[2] = -radius;
+    v[0] = 0; v[1] = 0; v[2] = radius;
     points.push_back(v);
-    n[0] = 0; n[1] = 0; n[2] = -1;
+    n[0] = 0; n[1] = 0; n[2] = 1;
     vectors.push_back(n);
 
     // Sides
@@ -660,8 +660,8 @@ const pair<
     vector<vector<int> > normalindex;
     vector<vector<float> > vectors;
 
-    float radius = diameter * diameter / (4 * height);
-    float hd = diameter / 2;
+    float radius = diameter * diameter / height;
+    float hd = diameter;
     int csides = int(2*M_PI * radius / maxSideSize);
     if (csides < minSides) {
         csides = minSides;
@@ -678,15 +678,15 @@ const pair<
         for (int j = 0; j < csides; j++) {
             float C = (float)cos(2*M_PI / csides * j);
             float S = (float)sin(2*M_PI / csides * j);
-            v[0] = radius * C * c; v[1] = radius * S * c; v[2] = radius - height -radius * s;
+            v[0] = radius * C * c; v[1] = radius * S * c; v[2] = -(radius - height -radius * s);
             points.push_back(v);
-            n[0] = radius * C * c; n[1] = radius * S * c; n[2] = -radius * s;
+            n[0] = radius * C * c; n[1] = radius * S * c; n[2] = radius * s;
             vectors.push_back(normalize(n));
         }
     }
-    v[0] = 0; v[1] = 0; v[2] = -height;
+    v[0] = 0; v[1] = 0; v[2] = height;
     points.push_back(v);
-    n[0] = 0; n[1] = 0; n[2] = -1;
+    n[0] = 0; n[1] = 0; n[2] = 1;
     vectors.push_back(n);
 
     // Sides
