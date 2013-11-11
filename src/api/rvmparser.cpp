@@ -619,8 +619,14 @@ std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > RVMParse
             std::vector<std::pair<Vector3F, Vector3F> > g;
             unsigned int vc = readInt(is);
             for (unsigned int i = 0; i < vc; i++) {
-				Vector3F c(readFloat(is), readFloat(is), readFloat(is));
-				Vector3F n(readFloat(is), readFloat(is), readFloat(is));
+                float x = readFloat(is);
+                float y = readFloat(is);
+                float z = readFloat(is);
+                Vector3F c(x, y, z);
+                x = readFloat(is);
+                y = readFloat(is);
+                z = readFloat(is);
+                Vector3F n(x, y, z);
 				pair<Vector3F, Vector3F> v(c, n);
                 g.push_back(v);
             }

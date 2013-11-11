@@ -233,12 +233,12 @@ class RVMReader
         /**
          * @brief Describes a cylinder
          * @param matrix
-         * @param diameter
+         * @param radius
          * @param height
          * @see RVMMeshHelper::makeCylinder
          */
         virtual void startCylinder(const std::vector<float>& matrix,
-                                   const float& diameter,
+                                   const float& radius,
                                    const float& height) = 0;
         /**
          * @brief End of a cylinder
