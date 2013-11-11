@@ -484,16 +484,16 @@ void X3DConverter::endSnout() {
 }
 
 void X3DConverter::startCylinder(const vector<float>& matrix,
-                           const float& diameter,
+                           const float& radius,
                            const float& height) {
     startShape(matrix);
     if (m_primitives) {
         m_writers.back()->startNode(ID::Cylinder);
-        m_writers.back()->setSFFloat(ID::radius, diameter / 2);
+        m_writers.back()->setSFFloat(ID::radius, radius);
         m_writers.back()->setSFFloat(ID::height, height);
     } else {
         m_writers.back()->startNode(ID::IndexedFaceSet);
-        pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCylinder(diameter, height, m_maxSideSize, m_minSides);
+        pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCylinder(radius, height, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
         for (unsigned int i = 0; i < c.first.first.size(); i++) {

@@ -79,7 +79,7 @@ class DummyReader : public RVMReader
         virtual void endSnout();
 
         virtual void startCylinder(const std::vector<float>& matrix,
-                                   const float& diameter,
+                                   const float& radius,
                                    const float& height);
         virtual void endCylinder();
 

@@ -142,7 +142,7 @@ void DummyReader::endSnout() {
 }
 
 void DummyReader::startCylinder(const vector<float>& matrix,
-                           const float& diameter,
+                           const float& radius,
                            const float& height) {
     cout << "startCylinder" << endl;
 }

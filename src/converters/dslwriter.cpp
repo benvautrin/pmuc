@@ -58,8 +58,8 @@ void DSLWriter::writeRectangularTorus(const string& id, float r_outside, float r
     fprintf(fp, "%s = make_rectangular_torus(%f, %f, %f, %f)\n", id.data(), r_outside, r_inside, height, angle);
 }
 
-void DSLWriter::writeCylinder(const string& id, float diameter, float height){
-    fprintf(fp, "%s = make_cylinder(%f, %f)\n", id.data(), diameter, height);
+void DSLWriter::writeCylinder(const string& id, float radius, float height){
+    fprintf(fp, "%s = make_cylinder(%f, %f)\n", id.data(), radius, height);
 }
 
 void DSLWriter::writeDish(const string& id, float height, float diameter, float angle){

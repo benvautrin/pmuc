@@ -308,9 +308,9 @@ void COLLADAConverter::endSnout() {
 }
 
 void COLLADAConverter::startCylinder(const vector<float>& matrix,
-                           const float& diameter,
+                           const float& radius,
                            const float& height) {
-    writeGeometryWithNormals(matrix, RVMMeshHelper::makeCylinder(diameter, height, m_maxSideSize, m_minSides));
+    writeGeometryWithNormals(matrix, RVMMeshHelper::makeCylinder(radius, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCylinder() {

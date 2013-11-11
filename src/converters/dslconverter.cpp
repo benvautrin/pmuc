@@ -180,10 +180,10 @@ void DSLConverter::endSnout() {
 }
 
 void DSLConverter::startCylinder(const vector<float>& matrix,
-                           const float& diameter,
+                           const float& radius,
                            const float& height) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeCylinder("bshape" + shapeid, diameter, height);
+    writer->writeCylinder("bshape" + shapeid, radius, height);
     writeShapeTransforms(shapeid, matrix);
 }
 

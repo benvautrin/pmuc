@@ -307,96 +307,131 @@ bool RVMParser::readPrimitive(std::istream& is) {
         switch (primitiveKind) {
             case 1: {
                 m_nbPyramids++;
+                float xbottom = readFloat(is);
+                float ybottom = readFloat(is);
+                float xtop = readFloat(is);
+                float ytop = readFloat(is);
+                float height = readFloat(is);
+                float xoffset = readFloat(is);
+                float yoffset = readFloat(is);
                 m_reader->startPyramid(matrix,
-                                       readFloat(is),
-                                       readFloat(is),
-                                       readFloat(is),
-                                       readFloat(is),
-                                       readFloat(is),
-                                       readFloat(is),
-                                       readFloat(is));
+                                       xbottom,
+                                       ybottom,
+                                       xtop,
+                                       ytop,
+                                       height,
+                                       xoffset,
+                                       yoffset);
                 m_reader->endPyramid();
             } break;
 
             case 2: {
                 m_nbBoxes++;
+                float xlength = readFloat(is);
+                float ylength = readFloat(is);
+                float zlength = readFloat(is);
                 m_reader->startBox(matrix,
-                                   readFloat(is),
-                                   readFloat(is),
-                                   readFloat(is));
+                                   xlength,
+                                   ylength,
+                                   zlength);
                 m_reader->endBox();
             } break;
 
             case 3: {
                 m_nbRectangularToruses++;
+                float rinside = readFloat(is);
+                float routside = readFloat(is);
+                float height = readFloat(is);
+                float angle = readFloat(is);
                 m_reader->startRectangularTorus(matrix,
-                                                readFloat(is),
-                                                readFloat(is),
-                                                readFloat(is),
-                                                readFloat(is));
+                                                rinside,
+                                                routside,
+                                                height,
+                                                angle);
                 m_reader->endRectangularTorus();
             } break;
 
             case 4: {
                 m_nbCircularToruses++;
+                float rinside = readFloat(is);
+                float routside = readFloat(is);
+                float angle = readFloat(is);
                 m_reader->startCircularTorus(matrix,
-                                             readFloat(is),
-                                             readFloat(is),
-                                             readFloat(is));
+                                             rinside,
+                                             routside,
+                                             angle);
                 m_reader->endCircularTorus();
             } break;
 
             case 5: {
                 m_nbEllipticalDishes++;
+                float diameter = readFloat(is);
+                float radius = readFloat(is);
                 m_reader->startEllipticalDish(matrix,
-                                              readFloat(is),
-                                              readFloat(is));
+                                              diameter,
+                                              radius);
                 m_reader->endEllipticalDish();
             } break;
 
             case 6: {
                 m_nbSphericalDishes++;
+                float diameter = readFloat(is);
+                float height = readFloat(is);
                 m_reader->startSphericalDish(matrix,
-                                             readFloat(is),
-                                             readFloat(is));
+                                             diameter,
+                                             height);
                 m_reader->endSphericalDish();
             } break;
 
             case 7: {
                 m_nbSnouts++;
+                float dtop = readFloat(is);
+                float dbottom = readFloat(is);
+                float height = readFloat(is);
+                float xoffset = readFloat(is);
+                float yoffset = readFloat(is);
+                float unknown1 = readFloat(is);
+                float unknown2 = readFloat(is);
+                float unknown3 = readFloat(is);
+                float unknown4 = readFloat(is);
                 m_reader->startSnout(matrix,
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is),
-                                     readFloat(is));
+                                     dtop,
+                                     dbottom,
+                                     height,
+                                     xoffset,
+                                     yoffset,
+                                     unknown1,
+                                     unknown2,
+                                     unknown3,
+                                     unknown4);
                 m_reader->endSnout();
             } break;
 
             case 8: {
                 m_nbCylinders++;
+                float radius = readFloat(is);
+                float height = readFloat(is);
                 m_reader->startCylinder(matrix,
-                                        readFloat(is),
-                                        readFloat(is));
+                                        radius,
+                                        height);
                 m_reader->endCylinder();
             } break;
 
             case 9: {
                 m_nbSpheres++;
+                float diameter = readFloat(is);
                 m_reader->startSphere(matrix,
-                                      readFloat(is));
+                                      diameter);
                 m_reader->endSphere();
             } break;
 
             case 10: {
                 m_nbLines++;
+                float startx = readFloat(is);
+                float endx = readFloat(is);
                 m_reader->startLine(matrix,
-                                    readFloat(is),
-                                    readFloat(is));
+                                    startx,
+                                    endx);
                 m_reader->endLine();
             } break;
 
