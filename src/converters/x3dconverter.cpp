@@ -857,18 +857,20 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
     vector<float> r(4, 0);
 
     // Finding axis/angle from matrix using Eigen for its bullet proof implementation.
-    Transform<float, 3, Affine> t;
+    Transform<double, 3, Affine> t;
     t.setIdentity();
     for (unsigned int i = 0; i < 3; i++) {
         for (unsigned int j = 0; j < 4; j++) {
             t(i, j) = matrix[i+j*3];
         }
     }
-    Matrix3f rotation;
-    Matrix3f scale;
+    Matrix3d rotation;
+    Matrix3d scale;
     t.computeRotationScaling(&rotation, &scale);
-    AngleAxisf aa;
-    aa = rotation;
+	Quaterniond q;
+    AngleAxisd aa;
+	q = rotation;
+    aa = q;
     r[0] = aa.axis()(0);
     r[1] = aa.axis()(1);
     r[2] = aa.axis()(2);
