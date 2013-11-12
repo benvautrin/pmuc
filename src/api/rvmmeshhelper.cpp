@@ -540,7 +540,7 @@ const pair<
         v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh;
         points.push_back(v);
         float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
-        n[0] = c; n[1] = s; n[2] = -dh;
+        n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
         n = normalize(n);
         vectors.push_back(n);
     }
@@ -561,26 +561,28 @@ const pair<
 
     // Caps
     // - Caps normals
-    int ci = vectors.size();
+    int nci = vectors.size();
     n[0] = 0; n[1] = 0; n[2] = -1;
     vectors.push_back(n);
     n[0] = 0; n[1] = 0; n[2] = 1;
     vectors.push_back(n);
     // - Caps centers
+	int ci = points.size();
     v[0] = 0; v[1] = 0; v[2] = -hh;
     points.push_back(v);
     v[0] = xoffset; v[1] = yoffset; v[2] = hh;
     points.push_back(v);
+	cout << vectors.size() << " " << points.size() << endl;
     // - Caps indexes
-    ni[0] = ci; ni[1] = ci; ni[2] = ci;
+    ni[0] = nci; ni[1] = nci; ni[2] = nci;
     for (int j = 0; j < sides; j++) {
         pi[0] = j*2; pi[1] = ci; pi[2] = j < sides-1 ? (j+1)*2 : 0;
         index.push_back(pi);
         normalindex.push_back(ni);
     }
-    ni[0] = ci+1; ni[1] = ci+1; ni[2] = ci+1;
+    ni[0] = nci+1; ni[1] = nci+1; ni[2] = nci+1;
     for (int j = 0; j < sides; j++) {
-        pi[0] = j*2+1; pi[1] = ci+1; pi[2] = j < sides-1 ? j*2 + 3 : 1;
+        pi[0] = j*2+1; pi[2] = ci+1; pi[1] = j < sides-1 ? j*2 + 3 : 1;
         index.push_back(pi);
         normalindex.push_back(ni);
     }
@@ -633,16 +635,16 @@ const pair<
     vector<int> ni(3, 0);
     for (int i = 0; i < sides-1; i++) {
         for (int j = 0; j < csides; j++) {
-            pi[0] = i*csides+j; pi[1] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+1+j : i*csides;
+            pi[0] = i*csides+j; pi[2] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
             normalindex.push_back(pi);
-            pi[0] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[2] = j < csides-1 ? i*csides+1+j : i*csides;
+            pi[0] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
             normalindex.push_back(pi);
         }
     }
     for (int i = 0; i < csides; i++) {
-        pi[0] = csides*(sides-1) + i; pi[2] = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1; pi[1] = points.size()-1;
+        pi[0] = csides*(sides-1) + i; pi[1] = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1; pi[2] = points.size()-1;
         index.push_back(pi);
         normalindex.push_back(pi);
     }
@@ -694,16 +696,16 @@ const pair<
     vector<int> ni(3, 0);
     for (int i = 0; i < sides-1; i++) {
         for (int j = 0; j < csides; j++) {
-            pi[0] = i*csides+j; pi[1] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+1+j : i*csides;
+            pi[0] = i*csides+j; pi[2] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
             normalindex.push_back(pi);
-            pi[0] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[2] = j < csides-1 ? i*csides+1+j : i*csides;
+            pi[0] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
             normalindex.push_back(pi);
         }
     }
     for (int i = 0; i < csides; i++) {
-        pi[0] = csides*(sides-1) + i; pi[2] = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1; pi[1] = points.size()-1;
+        pi[0] = csides*(sides-1) + i; pi[1] = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1; pi[2] = points.size()-1;
         index.push_back(pi);
         normalindex.push_back(pi);
     }
