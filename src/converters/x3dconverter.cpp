@@ -871,10 +871,10 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
     AngleAxisd aa;
 	q = rotation;
     aa = q;
-    r[0] = aa.axis()(0);
-    r[1] = aa.axis()(1);
-    r[2] = aa.axis()(2);
-    r[3] = aa.angle();
+    r[0] = (float)aa.axis()(0);
+    r[1] = (float)aa.axis()(1);
+    r[2] = (float)aa.axis()(2);
+    r[3] = (float)aa.angle();
 
     m_writers.back()->startNode(ID::Transform);
     m_writers.back()->setSFVec3f(ID::translation,

@@ -572,7 +572,6 @@ const pair<
     points.push_back(v);
     v[0] = xoffset; v[1] = yoffset; v[2] = hh;
     points.push_back(v);
-	cout << vectors.size() << " " << points.size() << endl;
     // - Caps indexes
     ni[0] = nci; ni[1] = nci; ni[2] = nci;
     for (int j = 0; j < sides; j++) {
