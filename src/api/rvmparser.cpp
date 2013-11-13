@@ -168,7 +168,14 @@ bool RVMParser::readStream(istream& is) {
     string user = readString(is);
 
     m_encoding = version >= 2 ? readString(is) : "UTF-8";
-    m_cd = iconv_open("UTF-8", m_encoding.data());
+    m_cd = (iconv_t)-1;
+    if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
+        cout << m_encoding << endl;
+        m_cd = iconv_open("UTF-8", m_encoding.data());
+        if (m_cd == (iconv_t)-1) {
+            cout << "Unknown encoding: " << m_encoding << endl;
+        }
+    }
 
     if (!m_aggregation) {
         m_reader->startHeader(banner, fileNote, date, user, m_encoding);
@@ -214,7 +221,9 @@ bool RVMParser::readStream(istream& is) {
         m_reader->endDocument();
     }
 
-    iconv_close(m_cd);
+    if (m_cd != (iconv_t)-1) {
+        iconv_close(m_cd);
+    }
 
     return true;
 }
@@ -244,17 +253,19 @@ bool RVMParser::readGroup(std::istream& is) {
             string p;
             while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
                 std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                char buffer[1056];
-                size_t inb = m_currentAttributeLine.size();
-                size_t outb = 1056;
-                char* bp = buffer;
+                if (m_cd != (iconv_t)-1) {
+                    char buffer[1056];
+                    size_t inb = m_currentAttributeLine.size();
+                    size_t outb = 1056;
+                    char* bp = buffer;
 #ifdef __APPLE__
-                char* sp = const_cast<char*>(m_currentAttributeLine.data());
+                    char* sp = const_cast<char*>(m_currentAttributeLine.data());
 #else
-                const char* sp = m_currentAttributeLine.data();
+                    const char* sp = m_currentAttributeLine.data();
 #endif
-                iconv(m_cd, &sp, &inb, &bp, &outb);
-                m_currentAttributeLine = buffer;
+                    iconv(m_cd, &sp, &inb, &bp, &outb);
+                    m_currentAttributeLine = buffer;
+                }
             }
             if (p == "NEW " + name ) {
                 m_reader->startMetaData();
@@ -269,17 +280,19 @@ bool RVMParser::readGroup(std::istream& is) {
                      m_attributes++;
 
                      std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                     char buffer[1056];
-                     size_t inb = m_currentAttributeLine.size();
-                     size_t outb = 1056;
-                     char* bp = buffer;
+                     if (m_cd != (iconv_t)-1) {
+                         char buffer[1056];
+                         size_t inb = m_currentAttributeLine.size();
+                         size_t outb = 1056;
+                         char* bp = buffer;
 #ifdef __APPLE__
-		             char* sp = const_cast<char*>(m_currentAttributeLine.data());
+                         char* sp = const_cast<char*>(m_currentAttributeLine.data());
 #else
-	                 const char* sp = m_currentAttributeLine.data();
+                         const char* sp = m_currentAttributeLine.data();
 #endif
-                     iconv(m_cd, &sp, &inb, &bp, &outb);
-                     m_currentAttributeLine = buffer;
+                         iconv(m_cd, &sp, &inb, &bp, &outb);
+                         m_currentAttributeLine = buffer;
+                     }
                      p = trim(m_currentAttributeLine);
                 }
                 m_reader->endMetaData();
