@@ -63,7 +63,7 @@ class Vector3F
         }
 
         inline bool equals(const Vector3F& v) const {
-            return (m_values[0] == v[0] && m_values[1] == v[1] && m_values[2] == v[2]);
+            return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
         }
 
     private:
