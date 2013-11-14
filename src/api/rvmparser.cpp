@@ -64,7 +64,7 @@ RVMParser::RVMParser(RVMReader* reader) :
     m_nbLines(0),
     m_nbFacetGroups(0),
     m_attributes(0),
-    m_cd(0),
+    m_cd((iconv_t)-1),
     m_aggregation(false) {
 }
 
