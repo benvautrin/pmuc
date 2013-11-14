@@ -168,9 +168,11 @@ bool RVMParser::readStream(istream& is) {
     string user = readString(is);
 
     m_encoding = version >= 2 ? readString(is) : "UTF-8";
+	if (m_encoding == "Unicode UTF-8") {
+		m_encoding = "UTF-8";
+	}
     m_cd = (iconv_t)-1;
     if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
-        cout << m_encoding << endl;
         m_cd = iconv_open("UTF-8", m_encoding.data());
         if (m_cd == (iconv_t)-1) {
             cout << "Unknown encoding: " << m_encoding << endl;
@@ -595,27 +597,33 @@ string RVMParser::readString(istream& is)
     is.read(buffer, size);
     buffer[size] = 0;
     // Since I've never been able to find why there sometimes are strange characters at the end of some names, ignore them and truncate the string.
-    for (unsigned int i = 0; i < size; i++) {
-        if ((unsigned char)buffer[i] > 0x7E) {
-            buffer[i] = 0;
-            break;
-        }
-    }
-    return buffer;
-
-    /* Attempt to use encoding... Failed.
-    if (!m_cd) {
+	/*
+	if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") { 
+	    for (unsigned int i = 0; i < size; i++) {
+		    if ((unsigned char)buffer[i] > 0x7E) {
+			    buffer[i] = 0;
+				break;
+		    }
+	    }
+	}*/
+	
+	// If already in UTF-8, no change
+	if (m_cd == (iconv_t)-1) {
         return buffer;
     }
 
+	// Encoding conversion.
     char cbuffer[1056];
     size_t inb = strlen(buffer);
     size_t outb = 1056;
     char* bp = cbuffer;
-    char* sp = buffer;
+#ifdef __APPLE__
+	char* sp = buffer;
+#else
+	const char* sp = buffer;
+#endif
     iconv(m_cd, &sp, &inb, &bp, &outb);
     return cbuffer;
-    */
 }
 
 vector<float> RVMParser::readMatrix(istream& is) {
