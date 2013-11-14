@@ -84,6 +84,7 @@ void X3DConverter::startHeader(const string& banner, const string& fileNote, con
 }
 
 void X3DConverter::endHeader() {
+	// Closed in startX3DDocument.
 }
 
 void X3DConverter::startModel(const string& projectName, const string& name) {
@@ -146,12 +147,19 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
         m_writers.back()->endNode();
     }
     m_writers.back()->startNode(ID::Transform);
-    m_writers.back()->setSFString(ID::DEF, x3dName);
+	// Problems with encoding and unicity so changed name from DEF storage to metadata. See after translation.
+    //m_writers.back()->setSFString(ID::DEF, x3dName);
     m_writers.back()->setSFVec3f(ID::translation,
                                  (translation[0] - m_translations.back()[0]),
                                  (translation[1] - m_translations.back()[1]),
                                  (translation[2] - m_translations.back()[2]));
     m_translations.push_back(translation);
+
+    m_writers.back()->startNode(ID::MetadataString);
+    m_writers.back()->setSFString(ID::name, "pdmsName");
+    vector<string> v; v.push_back(name);
+    m_writers.back()->setMFString(ID::value, v);
+    m_writers.back()->endNode();
 }
 
 void X3DConverter::endGroup() {
@@ -722,7 +730,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
             vector<vector<pair<Vector3F, Vector3F> > > shapes;
             int reorder = 0;
             // Close shapes
-            polygon.push_back(vertexes[i][0][0]);
+            polygon.push_back(polygon[0]);
             for (unsigned int j = 1; j < vertexes[i].size(); j++) {
                 shapes.push_back(vertexes[i][j]);
             }
@@ -773,6 +781,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                     }
                 } else {
                     // insert link and shape
+					/* Problem here with VC2010. What causes inserts to change values ??
                     bool ins = false;
                     if (pi == 0 || !(polygon[pi-1].first.equals(polygon[pi].first)) || !(polygon[pi-1].second.equals(polygon[pi].second))) {
                         polygon.insert(polygon.begin() + pi, polygon[pi]);
@@ -781,6 +790,19 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                     for (unsigned int k = 0; k < shape.size() + 1; k++) {
                         polygon.insert(polygon.begin() + (pi + k + (ins ? 1 : 0)), shape[(k + si) % shape.size()]);
                     }
+					*/
+					/* New implementation compatible with VC2010 */
+					vector<pair<Vector3F, Vector3F> > newpolygon;
+					for (int k = 0; k < pi + 1; k++) {
+						newpolygon.push_back(polygon[k]);
+					}
+                    for (unsigned int k = 0; k < shape.size() + 1; k++) {
+                        newpolygon.push_back(shape[(k + si) % shape.size()]);
+                    }
+					for (unsigned int k = pi; k < polygon.size(); k++) {
+						newpolygon.push_back(polygon[k]);
+					}
+					polygon.swap(newpolygon);
                 }
                 shapes.pop_back();
             }
