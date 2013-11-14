@@ -57,7 +57,7 @@ const option::Descriptor usage[] = {
     { SPLIT,        0, "",  "split",         option::Arg::None,      "  --split \tIf possible split in sub files (Only X3D)." },
     { AGGREGATE,    0, "",  "aggregate",     option::Arg::Optional,  "  --aggregate=<name> \tCombine input files in one export file." },
     { PRIMITIVES,   0, "",  "primitives",    option::Arg::None,      "  --primitives  \tIf possible use native primitives." },
-    { SIDESIZE ,    0, "",  "maxsidesize",   option::Arg::Optional,  "  --maxsidesize=<length>  \tUsed for tesselation. Default 10." },
+    { SIDESIZE ,    0, "",  "maxsidesize",   option::Arg::Optional,  "  --maxsidesize=<length>  \tUsed for tesselation. Default 1000." },
     { MINSIDES ,    0, "",  "minsides",      option::Arg::Optional,  "  --minsides=<nb>  \tUsed for tesselation. Default 8." },
     { TEST,         0, "t", "test",          option::Arg::None,      "  --test, -t \tOutputs primitive samples for testing purposes." },
     { OBJECT,       0, "",  "object",        option::Arg::Optional,  "  --object=<name> \tExtract only the named object." },
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
         }
     }
 
-    float maxSideSize = 10.;
+    float maxSideSize = 1000.;
     if (options[SIDESIZE].count() > 0) {
         maxSideSize = (float)atof(options[SIDESIZE].arg);
         if (maxSideSize <= 0) {
@@ -305,9 +305,9 @@ int main(int argc, char** argv)
                     return 1;
                 } else {
                     cout << "Statistics:" << endl;
-                    cout << "  " << parser.nbGroups() << " groups(s)" << endl;
-                    cout << "  " << parser.nbPyramids() << " pyramids(s)" << endl;
-                    cout << "  " << parser.nbBoxes() << " boxes(s)" << endl;
+                    cout << "  " << parser.nbGroups() << " group(s)" << endl;
+                    cout << "  " << parser.nbPyramids() << " pyramid(s)" << endl;
+                    cout << "  " << parser.nbBoxes() << " box(es)" << endl;
                     cout << "  " << parser.nbRectangularToruses() << " rectangular torus(es)" << endl;
                     cout << "  " << parser.nbCircularToruses() << " circular torus(es)" << endl;
                     cout << "  " << parser.nbEllipticalDishes() << " elliptical dish(es)" << endl;
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
                     cout << "  " << parser.nbSnouts() << " snout(s)" << endl;
                     cout << "  " << parser.nbCylinders() << " cylinder(s)" << endl;
                     cout << "  " << parser.nbSpheres() << " sphere(s)" << endl;
-                    cout << "  " << parser.nbLines() << " lines(s)" << endl;
+                    cout << "  " << parser.nbLines() << " line(s)" << endl;
                     cout << "  " << parser.nbFacetGroups() << " facet group(s)" << endl;
                     cout << "  " << parser.nbAttributes() << " attribute(s)" << endl;
                     time_t duration = time(0) - start;
@@ -381,9 +381,9 @@ int main(int argc, char** argv)
                         return 1;
                     } else {
                         cout << "Statistics:" << endl;
-                        cout << "  " << parser.nbGroups() << " groups(s)" << endl;
-                        cout << "  " << parser.nbPyramids() << " pyramids(s)" << endl;
-                        cout << "  " << parser.nbBoxes() << " boxes(s)" << endl;
+                        cout << "  " << parser.nbGroups() << " group(s)" << endl;
+                        cout << "  " << parser.nbPyramids() << " pyramid(s)" << endl;
+                        cout << "  " << parser.nbBoxes() << " box(es)" << endl;
                         cout << "  " << parser.nbRectangularToruses() << " rectangular torus(es)" << endl;
                         cout << "  " << parser.nbCircularToruses() << " circular torus(es)" << endl;
                         cout << "  " << parser.nbEllipticalDishes() << " elliptical dish(es)" << endl;
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
                         cout << "  " << parser.nbSnouts() << " snout(s)" << endl;
                         cout << "  " << parser.nbCylinders() << " cylinder(s)" << endl;
                         cout << "  " << parser.nbSpheres() << " sphere(s)" << endl;
-                        cout << "  " << parser.nbLines() << " lines(s)" << endl;
+                        cout << "  " << parser.nbLines() << " line(s)" << endl;
                         cout << "  " << parser.nbFacetGroups() << " facet group(s)" << endl;
                         cout << "  " << parser.nbAttributes() << " attribute(s)" << endl;
                         time_t duration = time(0) - start;
