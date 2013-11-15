@@ -29,7 +29,7 @@ Dependencies
 ------------
 
 The library itself only relies on the C++ standard library but the converter uses several open-source projects:
- - XIOT, a X3D/X3DB input/ouput library, http://???
+ - XIOT, a X3D/X3DB input/ouput library, https://github.com/Supporting/xiot
  - OpenCOLLADA, and more precisely its StreamWriter library, https://collada.org/mediawiki/index.php/OpenCOLLADA
  - Eigen, a C++ template library for linear algebra, http://eigen.tuxfamily.org
 
