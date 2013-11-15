@@ -41,6 +41,29 @@ using namespace std;
 using namespace XIOT;
 using namespace Eigen;
 
+// Helper function to escape XML attribute strings... Should have been done in XIOT...
+string escapeXMLAttribute(const string& value) {
+	string res = value;
+	size_t pos;
+	while ((pos = res.find("<")) != string::npos) {
+		res.replace(pos, 1, "&lt;");
+	}
+	while ((pos = res.find(">")) != string::npos) {
+		res.replace(pos, 1, "&gt;");
+	}
+	while ((pos = res.find("&")) != string::npos) {
+		res.replace(pos, 1, "&amp;");
+	}
+	while ((pos = res.find("\"")) != string::npos) {
+		res.replace(pos, 1, "&quot;");
+	}
+	while ((pos = res.find("'")) != string::npos) {
+		res.replace(pos, 1, "&apos;");
+	}
+	return res;
+}
+
+
 X3DConverter::X3DConverter(const string& filename, bool binary) :
     RVMReader(),
     m_binary(binary)
@@ -155,9 +178,10 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
                                  (translation[2] - m_translations.back()[2]));
     m_translations.push_back(translation);
 
+	// PDMS name as metadata.
     m_writers.back()->startNode(ID::MetadataString);
     m_writers.back()->setSFString(ID::name, "pdmsName");
-    vector<string> v; v.push_back(name);
+    vector<string> v; v.push_back(escapeXMLAttribute(name));
     m_writers.back()->setMFString(ID::value, v);
     m_writers.back()->endNode();
 }
