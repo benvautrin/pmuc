@@ -44,16 +44,16 @@ using namespace Eigen;
 // Helper function to escape XML attribute strings... Should have been done in XIOT...
 string escapeXMLAttribute(const string& value) {
 	string res = value;
-	size_t pos;
-	while ((pos = res.find("<")) != string::npos) {
+    size_t pos = 0;
+    while ((pos = res.find("&", pos + 3)) != string::npos) {
+        res.replace(pos, 1, "&amp;");
+    }
+    while ((pos = res.find("<")) != string::npos) {
 		res.replace(pos, 1, "&lt;");
 	}
 	while ((pos = res.find(">")) != string::npos) {
 		res.replace(pos, 1, "&gt;");
-	}
-	while ((pos = res.find("&")) != string::npos) {
-		res.replace(pos, 1, "&amp;");
-	}
+    }
 	while ((pos = res.find("\"")) != string::npos) {
 		res.replace(pos, 1, "&quot;");
 	}
