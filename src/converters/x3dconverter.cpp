@@ -226,7 +226,6 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
     pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
@@ -241,14 +240,17 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
         }
         index.push_back(-1);
     }
-    m_writers.back()->setMFInt32(ID::coordIndex, index);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
+    if (index.size() != 0) { // Seems to happen with all parameters set to 0.
+        m_writers.back()->startNode(ID::IndexedFaceSet);
+        m_writers.back()->setMFInt32(ID::coordIndex, index);
+        m_writers.back()->startNode(ID::Coordinate);
+        m_writers.back()->setMFFloat(ID::point, coordinates);
+        m_writers.back()->endNode(); // Coordinate
+        m_writers.back()->endNode(); // IndexedFaceSet
+    }
 }
 
 void X3DConverter::endPyramid() {
-    m_writers.back()->endNode();
     endShape();
 }
 
