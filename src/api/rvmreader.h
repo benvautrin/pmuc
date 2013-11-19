@@ -200,8 +200,8 @@ class RVMReader
          * @see RVMMeshHelper::makeEllipticalDish
          */
         virtual void startEllipticalDish(const std::vector<float>& matrix,
-                                         const float& diameter,
-                                         const float& radius) = 0;
+                                         const float& dishradius,
+                                         const float& secondradius) = 0;
         /**
          * @brief End of elliptical dish
          */
@@ -215,7 +215,7 @@ class RVMReader
          * @see RVMMeshHelper::makeSphericalDish
          */
         virtual void startSphericalDish(const std::vector<float>& matrix,
-                                        const float& diameter,
+                                        const float& dishradius,
                                         const float& height) = 0;
         /**
          * @brief End of a spherical dish.

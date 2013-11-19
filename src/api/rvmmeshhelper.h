@@ -120,7 +120,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeEllipticalDish(const float& diameter, const float& radius, const float& maxSideSize, const int& minSides);
+        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeSphericalDish
@@ -130,7 +130,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSphericalDish(const float& diameter, const float& height, const float& maxSideSize, const int& minSides);
+        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
 };
 
 #endif // RVMMESHHELPER_H

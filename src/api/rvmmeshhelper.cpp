@@ -593,14 +593,14 @@ const pair<
 
 const pair<
         pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper::makeEllipticalDish(const float& diameter, const float& radius, const float& maxSideSize, const int& minSides) {
+        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper::makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides) {
     vector<vector<int> > index;
     vector<vector<float> > points;
     vector<vector<int> > normalindex;
     vector<vector<float> > vectors;
 
-    float hd = diameter;
-    int sides = int(2*M_PI * radius / maxSideSize);
+    float hd = dishradius;
+    int sides = int(2*M_PI * secondradius / maxSideSize);
     if (sides < minSides / 2) {
         sides = minSides / 2;
     }
@@ -618,13 +618,13 @@ const pair<
         for (int j = 0; j < csides; j++) {
             float C = (float)cos(2*M_PI / csides * j);
             float S = (float)sin(2*M_PI / csides * j);
-            v[0] = hd * C * c; v[1] = hd * S * c; v[2] = radius * s;
+            v[0] = hd * C * c; v[1] = hd * S * c; v[2] = secondradius * s;
             points.push_back(v);
-            n[0] = radius * C * c; n[1] = radius * S * c; n[2] = hd * s;
+            n[0] = secondradius * C * c; n[1] = secondradius * S * c; n[2] = hd * s;
             vectors.push_back(normalize(n));
         }
     }
-    v[0] = 0; v[1] = 0; v[2] = radius;
+    v[0] = 0; v[1] = 0; v[2] = secondradius;
     points.push_back(v);
     n[0] = 0; n[1] = 0; n[2] = 1;
     vectors.push_back(n);
@@ -655,14 +655,20 @@ const pair<
 
 const pair<
         pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper::makeSphericalDish(const float& diameter, const float& height, const float& maxSideSize, const int& minSides) {
+        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper::makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides) {
+
+    // Asking for a sphere...
+    if (height >= dishradius * 2) {
+        return makeSphere(dishradius, maxSideSize, minSides);
+    }
+
     vector<vector<int> > index;
     vector<vector<float> > points;
     vector<vector<int> > normalindex;
     vector<vector<float> > vectors;
 
-    float radius = diameter * diameter / height;
-    float hd = diameter;
+    float radius = dishradius * dishradius / height;
+    float hd = dishradius;
     int csides = int(2*M_PI * radius / maxSideSize);
     if (csides < minSides) {
         csides = minSides;
