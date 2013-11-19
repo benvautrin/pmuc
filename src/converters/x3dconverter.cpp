@@ -493,8 +493,11 @@ void X3DConverter::startSnout(const vector<float>& matrix,
                         const float& unknown2,
                         const float& unknown3,
                         const float& unknown4) {
+    if (height == 0 && dbottom == 0 && dtop == 0) { // Degenerated snout...
+        return;
+    }
+
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
@@ -522,20 +525,21 @@ void X3DConverter::startSnout(const vector<float>& matrix,
         }
         normalindex.push_back(-1);
     }
+    m_writers.back()->startNode(ID::IndexedFaceSet);
     m_writers.back()->setSFBool(ID::solid, false);
     m_writers.back()->setMFInt32(ID::coordIndex, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
     m_writers.back()->startNode(ID::Coordinate);
     m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
+    m_writers.back()->endNode(); // Coordinate
     m_writers.back()->startNode(ID::Normal);
     m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode();
+    m_writers.back()->endNode(); // Normal
+    m_writers.back()->endNode(); // IndexedFaceSet
+    endShape();
 }
 
 void X3DConverter::endSnout() {
-    m_writers.back()->endNode();
-    endShape();
 }
 
 void X3DConverter::startCylinder(const vector<float>& matrix,

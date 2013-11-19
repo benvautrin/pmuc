@@ -659,7 +659,11 @@ const pair<
 
     // Asking for a sphere...
     if (height >= dishradius * 2) {
-        return makeSphere(dishradius, maxSideSize, minSides);
+        pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > res = makeSphere(dishradius, maxSideSize, minSides);
+        for (unsigned int i = 0; i < res.first.first.size(); i++) {
+            res.first.first[i][2] += dishradius;
+        }
+        return res;
     }
 
     vector<vector<int> > index;
