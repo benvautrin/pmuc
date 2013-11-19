@@ -17,6 +17,9 @@ aux_source_directory(src SRC_LIST)
 aux_source_directory(src/api APISRC_LIST)
 aux_source_directory(src/converters CONVERTERSSRC_LIST)
 
+add_library(rvm ${APISRC_LIST})
+target_link_libraries(rvm STATIC ${ICONV_LIBRARY})
+
 add_executable(${PROJECT_NAME} ${SRC_LIST} ${APISRC_LIST} ${CONVERTERSSRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${OPENCOLLADASW_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${XIOT_LIBRARY})
