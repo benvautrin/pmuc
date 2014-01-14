@@ -26,7 +26,9 @@
 #include <string>
 #include <vector>
 
+#ifdef ICONV_FOUND
 #include <iconv.h>
+#endif
 
 #include "vector3f.h"
 
@@ -90,6 +92,7 @@ class RVMParser
          * @param index a PDMS color index
          */
         void setForcedColor(const int index) { m_forcedColor = index; }
+        void setScale(const float scale) { m_scale = scale; }
 
         /**
          * @brief In case of error, returns the last error that occured.
@@ -179,7 +182,9 @@ class RVMParser
 
         RVMReader*  m_reader;
         std::string m_encoding;
+#ifdef ICONV_FOUND
         iconv_t     m_cd;
+#endif
         std::string m_lastError;
 
         std::istream*   m_attributeStream;
@@ -190,6 +195,7 @@ class RVMParser
         int             m_objectFound;
         int             m_forcedColor;
         bool            m_aggregation;
+        float           m_scale;
 
         int             m_nbGroups;
         int             m_nbPyramids;

@@ -51,6 +51,7 @@ RVMParser::RVMParser(RVMReader* reader) :
     m_objectName(""),
     m_objectFound(0),
     m_forcedColor(-1),
+    m_scale(1.),
     m_nbGroups(0),
     m_nbPyramids(0),
     m_nbBoxes(0),
@@ -64,7 +65,9 @@ RVMParser::RVMParser(RVMReader* reader) :
     m_nbLines(0),
     m_nbFacetGroups(0),
     m_attributes(0),
+#ifdef ICONV_FOUND
     m_cd((iconv_t)-1),
+#endif
     m_aggregation(false) {
 }
 
@@ -171,6 +174,7 @@ bool RVMParser::readStream(istream& is) {
 	if (m_encoding == "Unicode UTF-8") {
 		m_encoding = "UTF-8";
 	}
+#ifdef ICONV_FOUND
     m_cd = (iconv_t)-1;
     if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
         m_cd = iconv_open("UTF-8", m_encoding.data());
@@ -178,6 +182,7 @@ bool RVMParser::readStream(istream& is) {
             cout << "Unknown encoding: " << m_encoding << endl;
         }
     }
+#endif
 
     if (!m_aggregation) {
         m_reader->startHeader(banner, fileNote, date, user, m_encoding);
@@ -223,9 +228,11 @@ bool RVMParser::readStream(istream& is) {
         m_reader->endDocument();
     }
 
+#ifdef ICONV_FOUND
     if (m_cd != (iconv_t)-1) {
         iconv_close(m_cd);
     }
+#endif
 
     return true;
 }
@@ -255,6 +262,7 @@ bool RVMParser::readGroup(std::istream& is) {
             string p;
             while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
                 std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+#ifdef ICONV_FOUND
                 if (m_cd != (iconv_t)-1) {
                     char buffer[1056];
                     size_t inb = m_currentAttributeLine.size();
@@ -268,6 +276,7 @@ bool RVMParser::readGroup(std::istream& is) {
                     iconv(m_cd, &sp, &inb, &bp, &outb);
                     m_currentAttributeLine = buffer;
                 }
+#endif
             }
             if (p == "NEW " + name ) {
                 m_reader->startMetaData();
@@ -282,6 +291,7 @@ bool RVMParser::readGroup(std::istream& is) {
                      m_attributes++;
 
                      std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+#ifdef ICONV_FOUND
                      if (m_cd != (iconv_t)-1) {
                          char buffer[1056];
                          size_t inb = m_currentAttributeLine.size();
@@ -295,6 +305,7 @@ bool RVMParser::readGroup(std::istream& is) {
                          iconv(m_cd, &sp, &inb, &bp, &outb);
                          m_currentAttributeLine = buffer;
                      }
+#endif
                      p = trim(m_currentAttributeLine);
                 }
                 m_reader->endMetaData();
@@ -607,6 +618,9 @@ string RVMParser::readString(istream& is)
 	    }
 	}*/
 	
+#ifndef ICONV_FOUND
+    return buffer;
+#else
 	// If already in UTF-8, no change
 	if (m_cd == (iconv_t)-1) {
         return buffer;
@@ -624,6 +638,7 @@ string RVMParser::readString(istream& is)
 #endif
     iconv(m_cd, &sp, &inb, &bp, &outb);
     return cbuffer;
+#endif
 }
 
 vector<float> RVMParser::readMatrix(istream& is) {
@@ -632,13 +647,16 @@ vector<float> RVMParser::readMatrix(istream& is) {
         // Why do we have to multiply by 1000. ?
         res.push_back(readFloat(is) * 1000.f);
     }
+    for (int i = 9; i < 12; i++) {
+        res[i] *= m_scale;
+    }
     return res;
 }
 
 vector<float> RVMParser::readBoundingBox(istream& is) {
     vector<float> res;
     for (int i = 0; i < 6; i++) {
-        res.push_back(readFloat(is));
+        res.push_back(readFloat(is) * m_scale);
     }
     return res;
 }
@@ -646,7 +664,7 @@ vector<float> RVMParser::readBoundingBox(istream& is) {
 vector<float> RVMParser::readVector(istream& is) {
     vector<float> res;
     for (int i = 0; i < 3; i++) {
-        res.push_back(readFloat(is));
+        res.push_back(readFloat(is) * m_scale);
     }
     return res;
 }
@@ -661,13 +679,13 @@ std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > RVMParse
             std::vector<std::pair<Vector3F, Vector3F> > g;
             unsigned int vc = readInt(is);
             for (unsigned int i = 0; i < vc; i++) {
-                float x = readFloat(is);
-                float y = readFloat(is);
-                float z = readFloat(is);
+                float x = readFloat(is) * m_scale;
+                float y = readFloat(is) * m_scale;
+                float z = readFloat(is) * m_scale;
                 Vector3F c(x, y, z);
-                x = readFloat(is);
-                y = readFloat(is);
-                z = readFloat(is);
+                x = readFloat(is) * m_scale;
+                y = readFloat(is) * m_scale;
+                z = readFloat(is) * m_scale;
                 Vector3F n(x, y, z);
 				pair<Vector3F, Vector3F> v(c, n);
                 g.push_back(v);

@@ -44,7 +44,7 @@
 
 using namespace std;
 
-enum optionIndex { UNKNOWN, HELP, TEST, X3D, X3DB, COLLADA, DSL, DUMMY, SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE, MINSIDES, OBJECT, COLOR };
+enum optionIndex { UNKNOWN, HELP, TEST, X3D, X3DB, COLLADA, DSL, DUMMY, SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE, MINSIDES, OBJECT, COLOR, SCALE };
 const option::Descriptor usage[] = {
     { UNKNOWN,      0, "",  "",              option::Arg::None,      "\nusage: pmuc [options] <rvm file 1> ...\n\nChoose at least one format and one file to convert.\nOptions:" },
     { HELP,         0, "h", "help",          option::Arg::None,      "  --help, -h \tPrint usage and exit." },
@@ -62,6 +62,7 @@ const option::Descriptor usage[] = {
     { TEST,         0, "t", "test",          option::Arg::None,      "  --test, -t \tOutputs primitive samples for testing purposes." },
     { OBJECT,       0, "",  "object",        option::Arg::Optional,  "  --object=<name> \tExtract only the named object." },
     { COLOR,        0, "",  "color",         option::Arg::Optional,  "  --color=<index> \tForce a PDMS color on all objects." },
+    { SCALE,        0, "",  "scale",         option::Arg::Optional,  "  --scale=<multiplier> \tScale the model." },
     {0,0,0,0,0,0}
 };
 const string formatnames[] = {
@@ -138,6 +139,11 @@ int main(int argc, char** argv)
             option::printUsage(std::cout, usage);
             return 1;
         }
+    }
+
+    int scale = 1.;
+    if (options[SCALE].count()) {
+        scale = (float)atof(options[SCALE].arg);
     }
 
     string objectName = options[OBJECT].count() ? options[OBJECT].arg : "";
@@ -291,6 +297,9 @@ int main(int argc, char** argv)
                 }
                 if (forcedColor != -1) {
                     parser.setForcedColor(forcedColor);
+                }
+                if (scale != 1) {
+                    parser.setScale(scale);
                 }
                 vector<string> files;
                 for (int file = 0; file < parse.nonOptionsCount(); file++) {

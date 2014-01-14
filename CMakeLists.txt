@@ -10,8 +10,12 @@ include_directories( ${OPENCOLLADASW_INCLUDE_DIR} )
 include_directories( ${OPENCOLLADABU_INCLUDE_DIR} )
 find_package(EIGEN REQUIRED)
 include_directories( ${EIGEN_INCLUDE_DIR} )
-find_package(Iconv REQUIRED)
+find_package(Iconv)
 include_directories( ${ICONV_INCLUDE_DIR} )
+
+if (ICONV_FOUND)
+    add_definitions( -DICONV_FOUND )
+endif (ICONV_FOUND)
 
 aux_source_directory(src SRC_LIST)
 aux_source_directory(src/api APISRC_LIST)
