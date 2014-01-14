@@ -33,4 +33,6 @@ The library itself only relies on the C++ standard library but the converter use
  - OpenCOLLADA, and more precisely its StreamWriter library, https://collada.org/mediawiki/index.php/OpenCOLLADA
  - Eigen, a C++ template library for linear algebra, http://eigen.tuxfamily.org
 
+An optional dependency also exists on iconv for encoding translations, Windows users can find it at : http://gnuwin32.sourceforge.net/packages/libiconv.htm
+
 
