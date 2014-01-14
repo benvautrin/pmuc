@@ -112,7 +112,9 @@ void X3DConverter::endHeader() {
 
 void X3DConverter::startModel(const string& projectName, const string& name) {
     m_writers.back()->startNode(ID::WorldInfo);
-    m_writers.back()->setSFString(ID::info, "info");
+    MFString info;
+    info.push_back("info");
+    m_writers.back()->setMFString(ID::info, info);
     if (!projectName.empty()) {
         m_writers.back()->startNode(ID::MetadataString);
         m_writers.back()->setSFString(ID::name, "projectName");
@@ -238,10 +240,9 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.second[i].size(); j++) {
             index.push_back(c.second[i][j]);
         }
-        index.push_back(-1);
     }
     if (index.size() != 0) { // Seems to happen with all parameters set to 0.
-        m_writers.back()->startNode(ID::IndexedFaceSet);
+        m_writers.back()->startNode(ID::IndexedTriangleSet);
         m_writers.back()->setMFInt32(ID::coordIndex, index);
         m_writers.back()->startNode(ID::Coordinate);
         m_writers.back()->setMFFloat(ID::point, coordinates);
@@ -263,7 +264,7 @@ void X3DConverter::startBox(const vector<float>& matrix,
         m_writers.back()->startNode(ID::Box);
         m_writers.back()->setSFVec3f(ID::size, xlength, ylength, zlength);
     } else {
-        m_writers.back()->startNode(ID::IndexedFaceSet);
+        m_writers.back()->startNode(ID::IndexedTriangleSet);
         pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
@@ -276,7 +277,6 @@ void X3DConverter::startBox(const vector<float>& matrix,
             for (unsigned int j = 0; j < c.second[i].size(); j++) {
                 index.push_back(c.second[i][j]);
             }
-            index.push_back(-1);
         }
         m_writers.back()->setMFInt32(ID::coordIndex, index);
         m_writers.back()->startNode(ID::Coordinate);
@@ -296,7 +296,7 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
+    m_writers.back()->startNode(ID::IndexedTriangleSet);
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
@@ -309,7 +309,6 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
-        index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
@@ -322,7 +321,6 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
-        normalindex.push_back(-1);
     }
     m_writers.back()->setMFInt32(ID::coordIndex, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -344,7 +342,7 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& routside,
                                 const float& angle) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
+    m_writers.back()->startNode(ID::IndexedTriangleSet);
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
@@ -357,7 +355,6 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
-        index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
@@ -370,7 +367,6 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
-        normalindex.push_back(-1);
     }
     m_writers.back()->setMFInt32(ID::coordIndex, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -391,7 +387,7 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
+    m_writers.back()->startNode(ID::IndexedTriangleSet);
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
@@ -404,7 +400,6 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
-        index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
@@ -417,7 +412,6 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
-        normalindex.push_back(-1);
     }
     m_writers.back()->setMFInt32(ID::coordIndex, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -439,7 +433,7 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
+    m_writers.back()->startNode(ID::IndexedTriangleSet);
     pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
     vector<int> index;
     vector<float> coordinates;
@@ -452,7 +446,6 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
-        index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
@@ -465,7 +458,6 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
-        normalindex.push_back(-1);
     }
     m_writers.back()->setMFInt32(ID::coordIndex, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -510,7 +502,6 @@ void X3DConverter::startSnout(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
             index.push_back(c.first.second[i][j]);
         }
-        index.push_back(-1);
     }
     vector<int> normalindex;
     vector<float> normals;
@@ -523,9 +514,8 @@ void X3DConverter::startSnout(const vector<float>& matrix,
         for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
             normalindex.push_back(c.second.second[i][j]);
         }
-        normalindex.push_back(-1);
     }
-    m_writers.back()->startNode(ID::IndexedFaceSet);
+    m_writers.back()->startNode(ID::IndexedTriangleSet);
     m_writers.back()->setSFBool(ID::solid, false);
     m_writers.back()->setMFInt32(ID::coordIndex, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -551,7 +541,7 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
         m_writers.back()->setSFFloat(ID::radius, radius);
         m_writers.back()->setSFFloat(ID::height, height);
     } else {
-        m_writers.back()->startNode(ID::IndexedFaceSet);
+        m_writers.back()->startNode(ID::IndexedTriangleSet);
         pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCylinder(radius, height, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
@@ -564,7 +554,6 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
             for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
                 index.push_back(c.first.second[i][j]);
             }
-            index.push_back(-1);
         }
         vector<int> normalindex;
         vector<float> normals;
@@ -577,7 +566,6 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
             for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
                 normalindex.push_back(c.second.second[i][j]);
             }
-            normalindex.push_back(-1);
         }
         m_writers.back()->setMFInt32(ID::coordIndex, index);
         m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -602,7 +590,7 @@ void X3DConverter::startSphere(const vector<float>& matrix,
         m_writers.back()->startNode(ID::Sphere);
         m_writers.back()->setSFFloat(ID::radius, diameter/2);
     } else {
-        m_writers.back()->startNode(ID::IndexedFaceSet);
+        m_writers.back()->startNode(ID::IndexedTriangleSet);
         pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
         vector<int> index;
         vector<float> coordinates;
@@ -615,7 +603,6 @@ void X3DConverter::startSphere(const vector<float>& matrix,
             for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
                 index.push_back(c.first.second[i][j]);
             }
-            index.push_back(-1);
         }
         vector<int> normalindex;
         vector<float> normals;
@@ -628,7 +615,6 @@ void X3DConverter::startSphere(const vector<float>& matrix,
             for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
                 normalindex.push_back(c.second.second[i][j]);
             }
-            normalindex.push_back(-1);
         }
         m_writers.back()->setMFInt32(ID::coordIndex, index);
         m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
@@ -887,7 +873,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
         normalindexes.push_back(-1);
     }
 
-    m_writers.back()->setSFBool(ID::solid, false);
+    m_writers.back()->setSFBool(ID::solid, true);
     m_writers.back()->setSFBool(ID::convex, false);
     m_writers.back()->setSFFloat(ID::creaseAngle, 1.1f);
     m_writers.back()->setMFInt32(ID::coordIndex, indexes);
