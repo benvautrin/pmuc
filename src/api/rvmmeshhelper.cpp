@@ -539,9 +539,13 @@ const pair<
         points.push_back(v);
         v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh;
         points.push_back(v);
-        float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
-        n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
-        n = normalize(n);
+        if (height > 0) {
+            float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
+            n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
+            n = normalize(n);
+        } else {
+            n[0] = 0; n[1] = 0; n[2] = 1;
+        }
         vectors.push_back(n);
     }
 
