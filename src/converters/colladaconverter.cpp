@@ -361,12 +361,12 @@ void COLLADAConverter::startLine(const vector<float>& matrix,
     m_writer->appendAttribute("id", gid + "CA");
     vector<float> a;
     a.push_back(startx); a.push_back(0); a.push_back(0); a.push_back(endx); a.push_back(0); a.push_back(0);
-    m_writer->appendAttribute("count", a.size());
+    m_writer->appendAttribute("count", (unsigned int)a.size());
     m_writer->appendValues(a);
     m_writer->closeElement(); // float_array
     m_writer->openElement("technique_common");
     m_writer->openElement("accessor");
-    m_writer->appendAttribute("count", a.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(a.size()/3));
     m_writer->appendAttribute("source", "#" + gid + "CA");
     m_writer->appendAttribute("stride", 3);
     m_writer->openElement("param");
@@ -387,7 +387,7 @@ void COLLADAConverter::startLine(const vector<float>& matrix,
     m_writer->openElement("triangles");
     vector<unsigned long> na;
     na.push_back(0); na.push_back(1);
-    m_writer->appendAttribute("count", na.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(na.size()/3));
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
@@ -435,12 +435,12 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     m_writer->appendAttribute("id", gid + "C");
     m_writer->openElement("float_array");
     m_writer->appendAttribute("id", gid + "CA");
-    m_writer->appendAttribute("count", nc.size());
+    m_writer->appendAttribute("count", (unsigned int)(nc.size()));
     m_writer->appendValues(nc);
     m_writer->closeElement(); // float_array
     m_writer->openElement("technique_common");
     m_writer->openElement("accessor");
-    m_writer->appendAttribute("count", nc.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(nc.size()/3));
     m_writer->appendAttribute("source", "#" + gid + "CA");
     m_writer->appendAttribute("stride", 3);
     m_writer->openElement("param");
@@ -550,12 +550,12 @@ void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, 
     for (unsigned int i = 0; i < c.first.size(); i++)
         for (unsigned int j = 0; j < c.first[i].size(); j++)
             a.push_back(c.first[i][j]);
-    m_writer->appendAttribute("count", a.size());
+    m_writer->appendAttribute("count", (unsigned int)(a.size()));
     m_writer->appendValues(a);
     m_writer->closeElement(); // float_array
     m_writer->openElement("technique_common");
     m_writer->openElement("accessor");
-    m_writer->appendAttribute("count", a.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(a.size()/3));
     m_writer->appendAttribute("source", "#" + gid + "CA");
     m_writer->appendAttribute("stride", 3);
     m_writer->openElement("param");
@@ -578,7 +578,7 @@ void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, 
     for (unsigned int i = 0; i < c.second.size(); i++)
         for (unsigned int j = 0; j < c.second[i].size(); j++)
             na.push_back(c.second[i][j]);
-    m_writer->appendAttribute("count", na.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(na.size()/3));
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
@@ -634,12 +634,12 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     m_writer->appendAttribute("id", gid + "C");
     m_writer->openElement("float_array");
     m_writer->appendAttribute("id", gid + "CA");
-    m_writer->appendAttribute("count", nc.size());
+    m_writer->appendAttribute("count", (unsigned int)(nc.size()));
     m_writer->appendValues(nc);
     m_writer->closeElement(); // float_array
     m_writer->openElement("technique_common");
     m_writer->openElement("accessor");
-    m_writer->appendAttribute("count", nc.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(nc.size()/3));
     m_writer->appendAttribute("source", "#" + gid + "CA");
     m_writer->appendAttribute("stride", 3);
     m_writer->openElement("param");
@@ -662,12 +662,12 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     m_writer->appendAttribute("id", gid + "N");
     m_writer->openElement("float_array");
     m_writer->appendAttribute("id", gid + "NA");
-    m_writer->appendAttribute("count", nn.size());
+    m_writer->appendAttribute("count", (unsigned int)(nn.size()));
     m_writer->appendValues(nn);
     m_writer->closeElement(); // float_array
     m_writer->openElement("technique_common");
     m_writer->openElement("accessor");
-    m_writer->appendAttribute("count", nn.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(nn.size()/3));
     m_writer->appendAttribute("source", "#" + gid + "NA");
     m_writer->appendAttribute("stride", 3);
     m_writer->openElement("param");
@@ -687,7 +687,7 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     m_writer->closeElement(); // source
     // Write triangles woth common index
     m_writer->openElement("triangles");
-    m_writer->appendAttribute("count", ni.size()/3);
+    m_writer->appendAttribute("count", (unsigned int)(ni.size()/3));
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
