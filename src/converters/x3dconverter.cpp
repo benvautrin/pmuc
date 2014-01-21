@@ -185,6 +185,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
     m_writers.back()->setSFString(ID::name, "pdmsName");
     vector<string> v; v.push_back(escapeXMLAttribute(name));
     m_writers.back()->setMFString(ID::value, v);
+    m_writers.back()->setSFString(ID::containerField, "metadata");
     m_writers.back()->endNode();
 }
 
@@ -213,6 +214,7 @@ void X3DConverter::startMetaDataPair(const string &name, const string &value) {
     m_writers.back()->setSFString(ID::name, name);
     vector<string> v; v.push_back(value);
     m_writers.back()->setMFString(ID::value, v);
+    m_writers.back()->setSFString(ID::containerField, "metadata");
     m_writers.back()->endNode();
 }
 
@@ -243,7 +245,7 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
     }
     if (index.size() != 0) { // Seems to happen with all parameters set to 0.
         m_writers.back()->startNode(ID::IndexedTriangleSet);
-        m_writers.back()->setMFInt32(ID::coordIndex, index);
+        m_writers.back()->setMFInt32(ID::index, index);
         m_writers.back()->startNode(ID::Coordinate);
         m_writers.back()->setMFFloat(ID::point, coordinates);
         m_writers.back()->endNode(); // Coordinate
@@ -278,7 +280,7 @@ void X3DConverter::startBox(const vector<float>& matrix,
                 index.push_back(c.second[i][j]);
             }
         }
-        m_writers.back()->setMFInt32(ID::coordIndex, index);
+        m_writers.back()->setMFInt32(ID::index, index);
         m_writers.back()->startNode(ID::Coordinate);
         m_writers.back()->setMFFloat(ID::point, coordinates);
         m_writers.back()->endNode();
@@ -322,7 +324,7 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
             normalindex.push_back(c.second.second[i][j]);
         }
     }
-    m_writers.back()->setMFInt32(ID::coordIndex, index);
+    m_writers.back()->setMFInt32(ID::index, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
     m_writers.back()->startNode(ID::Coordinate);
     m_writers.back()->setMFFloat(ID::point, coordinates);
@@ -368,7 +370,7 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
             normalindex.push_back(c.second.second[i][j]);
         }
     }
-    m_writers.back()->setMFInt32(ID::coordIndex, index);
+    m_writers.back()->setMFInt32(ID::index, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
     m_writers.back()->startNode(ID::Coordinate);
     m_writers.back()->setMFFloat(ID::point, coordinates);
@@ -413,7 +415,7 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
             normalindex.push_back(c.second.second[i][j]);
         }
     }
-    m_writers.back()->setMFInt32(ID::coordIndex, index);
+    m_writers.back()->setMFInt32(ID::index, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
     m_writers.back()->setSFBool(ID::solid, false);
     m_writers.back()->startNode(ID::Coordinate);
@@ -459,7 +461,7 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
             normalindex.push_back(c.second.second[i][j]);
         }
     }
-    m_writers.back()->setMFInt32(ID::coordIndex, index);
+    m_writers.back()->setMFInt32(ID::index, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
     m_writers.back()->setSFBool(ID::solid, false);
     m_writers.back()->startNode(ID::Coordinate);
@@ -517,7 +519,7 @@ void X3DConverter::startSnout(const vector<float>& matrix,
     }
     m_writers.back()->startNode(ID::IndexedTriangleSet);
     m_writers.back()->setSFBool(ID::solid, false);
-    m_writers.back()->setMFInt32(ID::coordIndex, index);
+    m_writers.back()->setMFInt32(ID::index, index);
     m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
     m_writers.back()->startNode(ID::Coordinate);
     m_writers.back()->setMFFloat(ID::point, coordinates);
@@ -567,7 +569,7 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
                 normalindex.push_back(c.second.second[i][j]);
             }
         }
-        m_writers.back()->setMFInt32(ID::coordIndex, index);
+        m_writers.back()->setMFInt32(ID::index, index);
         m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
         m_writers.back()->startNode(ID::Coordinate);
         m_writers.back()->setMFFloat(ID::point, coordinates);
@@ -616,7 +618,7 @@ void X3DConverter::startSphere(const vector<float>& matrix,
                 normalindex.push_back(c.second.second[i][j]);
             }
         }
-        m_writers.back()->setMFInt32(ID::coordIndex, index);
+        m_writers.back()->setMFInt32(ID::index, index);
         m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
         m_writers.back()->startNode(ID::Coordinate);
         m_writers.back()->setMFFloat(ID::point, coordinates);
@@ -873,7 +875,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
         normalindexes.push_back(-1);
     }
 
-    m_writers.back()->setSFBool(ID::solid, true);
+    m_writers.back()->setSFBool(ID::solid, false);
     m_writers.back()->setSFBool(ID::convex, false);
     m_writers.back()->setSFFloat(ID::creaseAngle, 1.1f);
     m_writers.back()->setMFInt32(ID::coordIndex, indexes);
