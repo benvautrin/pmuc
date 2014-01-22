@@ -180,7 +180,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
                                  (translation[2] - m_translations.back()[2]));
     m_translations.push_back(translation);
 
-	// PDMS name as metadata.
+    // PDMS name as metadata.
     m_writers.back()->startNode(ID::MetadataString);
     m_writers.back()->setSFString(ID::name, "pdmsName");
     vector<string> v; v.push_back(escapeXMLAttribute(name));
@@ -707,6 +707,9 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
     for (unsigned int i = 0; i < vertexes.size(); i++) { // Patches
         if (vertexes[i].size() == 1) {
             int j = 0;
+            if (vertexes[i][0].size() < 3) {
+                continue;
+            }
             for (unsigned int k = 0; k < vertexes[i][j].size(); k++) { // Vertexes
                 int ci = -1;
                 int ni = -1;
@@ -836,6 +839,9 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
             }
             */
             // Then, insert polygon.
+            if (polygon.size() < 3) {
+                continue;
+            }
             for (unsigned int k = 0; k < polygon.size(); k++) { // Vertexes
                 int ci = -1;
                 int ni = -1;
