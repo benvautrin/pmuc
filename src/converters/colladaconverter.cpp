@@ -68,7 +68,7 @@ class CCGroup {
                 writer->openElement("bind_material");
                 writer->openElement("technique_common");
                 writer->openElement("instance_material");
-                writer->appendAttribute("symbol", "Material2");
+                writer->appendAttribute("symbol", "geometryMaterial");
                 writer->appendAttribute("target", "#M" + to_string((long long) m_material));
                 writer->openElement("bind_vertex_input");
                 writer->appendAttribute("semantic", "UVSET0");
@@ -388,6 +388,7 @@ void COLLADAConverter::startLine(const vector<float>& matrix,
     vector<unsigned long> na;
     na.push_back(0); na.push_back(1);
     m_writer->appendAttribute("count", (unsigned int)(na.size()/3));
+    m_writer->appendAttribute("material", "geometryMaterial");
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
@@ -489,6 +490,7 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     // Write triangles woth common index
     m_writer->openElement("polygons");
     m_writer->appendAttribute("count", np);
+    m_writer->appendAttribute("material", "geometryMaterial");
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
@@ -579,6 +581,7 @@ void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, 
         for (unsigned int j = 0; j < c.second[i].size(); j++)
             na.push_back(c.second[i][j]);
     m_writer->appendAttribute("count", (unsigned int)(na.size()/3));
+    m_writer->appendAttribute("material", "geometryMaterial");
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
@@ -620,9 +623,9 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     for (unsigned int i = 0; i < n.second.size(); i++) {
         for (unsigned int j = 0; j < n.second[i].size(); j++) {
             int fi = n.second[i][j];
-            nn.push_back(n.first[fi][0]);
-            nn.push_back(n.first[fi][1]);
-            nn.push_back(n.first[fi][2]);
+            nn.push_back(n.first[fi][3]);
+            nn.push_back(n.first[fi][4]);
+            nn.push_back(n.first[fi][5]);
         }
     }
     vector<unsigned long> ni;
@@ -688,6 +691,7 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     // Write triangles woth common index
     m_writer->openElement("triangles");
     m_writer->appendAttribute("count", (unsigned int)(ni.size()/3));
+    m_writer->appendAttribute("material", "geometryMaterial");
     m_writer->openElement("input");
     m_writer->appendAttribute("offset", 0);
     m_writer->appendAttribute("semantic", "POSITION");
