@@ -675,14 +675,14 @@ const pair<
     vector<vector<int> > normalindex;
     vector<vector<float> > vectors;
 
-    float radius = dishradius * dishradius / height;
+    float radius = (dishradius*dishradius + height*height) / (2*height);
+    float angle = asin(1-height/radius);
     float hd = dishradius;
     int csides = int(2*M_PI * radius / maxSideSize);
     if (csides < minSides) {
         csides = minSides;
     }
-    int sides = csides / 2;
-    float angle = asin(1-height/radius);
+    int sides = csides;
 
     // Vertexes and normals
     vector<float> v(3, 0);
