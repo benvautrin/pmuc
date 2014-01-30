@@ -59,8 +59,13 @@ class CCGroup {
             for (unsigned int i = 0; i < m_geometries.size(); i++) {
                 writer->openElement("node");
                 writer->openElement("matrix");
-                vector<float> m = m_geometries[i].second;
-                m.insert(m.begin()+12, 1.f); m.insert(m.begin()+9, 0.f); m.insert(m.begin()+6, 0.f); m.insert(m.begin()+3, 0.f);
+                vector<float> m(16, 0);
+                for (unsigned int j = 0; j < 4; j++) {
+                    for (unsigned int k = 0; k < 3; k++) {
+                        m[j+k*4] = m_geometries[i].second[j*3+k];
+                    }
+                }
+                m[15] = 1.f;
                 writer->appendValues(m);
                 writer->closeElement(); // matrix
                 writer->openElement("instance_geometry");
@@ -141,6 +146,7 @@ void COLLADAConverter::startHeader(const string& banner, const string& fileNote,
     m_writer->appendTextElement("author", user);
     m_writer->appendTextElement("authoring_tool", banner);
     m_writer->appendTextElement("comments", fileNote);
+    m_writer->appendTextElement("up_axis", "Z_UP");
     m_writer->closeElement();
 }
 
