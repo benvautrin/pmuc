@@ -605,6 +605,7 @@ string RVMParser::readString(istream& is)
     if (size == 0)
         return "";
     char buffer[1024];
+	buffer[0] = 0;
     is.read(buffer, size);
     buffer[size] = 0;
     // Since I've never been able to find why there sometimes are strange characters at the end of some names, ignore them and truncate the string.
