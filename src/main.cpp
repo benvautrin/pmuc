@@ -347,6 +347,7 @@ int main(int argc, char** argv)
                         case X3D:
                         case X3DB: {
                             string name = !objectName.empty() ? objectName : filename;
+                            if (options[SPLIT].count() > 0) name += "_origin";
                             name = name.substr(0, name.rfind(".")) + ".x3d" + (format == X3D ? "" : "b");
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new X3DConverter(name, format == X3DB);
