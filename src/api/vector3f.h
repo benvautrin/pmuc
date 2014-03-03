@@ -66,21 +66,17 @@ class Vector3F
             return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
         }
 
+        friend Vector3F operator-(const std::vector<float>& p1, const std::vector<float>& p2);
+        friend Vector3F operator-(const Vector3F& p1, const Vector3F& p2);
+        friend Vector3F operator+(const Vector3F& p1, const Vector3F& p2);
+        friend float operator*(const Vector3F& p1, const Vector3F& p2);
+        friend Vector3F operator*(const Vector3F& v, float f);
+        friend std::ostream& operator<<(std::ostream& out, const Vector3F& vec);
+
     private:
         float m_values[3];
 };
 
 
-Vector3F operator-(const std::vector<float>& p1, const std::vector<float>& p2);
-
-Vector3F operator-(const Vector3F& p1, const Vector3F& p2);
-
-Vector3F operator+(const Vector3F& p1, const Vector3F& p2);
-
-float operator*(const Vector3F& p1, const Vector3F& p2);
-
-Vector3F operator*(const Vector3F& v, float f);
-
-std::ostream& operator<<(std::ostream& out, const Vector3F& vec);
 
 #endif // Vector3F_H
