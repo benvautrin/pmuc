@@ -755,6 +755,8 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
             for (unsigned int j = 1; j < vertexes[i].size(); j++) {
                 shapes.push_back(vertexes[i][j]);
             }
+            // Theorical max reorderings...
+            int maxreorder = (shapes.size() * (shapes.size() + 1)) / 2;
             // Find non-crossing links and insert sub shapes
             while (!shapes.empty()) {
                 vector<pair<Vector3F, Vector3F> > shape(shapes.back());
@@ -791,28 +793,18 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
                     }
                 }
                 if (!noncrossing) {
-                    // Very uncommon... Added a safe guard for infinite loops. 10 is totally arbitrary. Never met a face with more than one reordering.
+                    // Very uncommon... Added a safe guard for infinite loops with theorical max (see over maxreorder). Max actual reorderings found: 47. Takes a looong time.
                     reorder++;
-                    if (reorder > 10) {
+                    if (reorder > maxreorder) {
                         cout << "Could not find the decomposition of a face set. " << m_groups.back() << endl;
                         cout << "Ignoring one shape !!!!" << endl;
+                        cout << reorder << " " << maxreorder << endl;
                     } else {
                         // Reordering shapes
                         shapes.insert(shapes.begin(), shape);
                     }
                 } else {
-                    // insert link and shape
-					/* Problem here with VC2010. What causes inserts to change values ??
-                    bool ins = false;
-                    if (pi == 0 || !(polygon[pi-1].first.equals(polygon[pi].first)) || !(polygon[pi-1].second.equals(polygon[pi].second))) {
-                        polygon.insert(polygon.begin() + pi, polygon[pi]);
-                        ins = true;
-                    }
-                    for (unsigned int k = 0; k < shape.size() + 1; k++) {
-                        polygon.insert(polygon.begin() + (pi + k + (ins ? 1 : 0)), shape[(k + si) % shape.size()]);
-                    }
-					*/
-					/* New implementation compatible with VC2010 */
+                    /* New implementation compatible with VC2010 - inserts incompatibility due to alignment problem. */
 					vector<pair<Vector3F, Vector3F> > newpolygon;
 					for (int k = 0; k < pi + 1; k++) {
 						newpolygon.push_back(polygon[k]);
