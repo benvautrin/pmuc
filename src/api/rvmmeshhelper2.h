@@ -25,6 +25,23 @@
 #include <utility>
 #include <vector>
 
+struct Vertex {
+  union {
+    struct { float x, y, z; };
+    float v_[3];
+  };
+  Vertex() : x(0.0), y(0.0), z(0.0) {}
+  Vertex(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
+};
+
+struct Mesh {
+
+ std::vector<unsigned long>  positionIndex;
+ std::vector<unsigned long>  normalIndex;
+ std::vector<Vertex>  positions;
+ std::vector<Vertex>  normals;
+};
+
 class RVMMeshHelper2
 {
     public:
@@ -44,7 +61,7 @@ class RVMMeshHelper2
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up indexed coordinates for the described box
@@ -55,7 +72,7 @@ class RVMMeshHelper2
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > makeBox(const float& x, const float& y, const float& z, const float& maxSideSize, const int& minSides);
+        static const Mesh makeBox(const float& x, const float& y, const float& z, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up a sphere with the given radius
@@ -74,7 +91,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeRectangularTorus
@@ -86,7 +103,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeRectangularTorus(const float& rinside, const float& routside, const float& height, const float& angle, const float& maxSideSize, const int& minSides);
+        static const Mesh makeRectangularTorus(const float& rinside, const float& routside, const float& height, const float& angle, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCircularTorus

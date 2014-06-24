@@ -25,6 +25,7 @@
 #include <COLLADASWStreamWriter.h>
 
 #include "../api/rvmreader.h"
+#include "../api/rvmmeshhelper2.h"
 
 class CCModel;
 
@@ -127,6 +128,9 @@ class COLLADAConverter : public RVMReader
 
         void writeGeometryWithNormals(const std::vector<float>& matrix,
                                       const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > >& vertexes);
+
+		void writeMesh(const std::vector<float>& matrix, 
+						const Mesh& mesh);
 
         COLLADASW::StreamWriter* m_writer;
         std::vector<std::vector<float> > m_translations;

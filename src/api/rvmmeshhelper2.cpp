@@ -67,6 +67,10 @@ static bool equals(const vector<float>& p1, const vector<float>& p2) {
     return p1[0] == p2[0] && p1[1] == p2[1] && p1[2] == p2[2];
 }
 
+static bool equals(const Vertex& p1, const Vertex& p2) {
+    return p1.x == p2.x && p1.y == p2.y && p1.z == p2.z;
+}
+
 static const float cube[] = {
     -.5, -.5, -.5,
     .5, -.5, -.5,
@@ -78,38 +82,43 @@ static const float cube[] = {
     -.5, .5, .5,
 };
 
-const pair<vector<vector<float> >, vector<vector<int> > > RVMMeshHelper2::makeBox(const float& x, const float &y, const float &z, const float &maxSideSize, const int &minSides) {
-    vector<vector<float> > points;
+const Mesh RVMMeshHelper2::makeBox(const float& x, const float &y, const float &z, const float &maxSideSize, const int &minSides) {
+    vector<Vertex> points;
     for (int i = 0; i < 8; i++) {
-        vector<float> point;
-        point.push_back(cube[i*3] * x);
-        point.push_back(cube[i*3+1] * y);
-        point.push_back(cube[i*3+2] * z);
+        Vertex point;
+        point.x = cube[i*3] * x;
+        point.y = cube[i*3+1] * y;
+        point.z = cube[i*3+2] * z;
         points.push_back(point);
     }
-    vector<vector<int> > index;
+    vector<unsigned long> index;
     for (int i = 0; i < 4; i++) {
-        vector<int> findex;
-        findex.push_back(i);
-        findex.push_back(i == 3 ? 0 : i+1);
-        findex.push_back(i+4);
-        index.push_back(findex);
-        findex.clear();
-        findex.push_back(i == 3 ? 0 : i+1);
-        findex.push_back(i == 3 ? 4 : i+5);
-        findex.push_back(i+4);
-        index.push_back(findex);
+        index.push_back(i);
+        index.push_back(i == 3 ? 0 : i+1);
+        index.push_back(i+4);
+        index.push_back(i == 3 ? 0 : i+1);
+        index.push_back(i == 3 ? 4 : i+5);
+        index.push_back(i+4);
     }
-    vector<int> findex(3, 0);
-    findex[0] = 0; findex[1] = 2; findex[2] = 1;
-    index.push_back(findex);
-    findex[0] = 0; findex[1] = 3; findex[2] = 2;
-    index.push_back(findex);
-    findex[0] = 4; findex[1] = 5; findex[2] = 6;
-    index.push_back(findex);
-    findex[0] = 4; findex[1] = 6; findex[2] = 7;
-    index.push_back(findex);
-    return pair<vector<vector<float> >, vector<vector<int> > >(points, index);
+
+	vector<int> findex(3, 0);
+    index.push_back(0);
+	index.push_back(2);
+	index.push_back(1);
+    index.push_back(0);
+	index.push_back(3);
+	index.push_back(2);
+    index.push_back(4);
+	index.push_back(5);
+	index.push_back(6);
+    index.push_back(4);
+	index.push_back(6);
+	index.push_back(7);
+
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+	return result;
 }
 
 static const float sphere[] = {
@@ -198,16 +207,15 @@ const pair<
     return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
 }
 
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeRectangularTorus(const float& rinside,
-                                                                                             const float& routside,
-                                                                                             const float& height,
-                                                                                             const float& angle, const float& maxSideSize, const int& minSides) {
-    vector<vector<int> > index;
-    vector<vector<float> > points;
-    vector<vector<int> > normalindex;
-    vector<vector<float> > vectors;
+const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
+                                                const float& routside,
+                                                const float& height,
+                                                const float& angle, const float& maxSideSize, const int& minSides) {
+    vector<unsigned long> index;
+    vector<Vertex> points;
+    
+	vector<unsigned long> normalindex;
+    vector<Vertex> vectors;
 
     int sides = int(angle * routside / maxSideSize);
     if (sides < minSides) {
@@ -215,79 +223,122 @@ const pair<
     }
 
     // Vertexes and normals
-    vector<float> v(3, 0);
-    vector<float> n(3, 0);
-    n[2] = -1;
-    vectors.push_back(n);
-    n[2] = 1;
-    vectors.push_back(n);
-    for (int i = 0; i < sides+1; i++) {
+    Vertex v;
+    vectors.push_back(Vertex(0,0,-1));
+	vectors.push_back(Vertex(0,0,1));
+    
+	for (int i = 0; i < sides+1; i++) {
         float c = cos(angle / sides * i);
         float s = sin(angle / sides * i);
-        v[0] = rinside * c; v[1] = rinside * s; v[2] = -height/2.f;
+        v.x = rinside * c; v.y = rinside * s; v.z = -height/2.f;
         points.push_back(v);
-        v[0] = routside * c; v[1] = routside * s; v[2] = -height/2.f;
+        v.x = routside * c; v.y = routside * s; v.z= -height/2.f;
         points.push_back(v);
-        v[0] = routside * c; v[1] = routside * s; v[2] = height/2.f;
+        v.x = routside * c; v.y = routside * s; v.z = height/2.f;
         points.push_back(v);
-        v[0] = rinside * c; v[1] = rinside * s; v[2] = height/2.f;
+        v.x = rinside * c; v.y = rinside * s; v.z = height/2.f;
         points.push_back(v);
-        n[0] = c; n[1] = s; n[2] = 0;
-        vectors.push_back(n);
-        n[0] = -c; n[1] = -s; n[2] = 0;
-        vectors.push_back(n);
+        vectors.push_back(Vertex(c,s,0));
+		vectors.push_back(Vertex(-c,-s,0));
     }
 
     // Sides
-    vector<int> pi(3, 0);
     vector<int> ni(3, 0);
     for (int i = 0; i < sides; i++) {
         for (int j = 0; j < 4; j++) {
-            pi[0] = i*4+j; pi[1] = i*4+4+j; pi[2] = j < 3 ? i*4+1+j : i*4;
-            index.push_back(pi);
-            for (int k = 0; k < 3; k++) ni[k] = j == 0 ? 0 : j == 1 ? i*2+2 : j == 2 ? 1 : i*2+3;
-            if (j == 1 || j == 3) {
-                ni[1] += 2;
-            }
-            normalindex.push_back(ni);
-            pi[0] = i*4+4+j; pi[1] = j < 3 ? i*4+5+j : i*4+4; pi[2] = j < 3 ? i*4+1+j : i*4;
-            index.push_back(pi);
-            if (j == 1 || j == 3) {
-                ni[0] += 2;
-            }
-            normalindex.push_back(ni);
+            index.push_back(i*4+j);
+			index.push_back(i*4+4+j);
+			index.push_back(j < 3 ? i*4+1+j : i*4);
+            
+			for (int k = 0; k < 3; k++) {
+					switch(j) {
+					case 0:
+						normalindex.push_back(0);
+						break;
+					case 1:
+						normalindex.push_back(k == 1 ? i*2+4 : i*2+2);
+						break;
+					case 2:
+						normalindex.push_back(1);
+						break;
+					case 3:
+						normalindex.push_back(k == 1 ? i*2+5 : i*2+3);
+						break;
+				}
+			}
+			
+			index.push_back(i*4+4+j);
+			index.push_back(j < 3 ? i*4+5+j : i*4+4);
+			index.push_back(j < 3 ? i*4+1+j : i*4);
+			
+			for (int k = 0; k < 3; k++) {
+					switch(j) {
+					case 0:
+						normalindex.push_back(0);
+						break;
+					case 1:
+						normalindex.push_back((k == 0 || k == 1) ? i*2+4 : i*2+2);
+						break;
+					case 2:
+						normalindex.push_back(1);
+						break;
+					case 3:
+						normalindex.push_back((k == 0 || k == 1) ? i*2+5 : i*2+3);
+						break;
+				}
+			}
+			
         }
     }
 
     // Caps
     // - Caps normals
     int nci = vectors.size();
-    n[0] = 0; n[1] = -1; n[2] = 0;
-    vectors.push_back(n);
+    vectors.push_back(Vertex(0,-1,0));
     float c = cos(angle);
     float s = sin(angle);
-    n[0] = -s; n[1] = c; n[2] = 0;
-    vectors.push_back(n);
+    vectors.push_back(Vertex(-s,c,0));
     // - Caps indexes
-    pi[0] = 0; pi[1] = 1; pi[2] = 2;
-    index.push_back(pi);
-    ni[0] = nci; ni[1] = nci; ni[2] = nci;
-    normalindex.push_back(ni);
-    pi[0] = 0; pi[1] = 2; pi[2] = 3;
-    index.push_back(pi);
-    normalindex.push_back(ni);
-    //
-    pi[0] = sides*4; pi[1] = sides*4+2; pi[2] = sides*4+1;
-    index.push_back(pi);
-    ni[0] = nci+1; ni[1] = nci+1; ni[2] = nci+1;
-    normalindex.push_back(ni);
-    pi[0] = sides*4; pi[1] = sides*4+3; pi[2] = sides*4+2;
-    index.push_back(pi);
-    normalindex.push_back(ni);
+    index.push_back(0);
+	index.push_back(1);
+	index.push_back(2);
+    
+	normalindex.push_back(nci);
+	normalindex.push_back(nci);
+	normalindex.push_back(nci);
+    
+	index.push_back(0);
+	index.push_back(2);
+	index.push_back(3);
 
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(points, index);
-    pair<vector<vector<float> >, vector<vector<int> > > normals(vectors, normalindex);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
+	normalindex.push_back(nci);
+	normalindex.push_back(nci);
+	normalindex.push_back(nci);
+
+	//
+    index.push_back(sides*4);
+    index.push_back(sides*4+2);
+	index.push_back(sides*4+1);
+    
+	normalindex.push_back(nci+1);
+	normalindex.push_back(nci+1);
+	normalindex.push_back(nci+1);
+    
+	index.push_back(sides*4);
+    index.push_back(sides*4+3);
+	index.push_back(sides*4+2);
+    
+	normalindex.push_back(nci+1);
+	normalindex.push_back(nci+1);
+	normalindex.push_back(nci+1);
+    
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+	result.normals= vectors;
+	result.normalIndex = normalindex;
+	
+	return result;
 }
 
 const pair<
@@ -389,79 +440,67 @@ static const float pyramid[] = {
     -.5, .5, .5,
 };
 
-const pair<vector<vector<float> >, vector<vector<int> > > RVMMeshHelper2::makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides) {
     // Coordinates
-    vector<vector<float> > points;
+    vector<Vertex> points;
     for (int i = 0; i < 8; i++) {
-        vector<float> p;
-        p.push_back(i < 4 ? pyramid[i*3] * xbottom : pyramid[i*3] * xtop + xoffset);
-        p.push_back(i < 4 ? pyramid[i*3+1] * ybottom : pyramid[i*3+1] * ytop + yoffset);
-        p.push_back(pyramid[i*3+2] * height);
+        Vertex p;
+        p.x = i < 4 ? pyramid[i*3] * xbottom : pyramid[i*3] * xtop + xoffset;
+        p.y = i < 4 ? pyramid[i*3+1] * ybottom : pyramid[i*3+1] * ytop + yoffset;
+        p.z = pyramid[i*3+2] * height;
         points.push_back(p);
     }
-    vector<vector<int> > index;
+    vector<unsigned long> index;
     // Sides
     for (int i = 0; i < 4; i++) {
         if (!equals(points[i], points[i == 3 ? 0 : i + 1]) && !equals(points[i == 3 ? 0 : i + 1], points[i+4]) && !equals(points[i], points[i+4])) {
-            vector<int> findex;
-            findex.push_back(i);
-            findex.push_back(i + 4);
-            findex.push_back(i == 3 ? 0 : i + 1);
-            index.push_back(findex);
+            index.push_back(i);
+            index.push_back(i + 4);
+            index.push_back(i == 3 ? 0 : i + 1);
         }
         if (!equals(points[i == 3 ? 0 : i+1], points[i == 3 ? 4 : i+5]) && !equals(points[i == 3 ? 4 : i+5], points[i+4]) && !equals(points[i == 3 ? 0 : i+1], points[i+4])) {
-            vector<int> findex;
-            findex.push_back(i == 3 ? 0 : i+1);
-            findex.push_back(i+4);
-            findex.push_back(i == 3 ? 4 : i+5);
-            index.push_back(findex);
+            index.push_back(i == 3 ? 0 : i+1);
+            index.push_back(i+4);
+            index.push_back(i == 3 ? 4 : i+5);
         }
     }
     // Caps
     if (!equals(points[0], points[1]) && !equals(points[1], points[2]) && !equals(points[0], points[2])) {
-        vector<int> findex;
-        findex.push_back(0);
-        findex.push_back(1);
-        findex.push_back(2);
-        index.push_back(findex);
-        findex.clear();
-        findex.push_back(0);
-        findex.push_back(2);
-        findex.push_back(3);
-        index.push_back(findex);
+        index.push_back(0);
+        index.push_back(1);
+        index.push_back(2);
+        index.push_back(0);
+        index.push_back(2);
+        index.push_back(3);
     }
     if (!equals(points[4], points[5]) && !equals(points[5], points[6]) && !equals(points[4], points[6])) {
-        vector<int> findex;
-        findex.push_back(4);
-        findex.push_back(6);
-        findex.push_back(5);
-        index.push_back(findex);
-        findex.clear();
-        findex.push_back(4);
-        findex.push_back(7);
-        findex.push_back(6);
-        index.push_back(findex);
+        index.push_back(4);
+        index.push_back(6);
+        index.push_back(5);
+        index.push_back(4);
+        index.push_back(7);
+        index.push_back(6);
     }
-    return pair<vector<vector<float> >, vector<vector<int> > >(points, index);
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+    return result;
 }
 
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides) {
     int s = int(2 * M_PI * radius / maxSideSize);
     if (s < minSides) {
         s = minSides;
     }
     float hh = height / 2;
-	std::cout << s << std::endl;
-
-    vector<vector<float> > positions;
-    vector<vector<float> > normals;
+	
+    vector<Vertex> positions;
+    vector<Vertex> normals;
     float r = radius;
 	float d = 2*M_PI/s;
 
-	vector<vector<int> > positionIndex;
-	vector<vector<int> > normalIndex;
+	vector<unsigned long> positionIndex;
+	vector<unsigned long> normalIndex;
 
 	int nrTrianglesSide = 2*s;
 
@@ -472,63 +511,56 @@ const pair<
 		float x = sin(d*(float)i); // [0..1]
 		float y = -cos(d*(float)i); // [-1..0]
 
-		vector<float> normal;
-		vector<float> position;
+		Vertex normal;
+		Vertex position;
 
-		position.push_back(x*r);
-		position.push_back(y*r);
-		position.push_back(-hh);
-
-		positions.push_back(position);
-
-		position.clear();
-		position.push_back(x*r);
-		position.push_back(y*r);
-		position.push_back(hh);
+		position.x = x*r;
+		position.y = y*r;
+		position.z = -hh;
 
 		positions.push_back(position);
 
-		normal.push_back(x);
-		normal.push_back(y);
-		normal.push_back(0); // normal does not point into z direction
+		position.x = x*r;
+		position.y = y*r;
+		position.z = hh;
+
+		positions.push_back(position);
+
+		normal.x = x;
+		normal.y = y;
+		normal.z = 0; // normal does not point into z direction
 
 		normals.push_back(normal);
 		normals.push_back(normal);
 
-			vector<int> findex;
-        	vector<int> nindex;
-
-			findex.push_back(idx);
-			findex.push_back(idx+1);
-			findex.push_back((idx+2)%nrTrianglesSide);
-			positionIndex.push_back(findex);
-
-			nindex.push_back(nidx);
-			nindex.push_back(nidx);
-			nindex.push_back(nidx+1);
-			normalIndex.push_back(nindex);
-
-			findex.clear();
-			findex.push_back((idx+2)%nrTrianglesSide);
-			findex.push_back(idx+1);
-			findex.push_back((idx+3)%nrTrianglesSide);
-			positionIndex.push_back(findex);
-
-			nindex.clear();
-			nindex.push_back(nidx+1);
-			nindex.push_back(nidx);
-			nindex.push_back(nidx+1);
-			normalIndex.push_back(nindex);
-
+			positionIndex.push_back(idx);
+			positionIndex.push_back(idx+1);
+			positionIndex.push_back((idx+2)%nrTrianglesSide);
+			
+			normalIndex.push_back(nidx);
+			normalIndex.push_back(nidx);
+			normalIndex.push_back(nidx+1);
+			
+			positionIndex.push_back((idx+2)%nrTrianglesSide);
+			positionIndex.push_back(idx+1);
+			positionIndex.push_back((idx+3)%nrTrianglesSide);
+			
+			normalIndex.push_back(nidx+1);
+			normalIndex.push_back(nidx);
+			normalIndex.push_back(nidx+1);
+			
 			idx += 2;
 			nidx += 1;
 
 
     }
 
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(positions, positionIndex);
-    pair<vector<vector<float> >, vector<vector<int> > > normalPair(normals, positionIndex);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normalPair);
+    Mesh result;
+	result.positions = positions;
+	result.normals = normals;
+	result.positionIndex = positionIndex;
+	result.normalIndex = normalIndex;
+    return result;
 }
 
 const pair<
