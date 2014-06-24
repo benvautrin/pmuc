@@ -29,6 +29,7 @@
 
 #include "../api/rvmcolorhelper.h"
 #include "../api/rvmmeshhelper.h"
+#include "../api/rvmmeshhelper2.h"
 
 using namespace std;
 using namespace COLLADASW;
@@ -455,7 +456,7 @@ void COLLADAConverter::endSnout() {
 void COLLADAConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
-    writeGeometryWithNormals(matrix, RVMMeshHelper::makeCylinder(radius, height, m_maxSideSize, m_minSides));
+    writeGeometryWithNormals(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCylinder() {
@@ -730,31 +731,32 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
     m_writer->openElement(colladaKey[colladaKeys::mesh]);
-    pair<vector<vector<float> >, vector<vector<int> > > c = vertexes.first;
-    pair<vector<vector<float> >, vector<vector<int> > > n = vertexes.first;
+    pair<vector<vector<float> >, vector<vector<int> > > positionInfo = vertexes.first;
+    pair<vector<vector<float> >, vector<vector<int> > > normalInfo = vertexes.second;
     // Redo a flat list of coordinates for simplicity (collada doesn't support different indexes for coordinates and normals...)
     // Should be better.
     vector<float> nc;
-    for (unsigned int i = 0; i < c.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second[i].size(); j++) {
-            int fi = c.second[i][j];
-            nc.push_back(c.first[fi][0]);
-            nc.push_back(c.first[fi][1]);
-            nc.push_back(c.first[fi][2]);
+    vector<vector<float>> positions = positionInfo.first;
+
+    for (unsigned int i = 0; i < positions.size(); i++) {
+        for (unsigned int j = 0; j < positions[i].size(); j++) {
+            nc.push_back(positions[i][j]);
         }
     }
     vector<float> nn;
-    for (unsigned int i = 0; i < n.second.size(); i++) {
-        for (unsigned int j = 0; j < n.second[i].size(); j++) {
-            int fi = n.second[i][j];
-            nn.push_back(n.first[fi][0]);
-            nn.push_back(n.first[fi][1]);
-            nn.push_back(n.first[fi][2]);
+    vector<vector<float>> normals = normalInfo.first;
+    for (unsigned int i = 0; i < normals.size(); i++) {
+        for (unsigned int j = 0; j < normals[i].size(); j++) {
+            nn.push_back(normals[i][j]);
         }
     }
+
     vector<unsigned long> ni;
-    for (unsigned int i = 0; i < c.second.size() * 3; i++) {
-        ni.push_back(i);
+    vector<vector<int>> positionIndex = positionInfo.second;
+    for (unsigned int i = 0; i < positionIndex.size(); i++) {
+        ni.push_back(positionIndex[i][0]);
+		ni.push_back(positionIndex[i][1]);
+		ni.push_back(positionIndex[i][2]);
     }
     // Write coordinates source
     m_writer->openElement(colladaKey[colladaKeys::source]);
