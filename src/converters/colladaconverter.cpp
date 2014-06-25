@@ -379,7 +379,7 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
 	m_writer->appendTextBlock("<!-- RVMPyramid -->");									
-    //writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endPyramid() {
@@ -391,7 +391,7 @@ void COLLADAConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
 	m_writer->appendTextBlock("<!-- RVMBox -->");									
-	//writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
+	writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endBox() {
@@ -404,7 +404,6 @@ void COLLADAConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     m_writer->appendTextBlock("<!-- RVMRectangularTorus -->");									
-	//writeGeometryWithNormals(matrix, RVMMeshHelper::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
 	writeMesh(matrix, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
 }
 
@@ -416,7 +415,8 @@ void COLLADAConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& rinside,
                                 const float& routside,
                                 const float& angle) {
-    //writeGeometryWithNormals(matrix, RVMMeshHelper::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
+    m_writer->appendTextBlock("<!-- RVMCircularTorus -->");
+    writeMesh(matrix, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCircularTorus() {
@@ -426,7 +426,8 @@ void COLLADAConverter::endCircularTorus() {
 void COLLADAConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
-    //writeGeometryWithNormals(matrix, RVMMeshHelper::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
+	m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
+    writeMesh(matrix, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endEllipticalDish() {
@@ -436,6 +437,7 @@ void COLLADAConverter::endEllipticalDish() {
 void COLLADAConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
+    m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
     //writeGeometryWithNormals(matrix, RVMMeshHelper::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
 }
 
@@ -453,7 +455,8 @@ void COLLADAConverter::startSnout(const vector<float>& matrix,
                         const float& unknown2,
                         const float& unknown3,
                         const float& unknown4) {
-   // writeGeometryWithNormals(matrix, RVMMeshHelper::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+	m_writer->appendTextBlock("<!-- RVMSnout -->");
+    writeMesh(matrix, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSnout() {
@@ -464,7 +467,7 @@ void COLLADAConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
 	m_writer->appendTextBlock("<!-- RVMCylinder -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCylinder() {

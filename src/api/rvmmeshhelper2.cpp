@@ -43,6 +43,19 @@ static vector<float> midpoint(const vector<float>& p1, const vector<float>& p2) 
     return mp;
 }
 
+
+static Vertex normalize(const Vertex& v) {
+    Vertex n(v);
+    double mag = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    if (mag != 0) {
+        mag = 1. / sqrt(mag);
+        n[0] = float(v[0] * mag);
+        n[1] = float(v[1] * mag);
+        n[2] = float(v[2] * mag);
+    }
+    return n;
+}
+
 static vector<float> normalize(const vector<float>& v) {
     vector<float> n = v;
     double mag = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
@@ -341,15 +354,13 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
 	return result;
 }
 
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeCircularTorus(const float& rinside,
+const Mesh RVMMeshHelper2::makeCircularTorus(const float& rinside,
                                                                                              const float& routside,
                                                                                              const float& angle, const float& maxSideSize, const int& minSides) {
-    vector<vector<int> > index;
-    vector<vector<float> > points;
-    vector<vector<int> > normalindex;
-    vector<vector<float> > vectors;
+    vector<unsigned long> index;
+    vector<Vertex> points;
+    vector<unsigned long> normalindex;
+    vector<Vertex> vectors;
 
     int tsides = int(angle * rinside / maxSideSize);
     if (tsides < minSides) {
@@ -363,34 +374,49 @@ const pair<
     // Vertexes and normals
     float rcenter = routside;
     float center = rinside;
-    vector<float> v(3, 0);
-    vector<float> n(3, 0);
+    Vertex v;
+    Vertex n;
     for (int i = 0; i < tsides+1; i++) {
         float c = cos(angle / tsides * i);
         float s = sin(angle / tsides * i);
         for (int j = 0; j < csides; j++) {
             float C = (float)cos(2 * M_PI / csides * j);
             float S = (float)sin(2 * M_PI / csides * j);
-            v[0] = (rcenter * C + center) * c;
-            v[1] = (rcenter * C + center) * s;
-            v[2] = rcenter * S;
+            v.x = (rcenter * C + center) * c;
+            v.y = (rcenter * C + center) * s;
+            v.z = rcenter * S;
             points.push_back(v);
-            n[0] = C*c;
-            n[1] = C*s;
-            n[2] = S;
+            n.x = C*c;
+            n.y = C*s;
+            n.z = S;
             vectors.push_back(n);
         }
     }
 
     // Sides
-    vector<int> pi(3, 0);
-    vector<int> ni(3, 0);
     for (int i = 0; i < tsides; i++) {
         for (int j = 0; j < csides; j++) {
-            pi[0] = i*csides+j; pi[1] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+1+j : i*csides;
-            index.push_back(pi);
+            unsigned long pi = i*csides+j; 
+			index.push_back(pi);
             normalindex.push_back(pi);
-            pi[0] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[2] = j < csides-1 ? i*csides+1+j : i*csides;
+            
+			pi = i*csides+csides+j;
+			index.push_back(pi);
+            normalindex.push_back(pi);
+            
+			pi = j < csides-1 ? i*csides+1+j : i*csides;
+			index.push_back(pi);
+            normalindex.push_back(pi);
+            
+            pi = i*csides+csides+j;
+			index.push_back(pi);
+            normalindex.push_back(pi);
+            
+			pi = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; 
+			index.push_back(pi);
+            normalindex.push_back(pi);
+            
+			pi = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
             normalindex.push_back(pi);
         }
@@ -399,34 +425,40 @@ const pair<
     // Caps
     // - Caps normals
     int ci = vectors.size();
-    n[0] = 0; n[1] = -1; n[2] = 0;
-    vectors.push_back(n);
-    float c = cos(angle);
+    vectors.push_back(Vertex(0,-1,0));
+    
+	float c = cos(angle);
     float s = sin(angle);
-    n[0] = -s; n[1] = c; n[2] = 0;
-    vectors.push_back(n);
-    // - Caps centers
-    v[0] = center; v[1] = 0; v[2] = 0;
-    points.push_back(v);
-    v[0] = c * center; v[1] = s * center; v[2] = 0;
-    points.push_back(v);
-    // - Caps indexes
-    ni[0] = ci; ni[1] = ci; ni[2] = ci;
+    vectors.push_back(Vertex(-s,c,0));
+    
+	// - Caps centers
+    points.push_back(Vertex(center, 0, 0));
+	points.push_back(Vertex(c*center, s*center, 0));
+    
+	// - Caps indexes
     for (int j = 0; j < csides; j++) {
-        pi[0] = j; pi[1] = j < csides-1 ? 1+j : 0; pi[2] = ci;
-        index.push_back(pi);
-        normalindex.push_back(ni);
+        index.push_back(j);
+        index.push_back(j < csides-1 ? 1+j : 0);
+        index.push_back(ci);
+        normalindex.push_back(ci);
+		normalindex.push_back(ci);
+		normalindex.push_back(ci);
     }
-    ni[0] = ci+1; ni[1] = ci+1; ni[2] = ci+1;
     for (int j = 0; j < csides; j++) {
-        pi[0] = tsides*csides+j; pi[2] = j < csides-1 ? tsides*csides+1+j : tsides*csides; pi[1] = ci+1;
-        index.push_back(pi);
-        normalindex.push_back(ni);
+        index.push_back(tsides*csides+j);
+		index.push_back( j < csides-1 ? tsides*csides+1+j : tsides*csides);
+		index.push_back(ci+1);
+        normalindex.push_back(ci+1);
+        normalindex.push_back(ci+1);
+        normalindex.push_back(ci+1);
     }
 
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(points, index);
-    pair<vector<vector<float> >, vector<vector<int> > > normals(vectors, normalindex);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+	result.normals = vectors;
+	result.normalIndex = normalindex;
+    return result;
 }
 
 static const float pyramid[] = {
@@ -563,13 +595,11 @@ const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height
     return result;
 }
 
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides) {
-    vector<vector<int> > index;
-    vector<vector<float> > points;
-    vector<vector<int> > normalindex;
-    vector<vector<float> > vectors;
+const Mesh RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides) {
+    vector<unsigned long> index;
+    vector<Vertex> points;
+    vector<unsigned long> normalindex;
+    vector<Vertex> vectors;
     float hh = height / 2;
 
     int sides = int(2*M_PI * (rbottom > rtop ? rbottom : rtop) / maxSideSize);
@@ -578,8 +608,8 @@ const pair<
     }
 
     // Vertexes and normals
-    vector<float> v(3, 0);
-    vector<float> n(3, 0);
+    Vertex v;
+    Vertex n;
     for (int i = 0; i < sides; i++) {
         float c = (float)cos(2*M_PI / sides * i);
         float s = (float)sin(2*M_PI / sides * i);
@@ -598,17 +628,22 @@ const pair<
     }
 
     // Sides
-    vector<int> pi(3, 0);
-    vector<int> ni(3, 0);
     for (int i = 0; i < sides; i++) {
-        pi[0] = i*2; pi[1] = i < sides - 1 ? i*2+2 : 0; pi[2] = i*2+1;
-        index.push_back(pi);
-        ni[0] = i; ni[1] = i < sides - 1 ? i+1 : 0; ni[2] = i;
-        normalindex.push_back(ni);
-        pi[0] = i < sides - 1 ? i*2+2 : 0; pi[1] = i < sides - 1 ? i*2+3 : 1; pi[2] = i*2+1;
-        index.push_back(pi);
-        ni[0] = i < sides - 1 ? i+1 : 0; ni[1] = i < sides - 1 ? i+1 : 0; ni[2] = i;
-        normalindex.push_back(ni);
+        index.push_back(i*2);
+		index.push_back(i < sides - 1 ? i*2+2 : 0);
+		index.push_back(i*2+1);
+        
+		normalindex.push_back(i);
+		normalindex.push_back(i < sides - 1 ? i+1 : 0);
+		normalindex.push_back(i);
+        
+		index.push_back(i < sides - 1 ? i*2+2 : 0);
+		index.push_back(i < sides - 1 ? i*2+3 : 1);
+		index.push_back(i*2+1);
+
+        normalindex.push_back(i < sides - 1 ? i+1 : 0);
+		normalindex.push_back(i < sides - 1 ? i+1 : 0);
+		normalindex.push_back(i);
     }
 
     // Caps
@@ -625,31 +660,36 @@ const pair<
     v[0] = xoffset; v[1] = yoffset; v[2] = hh;
     points.push_back(v);
     // - Caps indexes
-    ni[0] = nci; ni[1] = nci; ni[2] = nci;
     for (int j = 0; j < sides; j++) {
-        pi[0] = j*2; pi[1] = ci; pi[2] = j < sides-1 ? (j+1)*2 : 0;
-        index.push_back(pi);
-        normalindex.push_back(ni);
+        index.push_back(j*2);
+        index.push_back(ci);
+        index.push_back(j < sides-1 ? (j+1)*2 : 0);
+        normalindex.push_back(nci);
+		normalindex.push_back(nci);
+		normalindex.push_back(nci);
     }
-    ni[0] = nci+1; ni[1] = nci+1; ni[2] = nci+1;
     for (int j = 0; j < sides; j++) {
-        pi[0] = j*2+1; pi[2] = ci+1; pi[1] = j < sides-1 ? j*2 + 3 : 1;
-        index.push_back(pi);
-        normalindex.push_back(ni);
+        index.push_back(j*2+1);
+		index.push_back(j < sides-1 ? j*2 + 3 : 1);
+		index.push_back(ci+1);
+        normalindex.push_back(nci+1);
+		normalindex.push_back(nci+1);
+		normalindex.push_back(nci+1);
     }
 
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(points, index);
-    pair<vector<vector<float> >, vector<vector<int> > > normals(vectors, normalindex);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+	result.normals = vectors;
+	result.normalIndex = normalindex;
+    return result;
 }
 
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides) {
-    vector<vector<int> > index;
-    vector<vector<float> > points;
-    vector<vector<int> > normalindex;
-    vector<vector<float> > vectors;
+const Mesh RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides) {
+    vector<unsigned long> index;
+    vector<Vertex> points;
+    vector<unsigned long> normalindex;
+    vector<Vertex> vectors;
 
     float hd = dishradius;
     int sides = int(2*M_PI * secondradius / maxSideSize);
@@ -662,8 +702,8 @@ const pair<
     }
 
     // Vertexes and normals
-    vector<float> v(3, 0);
-    vector<float> n(3, 0);
+    Vertex v;
+    Vertex n;
     for (int i = 0; i < sides; i++) {
         float c = (float)cos(M_PI / 2 / sides * i);
         float s = (float)sin(M_PI / 2 / sides * i);
@@ -682,27 +722,29 @@ const pair<
     vectors.push_back(n);
 
     // Sides
-    vector<int> pi(3, 0);
-    vector<int> ni(3, 0);
     for (int i = 0; i < sides-1; i++) {
         for (int j = 0; j < csides; j++) {
-            pi[0] = i*csides+j; pi[2] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
-            index.push_back(pi);
-            normalindex.push_back(pi);
-            pi[0] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
-            index.push_back(pi);
-            normalindex.push_back(pi);
+            index.push_back(i*csides+j);
+			index.push_back(j < csides-1 ? i*csides+1+j : i*csides);
+			index.push_back(i*csides+csides+j);
+            
+            index.push_back(i*csides+csides+j);
+			index.push_back(j < csides-1 ? i*csides+1+j : i*csides);
+			index.push_back(j < csides-1 ? i*csides+csides+1+j : i*csides+csides);
         }
     }
     for (int i = 0; i < csides; i++) {
-        pi[0] = csides*(sides-1) + i; pi[1] = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1; pi[2] = points.size()-1;
-        index.push_back(pi);
-        normalindex.push_back(pi);
+        index.push_back(csides*(sides-1) + i);
+		index.push_back(i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1);
+		index.push_back(points.size()-1);
     }
 
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(points, index);
-    pair<vector<vector<float> >, vector<vector<int> > > normals(vectors, normalindex);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+	result.normals = vectors;
+	//result.normalIndex = normalindex;
+    return result;
 }
 
 const pair<

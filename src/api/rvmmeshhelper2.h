@@ -32,6 +32,15 @@ struct Vertex {
   };
   Vertex() : x(0.0), y(0.0), z(0.0) {}
   Vertex(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
+  Vertex(const Vertex& v) : x(v.x), y(v.y), z(v.z) {}
+
+  float operator[](int i) const {
+    return (&x)[i];
+  }
+
+  float& operator[](int i) {
+    return (&x)[i];
+  }
 };
 
 struct Mesh {
@@ -114,7 +123,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeCircularTorus(const float& rinside, const float& routside, const float& angle, const float& maxSideSize, const int& minSides);
+        static const Mesh makeCircularTorus(const float& rinside, const float& routside, const float& angle, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeSnout
@@ -127,7 +136,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeEllipticalDish
@@ -137,7 +146,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides);
+        static const Mesh makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeSphericalDish
