@@ -226,7 +226,7 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
                                                 const float& angle, const float& maxSideSize, const int& minSides) {
     vector<unsigned long> index;
     vector<Vertex> points;
-    
+
 	vector<unsigned long> normalindex;
     vector<Vertex> vectors;
 
@@ -239,7 +239,7 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
     Vertex v;
     vectors.push_back(Vertex(0,0,-1));
 	vectors.push_back(Vertex(0,0,1));
-    
+
 	for (int i = 0; i < sides+1; i++) {
         float c = cos(angle / sides * i);
         float s = sin(angle / sides * i);
@@ -262,7 +262,7 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
             index.push_back(i*4+j);
 			index.push_back(i*4+4+j);
 			index.push_back(j < 3 ? i*4+1+j : i*4);
-            
+
 			for (int k = 0; k < 3; k++) {
 					switch(j) {
 					case 0:
@@ -279,11 +279,11 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
 						break;
 				}
 			}
-			
+
 			index.push_back(i*4+4+j);
 			index.push_back(j < 3 ? i*4+5+j : i*4+4);
 			index.push_back(j < 3 ? i*4+1+j : i*4);
-			
+
 			for (int k = 0; k < 3; k++) {
 					switch(j) {
 					case 0:
@@ -300,7 +300,7 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
 						break;
 				}
 			}
-			
+
         }
     }
 
@@ -315,11 +315,11 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
     index.push_back(0);
 	index.push_back(1);
 	index.push_back(2);
-    
+
 	normalindex.push_back(nci);
 	normalindex.push_back(nci);
 	normalindex.push_back(nci);
-    
+
 	index.push_back(0);
 	index.push_back(2);
 	index.push_back(3);
@@ -332,25 +332,25 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
     index.push_back(sides*4);
     index.push_back(sides*4+2);
 	index.push_back(sides*4+1);
-    
+
 	normalindex.push_back(nci+1);
 	normalindex.push_back(nci+1);
 	normalindex.push_back(nci+1);
-    
+
 	index.push_back(sides*4);
     index.push_back(sides*4+3);
 	index.push_back(sides*4+2);
-    
+
 	normalindex.push_back(nci+1);
 	normalindex.push_back(nci+1);
 	normalindex.push_back(nci+1);
-    
+
 	Mesh result;
 	result.positions = points;
 	result.positionIndex = index;
 	result.normals= vectors;
 	result.normalIndex = normalindex;
-	
+
 	return result;
 }
 
@@ -396,26 +396,26 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const float& rinside,
     // Sides
     for (int i = 0; i < tsides; i++) {
         for (int j = 0; j < csides; j++) {
-            unsigned long pi = i*csides+j; 
+            unsigned long pi = i*csides+j;
 			index.push_back(pi);
             normalindex.push_back(pi);
-            
+
 			pi = i*csides+csides+j;
 			index.push_back(pi);
             normalindex.push_back(pi);
-            
+
 			pi = j < csides-1 ? i*csides+1+j : i*csides;
 			index.push_back(pi);
             normalindex.push_back(pi);
-            
+
             pi = i*csides+csides+j;
 			index.push_back(pi);
             normalindex.push_back(pi);
-            
-			pi = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; 
+
+			pi = j < csides-1 ? i*csides+csides+1+j : i*csides+csides;
 			index.push_back(pi);
             normalindex.push_back(pi);
-            
+
 			pi = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
             normalindex.push_back(pi);
@@ -426,15 +426,15 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const float& rinside,
     // - Caps normals
     int ci = vectors.size();
     vectors.push_back(Vertex(0,-1,0));
-    
+
 	float c = cos(angle);
     float s = sin(angle);
     vectors.push_back(Vertex(-s,c,0));
-    
+
 	// - Caps centers
     points.push_back(Vertex(center, 0, 0));
 	points.push_back(Vertex(c*center, s*center, 0));
-    
+
 	// - Caps indexes
     for (int j = 0; j < csides; j++) {
         index.push_back(j);
@@ -524,67 +524,49 @@ const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height
     if (s < minSides) {
         s = minSides;
     }
-    float hh = height / 2;
-	
+    float halfHeight = height / 2;
+
     vector<Vertex> positions;
     vector<Vertex> normals;
-    float r = radius;
-	float d = 2*M_PI/s;
+    float d = 2*M_PI/s;
 
 	vector<unsigned long> positionIndex;
 	vector<unsigned long> normalIndex;
 
 	int nrTrianglesSide = 2*s;
 
-	for (int i = 0, idx = 0, nidx = 0; i < s; i++) {
-        float c = d * i;
-
-		// Dimensions in x and y, z is height
+	for (int i = 0; i < s; i++) {
+        // Dimensions in x and y, z is height
 		float x = sin(d*(float)i); // [0..1]
 		float y = -cos(d*(float)i); // [-1..0]
 
-		Vertex normal;
-		Vertex position;
+		positions.push_back(Vertex(x*radius, y*radius, -halfHeight));
+		positions.push_back(Vertex(x*radius, y*radius, +halfHeight));
+		normals.push_back(Vertex(x,y,0));
 
-		position.x = x*r;
-		position.y = y*r;
-		position.z = -hh;
+		unsigned long v0 = i * 2;
+		unsigned long v1 = v0 + 1;
+		unsigned long v2 = (v0 + 2) % nrTrianglesSide;
+		unsigned long v3 = (v0 + 3) % nrTrianglesSide;
 
-		positions.push_back(position);
+		unsigned long n0 = i;
+		unsigned long n1 = (n0+1) % s;
 
-		position.x = x*r;
-		position.y = y*r;
-		position.z = hh;
+		// First triangle (CW: 0, 2, 1)
+		positionIndex.push_back(v0);
+		normalIndex.push_back(n0);
+		positionIndex.push_back(v2);
+		normalIndex.push_back(n1);
+		positionIndex.push_back(v1);
+		normalIndex.push_back(n0);
 
-		positions.push_back(position);
-
-		normal.x = x;
-		normal.y = y;
-		normal.z = 0; // normal does not point into z direction
-
-		normals.push_back(normal);
-		normals.push_back(normal);
-
-			positionIndex.push_back(idx);
-			positionIndex.push_back(idx+1);
-			positionIndex.push_back((idx+2)%nrTrianglesSide);
-			
-			normalIndex.push_back(nidx);
-			normalIndex.push_back(nidx);
-			normalIndex.push_back(nidx+1);
-			
-			positionIndex.push_back((idx+2)%nrTrianglesSide);
-			positionIndex.push_back(idx+1);
-			positionIndex.push_back((idx+3)%nrTrianglesSide);
-			
-			normalIndex.push_back(nidx+1);
-			normalIndex.push_back(nidx);
-			normalIndex.push_back(nidx+1);
-			
-			idx += 2;
-			nidx += 1;
-
-
+		// Second triangle (CW: 1, 2, 3)
+		positionIndex.push_back(v1);
+		normalIndex.push_back(n0);
+		positionIndex.push_back(v2);
+		normalIndex.push_back(n1);
+		positionIndex.push_back(v3);
+		normalIndex.push_back(n1);
     }
 
     Mesh result;
@@ -632,11 +614,11 @@ const Mesh RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, co
         index.push_back(i*2);
 		index.push_back(i < sides - 1 ? i*2+2 : 0);
 		index.push_back(i*2+1);
-        
+
 		normalindex.push_back(i);
 		normalindex.push_back(i < sides - 1 ? i+1 : 0);
 		normalindex.push_back(i);
-        
+
 		index.push_back(i < sides - 1 ? i*2+2 : 0);
 		index.push_back(i < sides - 1 ? i*2+3 : 1);
 		index.push_back(i*2+1);
@@ -727,7 +709,7 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const flo
             index.push_back(i*csides+j);
 			index.push_back(j < csides-1 ? i*csides+1+j : i*csides);
 			index.push_back(i*csides+csides+j);
-            
+
             index.push_back(i*csides+csides+j);
 			index.push_back(j < csides-1 ? i*csides+1+j : i*csides);
 			index.push_back(j < csides-1 ? i*csides+csides+1+j : i*csides+csides);
