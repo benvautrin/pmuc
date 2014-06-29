@@ -41,6 +41,11 @@ struct Vertex {
   float& operator[](int i) {
     return (&x)[i];
   }
+
+  friend Vertex operator*(const Vertex &a, float k)
+  {
+    return Vertex(a.x*k, a.y*k, a.z*k);
+  }
 };
 
 struct Mesh {
@@ -90,7 +95,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return coordinates and normals with their indexes.
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSphere(const float& radius, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSphere(const float& radius, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCylinder
@@ -156,7 +161,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
 };
 
 #endif // RVMMESHHELPER_H

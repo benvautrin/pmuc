@@ -134,90 +134,56 @@ const Mesh RVMMeshHelper2::makeBox(const float& x, const float &y, const float &
 	return result;
 }
 
-static const float sphere[] = {
-    0, 0, 1,
-    1, 0, 0,
-    0, 1, 0,
-    -1, 0, 0,
-    0, -1, 0,
-    0, 0, -1,
-};
-
-static const int sphereindex[] = {
-    0, 1, 2,
-    0, 2, 3,
-    0, 3, 4,
-    0, 4, 1,
-    2, 1, 5,
-    3, 2, 5,
-    4, 3, 5,
-    1, 4, 5,
-};
-
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeSphere(const float& radius, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makeSphere(const float& radius, const float& maxSideSize, const int& minSides) {
     // Init sphere
-    int s = 4;
-    vector<vector<float> > vectors;
-    for (int i = 0; i < 6; i++) {
-        vector<float> p;
-        p.push_back(sphere[i*3]);
-        p.push_back(sphere[i*3+1]);
-        p.push_back(sphere[i*3+2]);
-        vectors.push_back(p);
-    }
-    vector<vector<int> > index;
-    for (int i = 0; i < 8; i++) {
-        vector<int> findex;
-        findex.push_back(sphereindex[i*3]);
-        findex.push_back(sphereindex[i*3+1]);
-        findex.push_back(sphereindex[i*3+2]);
-        index.push_back(findex);
-    }
-    while (s < minSides || 2 * M_PI * radius / s > maxSideSize) {
-        s *= 2;
-        vector<vector<int> > newindex;
-        for (unsigned int i = 0; i < index.size(); i++) {
-            vector<int> t = index[i];
-            int npi = vectors.size();
-            vectors.push_back(normalize(midpoint(vectors[t[0]], vectors[t[1]])));
-            vectors.push_back(normalize(midpoint(vectors[t[1]], vectors[t[2]])));
-            vectors.push_back(normalize(midpoint(vectors[t[2]], vectors[t[0]])));
-            vector<int> t1;
-            t1.push_back(t[0]);
-            t1.push_back(npi);
-            t1.push_back(npi+2);
-            newindex.push_back(t1);
-            vector<int> t2;
-            t2.push_back(npi);
-            t2.push_back(npi+1);
-            t2.push_back(npi+2);
-            newindex.push_back(t2);
-            vector<int> t3;
-            t3.push_back(t[1]);
-            t3.push_back(npi+1);
-            t3.push_back(npi);
-            newindex.push_back(t3);
-            vector<int> t4;
-            t4.push_back(t[2]);
-            t4.push_back(npi+2);
-            t4.push_back(npi+1);
-            newindex.push_back(t4);
-        }
-        index.swap(newindex);
-    }
-    vector<vector<float> > points;
-    for (unsigned int i = 0; i < vectors.size(); i++) {
-        vector<float> p;
-        for (int j = 0; j < 3; j++) {
-            p.push_back(vectors[i][j] * radius);
-        }
-        points.push_back(p);
-    }
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(points, index);
-    pair<vector<vector<float> >, vector<vector<int> > > normals(vectors, index);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
+    int sides = max(8, minSides);
+	vector<Vertex> positions;
+	vector<Vertex> normals;
+
+	cout << "sides " << sides << endl;
+
+	for (int x = 0; x<= sides; x++) {
+		float theta = float((x * M_PI) / (float) sides);
+		float sinTheta = sinf(theta);
+		float cosTheta = cosf(theta);
+
+		for (int y = 0; y <= sides; y++) {
+			float phi = float((y * 2.0 * M_PI) / float(sides));
+			float sinPhi = sin(phi);
+			float cosPhi = cos(phi);
+
+			Vertex v;
+			v.x = -cosPhi * sinTheta;
+			v.y = -cosTheta;
+			v.z = -sinPhi * sinTheta;
+
+			normals.push_back(v);
+			positions.push_back(v * radius);
+		}
+	}
+
+	vector<unsigned long> index;
+
+	for (int i = 0; i < sides; i++) {
+		for (int j = 0; j < sides; j++) {
+			int first = (i * (sides + 1)) + j;
+			int second = first + sides + 1;
+
+			index.push_back(first);
+			index.push_back(second);
+			index.push_back(first + 1);
+
+			index.push_back(second);
+			index.push_back(second + 1);
+			index.push_back(first + 1);
+		}
+	}
+
+	Mesh result;
+	result.positions = positions;
+	result.positionIndex = index;
+	result.normals = normals;
+    return result;
 }
 
 const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
@@ -528,7 +494,7 @@ const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height
 
     vector<Vertex> positions;
     vector<Vertex> normals;
-    float d = 2*M_PI/s;
+    float d = float(2*M_PI/(float)s);
 
 	vector<unsigned long> positionIndex;
 	vector<unsigned long> normalIndex;
@@ -729,23 +695,17 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const flo
     return result;
 }
 
-const pair<
-        pair<vector<vector<float> >, vector<vector<int> > >,
-        pair<vector<vector<float> >, vector<vector<int> > > > RVMMeshHelper2::makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides) {
 
     // Asking for a sphere...
     if (height >= dishradius * 2) {
-        pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > res = makeSphere(dishradius, maxSideSize, minSides);
-        for (unsigned int i = 0; i < res.first.first.size(); i++) {
-            res.first.first[i][2] += dishradius;
-        }
-        return res;
+        cout << "Sphere" << endl;
+		return makeSphere(dishradius * 2, maxSideSize, minSides);
     }
 
-    vector<vector<int> > index;
-    vector<vector<float> > points;
-    vector<vector<int> > normalindex;
-    vector<vector<float> > vectors;
+    vector<unsigned long> index;
+    vector<Vertex> points;
+    vector<Vertex> vectors;
 
     float radius = (dishradius*dishradius + height*height) / (2*height);
     float angle = asin(1-height/radius);
@@ -757,8 +717,8 @@ const pair<
     int sides = csides;
 
     // Vertexes and normals
-    vector<float> v(3, 0);
-    vector<float> n(3, 0);
+    Vertex v;
+    Vertex n;
     for (int i = 0; i < sides; i++) {
         float c = (float)cos(angle + (M_PI/2 - angle) / sides * i);
         float s = (float)sin(angle + (M_PI/2 - angle) / sides * i);
@@ -777,26 +737,37 @@ const pair<
     vectors.push_back(n);
 
     // Sides
-    vector<int> pi(3, 0);
-    vector<int> ni(3, 0);
     for (int i = 0; i < sides-1; i++) {
         for (int j = 0; j < csides; j++) {
-            pi[0] = i*csides+j; pi[2] = i*csides+csides+j; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
+
+			unsigned long pi = i*csides+j;
+			index.push_back(pi);
+            pi = j < csides-1 ? i*csides+1+j : i*csides;
             index.push_back(pi);
-            normalindex.push_back(pi);
-            pi[0] = i*csides+csides+j; pi[2] = j < csides-1 ? i*csides+csides+1+j : i*csides+csides; pi[1] = j < csides-1 ? i*csides+1+j : i*csides;
-            index.push_back(pi);
-            normalindex.push_back(pi);
+            pi = i*csides+csides+j;
+			index.push_back(pi);
+
+			pi = i*csides+csides+j;
+			index.push_back(pi);
+			pi = j < csides-1 ? i*csides+1+j : i*csides;
+			index.push_back(pi);
+			pi = j < csides-1 ? i*csides+csides+1+j : i*csides+csides;
+			index.push_back(pi);
         }
     }
     for (int i = 0; i < csides; i++) {
-        pi[0] = csides*(sides-1) + i; pi[1] = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1; pi[2] = points.size()-1;
+        unsigned long pi = csides*(sides-1) + i;
+		index.push_back(pi);
+        pi = i == csides-1 ? csides*(sides-1) : csides*(sides-1) + i+1;
+		index.push_back(pi);
+        pi = points.size()-1;
         index.push_back(pi);
-        normalindex.push_back(pi);
     }
 
-    pair<vector<vector<float> >, vector<vector<int> > > vertexes(points, index);
-    pair<vector<vector<float> >, vector<vector<int> > > normals(vectors, normalindex);
-    return pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > >(vertexes, normals);
+	Mesh result;
+	result.positions = points;
+	result.positionIndex = index;
+	result.normals = vectors;
+    return result;
 }
 
