@@ -157,6 +157,47 @@ static String colladaKey[] = {
 	"polygons",
 };
 
+// From http://paulbourke.net/geometry/pointlineplane/lineline.c
+bool intersects(const Vector3F& p1, const Vector3F& p2, const Vector3F& p3, const Vector3F& p4) {
+    if (p1.equals(p2) || p1.equals(p3) || p1.equals(p4) || p2.equals(p3) || p2.equals(p4) || p3.equals(p4)) {
+        return false;
+    }
+    Vector3F p13 = p1 - p3;
+    Vector3F p43 = p4 - p3;
+    if (abs(p43[0]) < .001 && abs(p43[1]) < .001 && abs(p43[2]) < .001)
+        return false;
+    Vector3F p21 = p2 - p1;
+    if (abs(p21[0]) < .001 && abs(p21[1]) < .001 && abs(p21[2]) < .001)
+        return false;
+
+    float d1343 = p13 * p43;
+    float d4321 = p43 * p21;
+    float d1321 = p13 * p21;
+    float d4343 = p43 * p43;
+    float d2121 = p21 * p21;
+
+    double denom = d2121 * d4343 - d4321 * d4321;
+    if (abs(denom) < 0.001) {
+        return false;
+    }
+    double numer = d1343 * d4321 - d1321 * d4343;
+
+    float x1 = float(numer / denom);
+    float x2 = (d1343 + d4321 * x1) / d4343;
+    if (x1 > 1 || x1 < 0 || x2 > 1 || x2 < 0)
+        return false;
+
+    Vector3F pa = p1 + p21 * x1;
+    Vector3F pb = p3 + p43 * x2;
+
+    Vector3F papb = pb - pa;
+    float n2 = papb * papb;
+    if (n2 > 0.001)
+        return false;
+
+    return true;
+}
+
 class CCGroup {
     public:
         CCGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) : m_name(name), m_translation(translation), m_material(materialId) {}
@@ -379,7 +420,7 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
 	m_writer->appendTextBlock("<!-- RVMPyramid -->");
-    writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endPyramid() {
@@ -391,7 +432,7 @@ void COLLADAConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
 	m_writer->appendTextBlock("<!-- RVMBox -->");
-	writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
+	//writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endBox() {
@@ -404,7 +445,7 @@ void COLLADAConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     m_writer->appendTextBlock("<!-- RVMRectangularTorus -->");
-	writeMesh(matrix, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
+	//writeMesh(matrix, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endRectangularTorus() {
@@ -416,7 +457,7 @@ void COLLADAConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& routside,
                                 const float& angle) {
     m_writer->appendTextBlock("<!-- RVMCircularTorus -->");
-    writeMesh(matrix, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCircularTorus() {
@@ -427,7 +468,7 @@ void COLLADAConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
 	m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
-    writeMesh(matrix, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endEllipticalDish() {
@@ -438,7 +479,7 @@ void COLLADAConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
     m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
-    writeMesh(matrix, RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSphericalDish() {
@@ -456,7 +497,7 @@ void COLLADAConverter::startSnout(const vector<float>& matrix,
                         const float& unknown3,
                         const float& unknown4) {
 	m_writer->appendTextBlock("<!-- RVMSnout -->");
-    writeMesh(matrix, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSnout() {
@@ -467,7 +508,7 @@ void COLLADAConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
 	m_writer->appendTextBlock("<!-- RVMCylinder -->");
-    writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCylinder() {
@@ -477,7 +518,7 @@ void COLLADAConverter::endCylinder() {
 void COLLADAConverter::startSphere(const vector<float>& matrix,
                          const float& diameter) {
     m_writer->appendTextBlock("<!-- RVMSphere -->");
-    writeMesh(matrix, RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides));
+    //writeMesh(matrix, RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSphere() {
@@ -532,128 +573,262 @@ void COLLADAConverter::endLine() {
 void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
                              const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
 
-	m_writer->appendTextBlock("<!-- Omitted facet group -->");
-    //vector<float> nc;
-    //vector<float> nn;
-    //unsigned long np = 0;
-    //for (unsigned int i = 0; i < vertexes.size(); i++) {
-    //    for (unsigned int j = 0; j < vertexes[i].size(); j++) {
-    //        for (unsigned int k = 0; k < vertexes[i][j].size(); k++) {
-    //            nc.push_back(vertexes[i][j][k].first.x());
-    //            nc.push_back(vertexes[i][j][k].first.y());
-    //            nc.push_back(vertexes[i][j][k].first.z());
-    //            nn.push_back(vertexes[i][j][k].second.x());
-    //            nn.push_back(vertexes[i][j][k].second.y());
-    //            nn.push_back(vertexes[i][j][k].second.z());
-    //        }
-    //        np++;
-    //    }
-    //}
-    //m_writer->openElement(colladaKey[colladaKeys::geometry]);
-    //string gid = "G" + to_string((long long)m_model->geometryId()++);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
-    //m_writer->openElement(colladaKey[colladaKeys::mesh]);
-    //// Write coordinates source
-    //m_writer->openElement(colladaKey[colladaKeys::source]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "C");
-    //m_writer->openElement(colladaKey[colladaKeys::float_array]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "CA");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(nc.size()));
-    //m_writer->appendValues(nc);
-    //m_writer->closeElement(); // float_array
-    //m_writer->openElement(colladaKey[colladaKeys::technique_common]);
-    //m_writer->openElement(colladaKey[colladaKeys::accessor]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(nc.size()/3));
-    //m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "CA");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::stride], 3);
-    //m_writer->openElement(colladaKey[colladaKeys::param]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::name], "X");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    //m_writer->closeElement(); // param
-    //m_writer->openElement(colladaKey[colladaKeys::param]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::name], "Y");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    //m_writer->closeElement(); // param
-    //m_writer->openElement(colladaKey[colladaKeys::param]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::name], "Z");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    //m_writer->closeElement(); // param
-    //m_writer->closeElement(); // accessor
-    //m_writer->closeElement(); // technique_common
-    //m_writer->closeElement(); // source
-    //// Write normals source
-    //m_writer->openElement(colladaKey[colladaKeys::source]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "N");
-    //m_writer->openElement(colladaKey[colladaKeys::float_array]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "NA");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::count], nn.size());
-    //m_writer->appendValues(nn);
-    //m_writer->closeElement(); // float_array
-    //m_writer->openElement(colladaKey[colladaKeys::technique_common]);
-    //m_writer->openElement(colladaKey[colladaKeys::accessor]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::count], nn.size()/3);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "NA");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::stride], 3);
-    //m_writer->openElement(colladaKey[colladaKeys::param]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::name], "X");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    //m_writer->closeElement(); // param
-    //m_writer->openElement(colladaKey[colladaKeys::param]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::name], "Y");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    //m_writer->closeElement(); // param
-    //m_writer->openElement(colladaKey[colladaKeys::param]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::name], "Z");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    //m_writer->closeElement(); // param
-    //m_writer->closeElement(); // accessor
-    //m_writer->closeElement(); // technique_common
-    //m_writer->closeElement(); // source
-    //// Write triangles woth common index
-    //m_writer->openElement(colladaKey[colladaKeys::polygons]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::count], np);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::material], "geometryMaterial");
-    //m_writer->openElement(colladaKey[colladaKeys::input]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::offset], 0);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::semantic], "POSITION");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "C");
-    //m_writer->closeElement(); // input
-    //m_writer->openElement(colladaKey[colladaKeys::input]);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::offset], 0);
-    //m_writer->appendAttribute(colladaKey[colladaKeys::semantic], "NORMAL");
-    //m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "N");
-    //m_writer->closeElement(); // input
-    //unsigned int ci = 0;
-    //for (unsigned int i = 0; i < vertexes.size(); i++) {
-    //    if (vertexes[i].size() > 1) {
-    //        m_writer->openElement(colladaKey[colladaKeys::ph]);
-    //    }
-    //    for (unsigned int j = 0; j < vertexes[i].size(); j++) {
-    //        if (j == 0) {
-    //            m_writer->openElement(colladaKey[colladaKeys::p]);
-    //        } else {
-    //            m_writer->openElement(colladaKey[colladaKeys::h]);
-    //        }
-    //        vector<unsigned long> ni;
-    //        for (unsigned int k = 0; k < vertexes[i][j].size(); k++) {
-    //            ni.push_back(ci++);
-    //        }
-    //        m_writer->appendValues(ni);
-    //        m_writer->closeElement(); // p
-    //    }
-    //    if (vertexes[i].size() > 1) {
-    //        m_writer->closeElement(); // ph
-    //    }
-    //}
-    //m_writer->closeElement(); // polygons
-    //m_writer->closeElement(); // mesh
-    //m_writer->closeElement(); // geometry
+    unsigned long np = 0;
+	m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
+   /* vector<float> nc;
+    vector<float> nn;
+    
+    for (unsigned int i = 0; i < vertexes.size(); i++) {
+        for (unsigned int j = 0; j < vertexes[i].size(); j++) {
+            for (unsigned int k = 0; k < vertexes[i][j].size(); k++) {
+                nc.push_back(vertexes[i][j][k].first.x());
+                nc.push_back(vertexes[i][j][k].first.y());
+                nc.push_back(vertexes[i][j][k].first.z());
+                nn.push_back(vertexes[i][j][k].second.x());
+                nn.push_back(vertexes[i][j][k].second.y());
+                nn.push_back(vertexes[i][j][k].second.z());
+            }
+            np++;
+        }
+    }*/
+    vector<int> indexes;
+    vector<float> coordinates;
+    vector<int> normalindexes;
+    vector<float> normals;
+    vector<unsigned long> patches;
 
-    //vector<float> m = matrix;
-    //m[9] -= m_translations.back()[0];
-    //m[10] -= m_translations.back()[1];
-    //m[11] -= m_translations.back()[2];
-    //m_model->groupStack().back()->addGeometry(gid, m);
+    for (unsigned int i = 0; i < vertexes.size(); i++) { // Patches
+        if (vertexes[i].size() == 1) {
+            int j = 0;
+            if (vertexes[i][0].size() < 3) {
+                continue;
+            }
+            patches.push_back(vertexes[i][j].size());
+            for (unsigned int k = 0; k < vertexes[i][j].size(); k++) { // Vertexes
+                int ci = -1;
+                int ni = -1;
+                vector<float> c(3, 0); c[0] = vertexes[i][j][k].first[0]; c[1] = vertexes[i][j][k].first[1]; c[2] = vertexes[i][j][k].first[2];
+                vector<float> n(3, 0); n[0] = vertexes[i][j][k].second[0]; n[1] = vertexes[i][j][k].second[1]; n[2] = vertexes[i][j][k].second[2];
+                // Try to find a corresponding point or insert the new one.
+                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
+                    if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
+                        ci = l/3;
+                        continue;
+                    }
+                }
+                if (ci == -1) {
+                    for (unsigned int l = 0; l < 3; l++) {
+                        coordinates.push_back(c[l]);
+                    }
+                    indexes.push_back(coordinates.size()/3-1);
+                } else {
+                    indexes.push_back(ci);
+                }
+                // Try to find a corresponding vector or insert the new one.
+                for (unsigned int l = 0; l < normals.size(); l += 3) {
+                    if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
+                        ni = l/3;
+                        continue;
+                    }
+                }
+                if (ni == -1) {
+                    for (unsigned int l = 0; l < 3; l++) {
+                        normals.push_back(n[l]);
+                    }
+                    normalindexes.push_back(normals.size()/3-1);
+                } else {
+                    normalindexes.push_back(ni);
+                }
+            }
+        } else {
+            vector<pair<Vector3F, Vector3F> > polygon(vertexes[i][0]);
+            vector<vector<pair<Vector3F, Vector3F> > > shapes;
+            int reorder = 0;
+            // Close shapes
+            polygon.push_back(polygon[0]);
+            for (unsigned int j = 1; j < vertexes[i].size(); j++) {
+                shapes.push_back(vertexes[i][j]);
+            }
+            // Theorical max reorderings...
+            int maxreorder = (shapes.size() * (shapes.size() + 1)) / 2;
+            // Find non-crossing links and insert sub shapes
+            while (!shapes.empty()) {
+                vector<pair<Vector3F, Vector3F> > shape(shapes.back());
+                bool noncrossing = true;
+                int pi, si;
+                for (unsigned int k = 0; k < (polygon.size()-1) * (shape.size()); k++) {
+                    noncrossing = true;
+                    // Choose one segment between the polygon and the shape
+                    pi = k % (polygon.size()-1);
+                    si = k / (polygon.size()-1);
+                    // And test for collision with polygon
+                    for (unsigned int l = 0; l < polygon.size()-1; l++) {
+                        // Double check, probably for computing errors... How can we fix that ?
+                        if (intersects(polygon[pi].first, shape[si].first, polygon[l].first, polygon[l+1].first) ||
+                                intersects(shape[si].first, polygon[pi].first, polygon[l].first, polygon[l+1].first)) {
+                            noncrossing = false;
+                            continue;
+                        }
+                    }
+                    // And with shapes
+                    if (noncrossing && shapes.size()) {
+                        for (unsigned int l = 0; l < shapes.size(); l++) {
+                            for (unsigned int m = 0; m < shapes[l].size(); m++) {
+                                if (intersects(polygon[pi].first, shape[si].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first) ||
+                                        intersects(shape[si].first, polygon[pi].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first)) {
+                                    noncrossing = false;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    if (noncrossing) {
+                        break;
+                    }
+                }
+                if (!noncrossing) {
+                    // Very uncommon... Added a safe guard for infinite loops with theorical max (see over maxreorder). Max actual reorderings found: 47. Takes a looong time.
+                    reorder++;
+                    if (reorder > maxreorder) {
+                        cout << "Could not find the decomposition of a face set. " << endl;
+                        cout << "Ignoring one shape !!!!" << endl;
+                        cout << reorder << " " << maxreorder << endl;
+                    } else {
+                        // Reordering shapes
+                        shapes.insert(shapes.begin(), shape);
+                    }
+                } else {
+                    /* New implementation compatible with VC2010 - inserts incompatibility due to alignment problem. */
+					vector<pair<Vector3F, Vector3F> > newpolygon;
+					for (int k = 0; k < pi + 1; k++) {
+						newpolygon.push_back(polygon[k]);
+					}
+                    for (unsigned int k = 0; k < shape.size() + 1; k++) {
+                        newpolygon.push_back(shape[(k + si) % shape.size()]);
+                    }
+					for (unsigned int k = pi; k < polygon.size(); k++) {
+						newpolygon.push_back(polygon[k]);
+					}
+					polygon.swap(newpolygon);
+                }
+                shapes.pop_back();
+            }
+            // Check polygon -- For debugging purposes.
+            /*
+            for (unsigned int k = 0; k < polygon.size() - 1; k++) {
+                for (unsigned int l = k; l < polygon.size(); l++) {
+                    if (intersect(polygon[k].first, polygon[k+1].first, polygon[l].first, polygon[l == polygon.size()-1 ? 0 : l+1].first)) {
+                        // Should never show !
+                        cout << "Collision on " << m_groups.back() << ": " << k << " " << l << endl;
+                    }
+                }
+            }
+            */
+            // Then, insert polygon.
+            if (polygon.size() < 3) {
+                continue;
+            }
+            patches.push_back(polygon.size());
+            for (unsigned int k = 0; k < polygon.size(); k++) { // Vertexes
+                int ci = -1;
+                int ni = -1;
+                vector<float> c(3, 0); c[0] = polygon[k].first[0]; c[1] = polygon[k].first[1]; c[2] = polygon[k].first[2];
+                vector<float> n(3, 0); n[0] = polygon[k].second[0]; n[1] = polygon[k].second[1]; n[2] = polygon[k].second[2];
+                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
+                    if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
+                        ci = l/3;
+                        continue;
+                    }
+                }
+                if (ci == -1) {
+                    for (unsigned int l = 0; l < 3; l++) {
+                        coordinates.push_back(c[l]);
+                    }
+                    indexes.push_back(coordinates.size()/3-1);
+                } else {
+                    indexes.push_back(ci);
+                }
+                for (unsigned int l = 0; l < normals.size(); l += 3) {
+                    if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
+                        ni = l/3;
+                        continue;
+                    }
+                }
+                if (ni == -1) {
+                    for (unsigned int l = 0; l < 3; l++) {
+                        normals.push_back(n[l]);
+                    }
+                    normalindexes.push_back(normals.size()/3-1);
+                } else {
+                    normalindexes.push_back(ni);
+                }
+            }
+        }
+        indexes.push_back(-1);
+        normalindexes.push_back(-1);
+    }
+
+    m_writer->openElement(colladaKey[colladaKeys::geometry]);
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
+    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
+    m_writer->openElement(colladaKey[colladaKeys::mesh]);
+    
+    
+    // Write coordinates source
+    FloatSourceF positionSource(m_writer);
+    positionSource.setId(gid+"C");
+    positionSource.setArrayId(gid+"CA");
+    positionSource.setAccessorCount(coordinates.size() / 3);
+    positionSource.setAccessorStride(3);
+    positionSource.getParameterNameList().push_back("X");
+    positionSource.getParameterNameList().push_back("Y");
+    positionSource.getParameterNameList().push_back("Z");
+    positionSource.prepareToAppendValues();
+    positionSource.appendValues(coordinates);
+    positionSource.finish();
+
+   
+    // Write normals source
+    FloatSourceF normalSource(m_writer);
+    normalSource.setId(gid+"N");
+    normalSource.setArrayId(gid+"NA");
+    normalSource.setAccessorCount(normals.size() / 3);
+    normalSource.setAccessorStride(3);
+    normalSource.getParameterNameList().push_back("X");
+    normalSource.getParameterNameList().push_back("Y");
+    normalSource.getParameterNameList().push_back("Z");
+    normalSource.prepareToAppendValues();
+    normalSource.appendValues(normals);
+    normalSource.finish();
+    
+    
+
+    // Write polygons
+    Polylist p(m_writer);
+    p.setCount(patches.size());
+	p.setMaterial("geometryMaterial");
+	p.getInputList().push_back(Input(InputSemantic::POSITION, URI("#" + gid + "C"), 0));
+    p.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 1));
+    p.getVCountList().swap(patches);
+	p.prepareToAppendValues();
+    for(size_t i = 0; i < indexes.size(); i++) {
+        int index = indexes.at(i);
+        if(index != -1) {
+            m_writer->appendValues(index, normalindexes.at(i));
+        }
+        
+    }
+	
+    p.finish();
+    
+    m_writer->closeElement(); // mesh
+    m_writer->closeElement(); // geometry
+
+    vector<float> m = matrix;
+    m[9] -= m_translations.back()[0];
+    m[10] -= m_translations.back()[1];
+    m[11] -= m_translations.back()[2];
+    m_model->groupStack().back()->addGeometry(gid, m);
 }
 
 void COLLADAConverter::endFacetGroup() {
