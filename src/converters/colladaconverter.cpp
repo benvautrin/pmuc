@@ -420,7 +420,7 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
 	m_writer->appendTextBlock("<!-- RVMPyramid -->");
-    //writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endPyramid() {
@@ -432,7 +432,7 @@ void COLLADAConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
 	m_writer->appendTextBlock("<!-- RVMBox -->");
-	//writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
+	writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endBox() {
@@ -445,7 +445,7 @@ void COLLADAConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     m_writer->appendTextBlock("<!-- RVMRectangularTorus -->");
-	//writeMesh(matrix, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
+	writeMesh(matrix, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endRectangularTorus() {
@@ -457,7 +457,7 @@ void COLLADAConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& routside,
                                 const float& angle) {
     m_writer->appendTextBlock("<!-- RVMCircularTorus -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCircularTorus() {
@@ -468,7 +468,7 @@ void COLLADAConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
 	m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endEllipticalDish() {
@@ -479,7 +479,7 @@ void COLLADAConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
     m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSphericalDish() {
@@ -497,7 +497,7 @@ void COLLADAConverter::startSnout(const vector<float>& matrix,
                         const float& unknown3,
                         const float& unknown4) {
 	m_writer->appendTextBlock("<!-- RVMSnout -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSnout() {
@@ -508,7 +508,7 @@ void COLLADAConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
 	m_writer->appendTextBlock("<!-- RVMCylinder -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endCylinder() {
@@ -518,7 +518,7 @@ void COLLADAConverter::endCylinder() {
 void COLLADAConverter::startSphere(const vector<float>& matrix,
                          const float& diameter) {
     m_writer->appendTextBlock("<!-- RVMSphere -->");
-    //writeMesh(matrix, RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides));
+    writeMesh(matrix, RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides));
 }
 
 void COLLADAConverter::endSphere() {
@@ -833,185 +833,6 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
 
 void COLLADAConverter::endFacetGroup() {
     // in start.
-}
-
-void COLLADAConverter::writeGeometryWithoutNormals(const vector<float>& matrix, const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >& vertexes) {
-    m_writer->openElement(colladaKey[colladaKeys::geometry]);
-    string gid = "G" + to_string((long long)m_model->geometryId()++);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
-    m_writer->openElement(colladaKey[colladaKeys::mesh]);
-    pair<vector<vector<float> >, vector<vector<int> > > c = vertexes;
-    m_writer->openElement(colladaKey[colladaKeys::source]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "C");
-    m_writer->openElement(colladaKey[colladaKeys::float_array]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "CA");
-    vector<float> a;
-    for (unsigned int i = 0; i < c.first.size(); i++)
-        for (unsigned int j = 0; j < c.first[i].size(); j++)
-            a.push_back(c.first[i][j]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(a.size()));
-    m_writer->appendValues(a);
-    m_writer->closeElement(); // float_array
-    m_writer->openElement(colladaKey[colladaKeys::technique_common]);
-    m_writer->openElement(colladaKey[colladaKeys::accessor]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(a.size()/3));
-    m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "CA");
-    m_writer->appendAttribute(colladaKey[colladaKeys::stride], 3);
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "X");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "Y");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "Z");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->closeElement(); // accessor
-    m_writer->closeElement(); // technique_common
-    m_writer->closeElement(); // source
-    m_writer->openElement(colladaKey[colladaKeys::triangles]);
-    vector<unsigned long> na;
-    for (unsigned int i = 0; i < c.second.size(); i++)
-        for (unsigned int j = 0; j < c.second[i].size(); j++)
-            na.push_back(c.second[i][j]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(na.size()/3));
-    m_writer->appendAttribute(colladaKey[colladaKeys::material], "geometryMaterial");
-    m_writer->openElement(colladaKey[colladaKeys::input]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::offset], 0);
-    m_writer->appendAttribute(colladaKey[colladaKeys::semantic], "POSITION");
-    m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "C");
-    m_writer->closeElement(); // input
-    m_writer->openElement(colladaKey[colladaKeys::p]);
-    m_writer->appendValues(na);
-    m_writer->closeElement(); // p
-    m_writer->closeElement(); // triangles
-    m_writer->closeElement(); // mesh
-    m_writer->closeElement(); // geometry
-
-    vector<float> m = matrix;
-    m[9] -= m_translations.back()[0];
-    m[10] -= m_translations.back()[1];
-    m[11] -= m_translations.back()[2];
-    m_model->groupStack().back()->addGeometry(gid, m);
-}
-
-void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix, const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > >& vertexes) {
-    m_writer->openElement(colladaKey[colladaKeys::geometry]);
-    string gid = "G" + to_string((long long)m_model->geometryId()++);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
-    m_writer->openElement(colladaKey[colladaKeys::mesh]);
-    pair<vector<vector<float> >, vector<vector<int> > > positionInfo = vertexes.first;
-    pair<vector<vector<float> >, vector<vector<int> > > normalInfo = vertexes.second;
-    // Redo a flat list of coordinates for simplicity (collada doesn't support different indexes for coordinates and normals...)
-    // Should be better.
-    vector<float> nc;
-    vector<vector<float>> positions = positionInfo.first;
-
-    for (unsigned int i = 0; i < positions.size(); i++) {
-        for (unsigned int j = 0; j < positions[i].size(); j++) {
-            nc.push_back(positions[i][j]);
-        }
-    }
-    vector<float> nn;
-    vector<vector<float>> normals = normalInfo.first;
-    for (unsigned int i = 0; i < normals.size(); i++) {
-        for (unsigned int j = 0; j < normals[i].size(); j++) {
-            nn.push_back(normals[i][j]);
-        }
-    }
-
-    vector<unsigned long> ni;
-    vector<vector<int>> positionIndex = positionInfo.second;
-    for (unsigned int i = 0; i < positionIndex.size(); i++) {
-        ni.push_back(positionIndex[i][0]);
-		ni.push_back(positionIndex[i][1]);
-		ni.push_back(positionIndex[i][2]);
-    }
-    // Write coordinates source
-    m_writer->openElement(colladaKey[colladaKeys::source]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "C");
-    m_writer->openElement(colladaKey[colladaKeys::float_array]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "CA");
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(nc.size()));
-    m_writer->appendValues(nc);
-    m_writer->closeElement(); // float_array
-    m_writer->openElement(colladaKey[colladaKeys::technique_common]);
-    m_writer->openElement(colladaKey[colladaKeys::accessor]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(nc.size()/3));
-    m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "CA");
-    m_writer->appendAttribute(colladaKey[colladaKeys::stride], 3);
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "X");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "Y");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "Z");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->closeElement(); // accessor
-    m_writer->closeElement(); // technique_common
-    m_writer->closeElement(); // source
-    // Write normals source
-    m_writer->openElement(colladaKey[colladaKeys::source]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "N");
-    m_writer->openElement(colladaKey[colladaKeys::float_array]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid + "NA");
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(nn.size()));
-    m_writer->appendValues(nn);
-    m_writer->closeElement(); // float_array
-    m_writer->openElement(colladaKey[colladaKeys::technique_common]);
-    m_writer->openElement(colladaKey[colladaKeys::accessor]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(nn.size()/3));
-    m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "NA");
-    m_writer->appendAttribute(colladaKey[colladaKeys::stride], 3);
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "X");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "Y");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->openElement(colladaKey[colladaKeys::param]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::name], "Z");
-    m_writer->appendAttribute(colladaKey[colladaKeys::type], "float");
-    m_writer->closeElement(); // param
-    m_writer->closeElement(); // accessor
-    m_writer->closeElement(); // technique_common
-    m_writer->closeElement(); // source
-    // Write triangles woth common index
-    m_writer->openElement(colladaKey[colladaKeys::triangles]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::count], (unsigned int)(ni.size()/3));
-    m_writer->appendAttribute(colladaKey[colladaKeys::material], "geometryMaterial");
-    m_writer->openElement(colladaKey[colladaKeys::input]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::offset], 0);
-    m_writer->appendAttribute(colladaKey[colladaKeys::semantic], "POSITION");
-    m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "C");
-    m_writer->closeElement(); // input
-    m_writer->openElement(colladaKey[colladaKeys::input]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::offset], 0);
-    m_writer->appendAttribute(colladaKey[colladaKeys::semantic], "NORMAL");
-    m_writer->appendAttribute(colladaKey[colladaKeys::source], "#" + gid + "N");
-    m_writer->closeElement(); // input
-    m_writer->openElement(colladaKey[colladaKeys::p]);
-    m_writer->appendValues(ni);
-    m_writer->closeElement(); // p
-    m_writer->closeElement(); // triangles
-    m_writer->closeElement(); // mesh
-    m_writer->closeElement(); // geometry
-
-    vector<float> m = matrix;
-    m[9] -= m_translations.back()[0];
-    m[10] -= m_translations.back()[1];
-    m[11] -= m_translations.back()[2];
-    m_model->groupStack().back()->addGeometry(gid, m);
 }
 
 void COLLADAConverter::writeMesh(const std::vector<float>& matrix, const Mesh &mesh) {
