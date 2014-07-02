@@ -25,35 +25,13 @@
 #include <utility>
 #include <vector>
 
-struct Vertex {
-  union {
-    struct { float x, y, z; };
-    float v_[3];
-  };
-  Vertex() : x(0.0), y(0.0), z(0.0) {}
-  Vertex(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
-  Vertex(const Vertex& v) : x(v.x), y(v.y), z(v.z) {}
-
-  float operator[](int i) const {
-    return (&x)[i];
-  }
-
-  float& operator[](int i) {
-    return (&x)[i];
-  }
-
-  friend Vertex operator*(const Vertex &a, float k)
-  {
-    return Vertex(a.x*k, a.y*k, a.z*k);
-  }
-};
+#include "vector3f.h"
 
 struct Mesh {
-
  std::vector<unsigned long>  positionIndex;
  std::vector<unsigned long>  normalIndex;
- std::vector<Vertex>  positions;
- std::vector<Vertex>  normals;
+ std::vector<Vector3F>  positions;
+ std::vector<Vector3F>  normals;
 };
 
 class RVMMeshHelper2

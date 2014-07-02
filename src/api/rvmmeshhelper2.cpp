@@ -44,30 +44,6 @@ static vector<float> midpoint(const vector<float>& p1, const vector<float>& p2) 
 }
 
 
-static Vertex normalize(const Vertex& v) {
-    Vertex n(v);
-    double mag = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-    if (mag != 0) {
-        mag = 1. / sqrt(mag);
-        n[0] = float(v[0] * mag);
-        n[1] = float(v[1] * mag);
-        n[2] = float(v[2] * mag);
-    }
-    return n;
-}
-
-static vector<float> normalize(const vector<float>& v) {
-    vector<float> n = v;
-    double mag = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-    if (mag != 0) {
-        mag = 1. / sqrt(mag);
-        n[0] = float(v[0] * mag);
-        n[1] = float(v[1] * mag);
-        n[2] = float(v[2] * mag);
-    }
-    return n;
-}
-
 static vector<float> cross(const vector<float>& v1, const vector<float>& v2) {
     vector<float> c(3, 0);
     c[0] = v1[1]*v2[2] - v2[1]*v1[2];
@@ -76,13 +52,6 @@ static vector<float> cross(const vector<float>& v1, const vector<float>& v2) {
     return c;
 }
 
-static bool equals(const vector<float>& p1, const vector<float>& p2) {
-    return p1[0] == p2[0] && p1[1] == p2[1] && p1[2] == p2[2];
-}
-
-static bool equals(const Vertex& p1, const Vertex& p2) {
-    return p1.x == p2.x && p1.y == p2.y && p1.z == p2.z;
-}
 
 static const float cube[] = {
     -.5, -.5, -.5,
@@ -96,12 +65,12 @@ static const float cube[] = {
 };
 
 const Mesh RVMMeshHelper2::makeBox(const float& x, const float &y, const float &z, const float &maxSideSize, const int &minSides) {
-    vector<Vertex> points;
+    vector<Vector3F> points;
     for (int i = 0; i < 8; i++) {
-        Vertex point;
-        point.x = cube[i*3] * x;
-        point.y = cube[i*3+1] * y;
-        point.z = cube[i*3+2] * z;
+        Vector3F point;
+        point[0] = cube[i*3] * x;
+        point[1] = cube[i*3+1] * y;
+        point[2] = cube[i*3+2] * z;
         points.push_back(point);
     }
     vector<unsigned long> index;
@@ -137,8 +106,8 @@ const Mesh RVMMeshHelper2::makeBox(const float& x, const float &y, const float &
 const Mesh RVMMeshHelper2::makeSphere(const float& radius, const float& maxSideSize, const int& minSides) {
     // Init sphere
     int sides = max(8, minSides);
-	vector<Vertex> positions;
-	vector<Vertex> normals;
+	vector<Vector3F> positions;
+	vector<Vector3F> normals;
 
 	cout << "sides " << sides << endl;
 
@@ -152,10 +121,10 @@ const Mesh RVMMeshHelper2::makeSphere(const float& radius, const float& maxSideS
 			float sinPhi = sin(phi);
 			float cosPhi = cos(phi);
 
-			Vertex v;
-			v.x = -cosPhi * sinTheta;
-			v.y = -cosTheta;
-			v.z = -sinPhi * sinTheta;
+			Vector3F v;
+			v[0] = -cosPhi * sinTheta;
+			v[1] = -cosTheta;
+			v[2] = -sinPhi * sinTheta;
 
 			normals.push_back(v);
 			positions.push_back(v * radius);
@@ -191,10 +160,10 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
                                                 const float& height,
                                                 const float& angle, const float& maxSideSize, const int& minSides) {
     vector<unsigned long> index;
-    vector<Vertex> points;
+    vector<Vector3F> points;
 
 	vector<unsigned long> normalindex;
-    vector<Vertex> vectors;
+    vector<Vector3F> vectors;
 
     int sides = int(angle * routside / maxSideSize);
     if (sides < minSides) {
@@ -202,23 +171,23 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
     }
 
     // Vertexes and normals
-    Vertex v;
-    vectors.push_back(Vertex(0,0,-1));
-	vectors.push_back(Vertex(0,0,1));
+    Vector3F v;
+    vectors.push_back(Vector3F(0,0,-1));
+	vectors.push_back(Vector3F(0,0,1));
 
 	for (int i = 0; i < sides+1; i++) {
         float c = cos(angle / sides * i);
         float s = sin(angle / sides * i);
-        v.x = rinside * c; v.y = rinside * s; v.z = -height/2.f;
+        v[0] = rinside * c; v[1] = rinside * s; v[2] = -height/2.f;
         points.push_back(v);
-        v.x = routside * c; v.y = routside * s; v.z= -height/2.f;
+        v[0] = routside * c; v[1] = routside * s; v[2]= -height/2.f;
         points.push_back(v);
-        v.x = routside * c; v.y = routside * s; v.z = height/2.f;
+        v[0] = routside * c; v[1] = routside * s; v[2] = height/2.f;
         points.push_back(v);
-        v.x = rinside * c; v.y = rinside * s; v.z = height/2.f;
+        v[0] = rinside * c; v[1] = rinside * s; v[2] = height/2.f;
         points.push_back(v);
-        vectors.push_back(Vertex(c,s,0));
-		vectors.push_back(Vertex(-c,-s,0));
+        vectors.push_back(Vector3F(c,s,0));
+		vectors.push_back(Vector3F(-c,-s,0));
     }
 
     // Sides
@@ -273,10 +242,10 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const float& rinside,
     // Caps
     // - Caps normals
     int nci = vectors.size();
-    vectors.push_back(Vertex(0,-1,0));
+    vectors.push_back(Vector3F(0,-1,0));
     float c = cos(angle);
     float s = sin(angle);
-    vectors.push_back(Vertex(-s,c,0));
+    vectors.push_back(Vector3F(-s,c,0));
     // - Caps indexes
     index.push_back(0);
 	index.push_back(1);
@@ -324,9 +293,9 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const float& rinside,
                                                                                              const float& routside,
                                                                                              const float& angle, const float& maxSideSize, const int& minSides) {
     vector<unsigned long> index;
-    vector<Vertex> points;
+    vector<Vector3F> points;
     vector<unsigned long> normalindex;
-    vector<Vertex> vectors;
+    vector<Vector3F> vectors;
 
     int tsides = int(angle * rinside / maxSideSize);
     if (tsides < minSides) {
@@ -340,21 +309,21 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const float& rinside,
     // Vertexes and normals
     float rcenter = routside;
     float center = rinside;
-    Vertex v;
-    Vertex n;
+    Vector3F v;
+    Vector3F n;
     for (int i = 0; i < tsides+1; i++) {
         float c = cos(angle / tsides * i);
         float s = sin(angle / tsides * i);
         for (int j = 0; j < csides; j++) {
             float C = (float)cos(2 * M_PI / csides * j);
             float S = (float)sin(2 * M_PI / csides * j);
-            v.x = (rcenter * C + center) * c;
-            v.y = (rcenter * C + center) * s;
-            v.z = rcenter * S;
+            v[0] = (rcenter * C + center) * c;
+            v[1] = (rcenter * C + center) * s;
+            v[2] = rcenter * S;
             points.push_back(v);
-            n.x = C*c;
-            n.y = C*s;
-            n.z = S;
+            n[0] = C*c;
+            n[1] = C*s;
+            n[2] = S;
             vectors.push_back(n);
         }
     }
@@ -391,15 +360,15 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const float& rinside,
     // Caps
     // - Caps normals
     int ci = vectors.size();
-    vectors.push_back(Vertex(0,-1,0));
+    vectors.push_back(Vector3F(0,-1,0));
 
 	float c = cos(angle);
     float s = sin(angle);
-    vectors.push_back(Vertex(-s,c,0));
+    vectors.push_back(Vector3F(-s,c,0));
 
 	// - Caps centers
-    points.push_back(Vertex(center, 0, 0));
-	points.push_back(Vertex(c*center, s*center, 0));
+    points.push_back(Vector3F(center, 0, 0));
+	points.push_back(Vector3F(c*center, s*center, 0));
 
 	// - Caps indexes
     for (int j = 0; j < csides; j++) {
@@ -440,30 +409,30 @@ static const float pyramid[] = {
 
 const Mesh RVMMeshHelper2::makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides) {
     // Coordinates
-    vector<Vertex> points;
+    vector<Vector3F> points;
     for (int i = 0; i < 8; i++) {
-        Vertex p;
-        p.x = i < 4 ? pyramid[i*3] * xbottom : pyramid[i*3] * xtop + xoffset;
-        p.y = i < 4 ? pyramid[i*3+1] * ybottom : pyramid[i*3+1] * ytop + yoffset;
-        p.z = pyramid[i*3+2] * height;
+        Vector3F p;
+        p[0] = i < 4 ? pyramid[i*3] * xbottom : pyramid[i*3] * xtop + xoffset;
+        p[1] = i < 4 ? pyramid[i*3+1] * ybottom : pyramid[i*3+1] * ytop + yoffset;
+        p[2] = pyramid[i*3+2] * height;
         points.push_back(p);
     }
     vector<unsigned long> index;
     // Sides
     for (int i = 0; i < 4; i++) {
-        if (!equals(points[i], points[i == 3 ? 0 : i + 1]) && !equals(points[i == 3 ? 0 : i + 1], points[i+4]) && !equals(points[i], points[i+4])) {
+        if (!points[i].equals(points[i == 3 ? 0 : i + 1]) && !points[i == 3 ? 0 : i + 1].equals(points[i+4]) && !points[i].equals(points[i+4])) {
             index.push_back(i);
             index.push_back(i + 4);
             index.push_back(i == 3 ? 0 : i + 1);
         }
-        if (!equals(points[i == 3 ? 0 : i+1], points[i == 3 ? 4 : i+5]) && !equals(points[i == 3 ? 4 : i+5], points[i+4]) && !equals(points[i == 3 ? 0 : i+1], points[i+4])) {
+        if (!points[i == 3 ? 0 : i+1].equals(points[i == 3 ? 4 : i+5]) && !points[i == 3 ? 4 : i+5].equals(points[i+4]) && !points[i == 3 ? 0 : i+1].equals(points[i+4])) {
             index.push_back(i == 3 ? 0 : i+1);
             index.push_back(i+4);
             index.push_back(i == 3 ? 4 : i+5);
         }
     }
     // Caps
-    if (!equals(points[0], points[1]) && !equals(points[1], points[2]) && !equals(points[0], points[2])) {
+    if (!points[0].equals(points[1]) && !points[1].equals(points[2]) && !points[0].equals(points[2])) {
         index.push_back(0);
         index.push_back(1);
         index.push_back(2);
@@ -471,7 +440,7 @@ const Mesh RVMMeshHelper2::makePyramid(const float& xbottom, const float& ybotto
         index.push_back(2);
         index.push_back(3);
     }
-    if (!equals(points[4], points[5]) && !equals(points[5], points[6]) && !equals(points[4], points[6])) {
+    if (!points[4].equals(points[5]) && !points[5].equals(points[6]) && !points[4].equals(points[6])) {
         index.push_back(4);
         index.push_back(6);
         index.push_back(5);
@@ -492,8 +461,8 @@ const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height
     }
     float halfHeight = height / 2;
 
-    vector<Vertex> positions;
-    vector<Vertex> normals;
+    vector<Vector3F> positions;
+    vector<Vector3F> normals;
     float d = float(2*M_PI/(float)s);
 
 	vector<unsigned long> positionIndex;
@@ -506,9 +475,9 @@ const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height
 		float x = sin(d*(float)i); // [0..1]
 		float y = -cos(d*(float)i); // [-1..0]
 
-		positions.push_back(Vertex(x*radius, y*radius, -halfHeight));
-		positions.push_back(Vertex(x*radius, y*radius, +halfHeight));
-		normals.push_back(Vertex(x,y,0));
+		positions.push_back(Vector3F(x*radius, y*radius, -halfHeight));
+		positions.push_back(Vector3F(x*radius, y*radius, +halfHeight));
+		normals.push_back(Vector3F(x,y,0));
 
 		unsigned long v0 = i * 2;
 		unsigned long v1 = v0 + 1;
@@ -545,9 +514,9 @@ const Mesh RVMMeshHelper2::makeCylinder(const float& radius, const float& height
 
 const Mesh RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides) {
     vector<unsigned long> index;
-    vector<Vertex> points;
+    vector<Vector3F> points;
     vector<unsigned long> normalindex;
-    vector<Vertex> vectors;
+    vector<Vector3F> vectors;
     float hh = height / 2;
 
     int sides = int(2*M_PI * (rbottom > rtop ? rbottom : rtop) / maxSideSize);
@@ -555,9 +524,9 @@ const Mesh RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, co
         sides = minSides;
     }
 
-    // Vertexes and normals
-    Vertex v;
-    Vertex n;
+    // Vector3Fes and normals
+    Vector3F v;
+    Vector3F n;
     for (int i = 0; i < sides; i++) {
         float c = (float)cos(2*M_PI / sides * i);
         float s = (float)sin(2*M_PI / sides * i);
@@ -568,7 +537,7 @@ const Mesh RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, co
         if (height > 0) {
             float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
             n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
-            n = normalize(n);
+            n.normalize();
         } else {
             n[0] = 0; n[1] = 0; n[2] = 1;
         }
@@ -635,9 +604,9 @@ const Mesh RVMMeshHelper2::makeSnout(const float& rbottom, const float& rtop, co
 
 const Mesh RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides) {
     vector<unsigned long> index;
-    vector<Vertex> points;
+    vector<Vector3F> points;
     vector<unsigned long> normalindex;
-    vector<Vertex> vectors;
+    vector<Vector3F> vectors;
 
     float hd = dishradius;
     int sides = int(2*M_PI * secondradius / maxSideSize);
@@ -649,9 +618,9 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const flo
         csides = minSides;
     }
 
-    // Vertexes and normals
-    Vertex v;
-    Vertex n;
+    // Vector3Fes and normals
+    Vector3F v;
+    Vector3F n;
     for (int i = 0; i < sides; i++) {
         float c = (float)cos(M_PI / 2 / sides * i);
         float s = (float)sin(M_PI / 2 / sides * i);
@@ -661,7 +630,8 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const float& dishradius, const flo
             v[0] = hd * C * c; v[1] = hd * S * c; v[2] = secondradius * s;
             points.push_back(v);
             n[0] = secondradius * C * c; n[1] = secondradius * S * c; n[2] = hd * s;
-            vectors.push_back(normalize(n));
+            n.normalize();
+            vectors.push_back(n);
         }
     }
     v[0] = 0; v[1] = 0; v[2] = secondradius;
@@ -704,8 +674,8 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const float& dishradius, const floa
     }
 
     vector<unsigned long> index;
-    vector<Vertex> points;
-    vector<Vertex> vectors;
+    vector<Vector3F> points;
+    vector<Vector3F> vectors;
 
     float radius = (dishradius*dishradius + height*height) / (2*height);
     float angle = asin(1-height/radius);
@@ -716,9 +686,9 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const float& dishradius, const floa
     }
     int sides = csides;
 
-    // Vertexes and normals
-    Vertex v;
-    Vertex n;
+    // Position and normals
+    Vector3F v;
+    Vector3F n;
     for (int i = 0; i < sides; i++) {
         float c = (float)cos(angle + (M_PI/2 - angle) / sides * i);
         float s = (float)sin(angle + (M_PI/2 - angle) / sides * i);
@@ -728,7 +698,8 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const float& dishradius, const floa
             v[0] = radius * C * c; v[1] = radius * S * c; v[2] = -(radius - height -radius * s);
             points.push_back(v);
             n[0] = radius * C * c; n[1] = radius * S * c; n[2] = radius * s;
-            vectors.push_back(normalize(n));
+            n.normalize();
+            vectors.push_back(n);
         }
     }
     v[0] = 0; v[1] = 0; v[2] = height;
