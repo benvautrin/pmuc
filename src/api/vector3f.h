@@ -65,6 +65,18 @@ class Vector3F
 
         float squaredNorm() const { return x()*x() + y()*y() + z()*z(); }
 
+        float normalize() {
+            const float n = squaredNorm();
+            if(n != 0) {
+                float mag = 1.0f / sqrt(n);
+                m_values[0] *= mag;
+                m_values[1] *= mag;
+                m_values[2] *= mag;
+                return mag;
+            }
+            return 0.f;
+        }
+
         inline bool equals(const Vector3F& v) const {
             return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
         }
