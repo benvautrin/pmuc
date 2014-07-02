@@ -1032,7 +1032,7 @@ void COLLADAConverter::writeMesh(const std::vector<float>& matrix, const Mesh &m
 	positionSource.getParameterNameList().push_back("Y");
 	positionSource.getParameterNameList().push_back("Z");
 	positionSource.prepareToAppendValues();
-	m_writer->appendValues(&mesh.positions.front().x, mesh.positions.size() * 3);
+	m_writer->appendValues(&mesh.positions.front()[0], mesh.positions.size() * 3);
     positionSource.finish();
 
 	if(hasNormals) {
@@ -1045,7 +1045,7 @@ void COLLADAConverter::writeMesh(const std::vector<float>& matrix, const Mesh &m
 		normalSource.getParameterNameList().push_back("Y");
 		normalSource.getParameterNameList().push_back("Z");
 		normalSource.prepareToAppendValues();
-		m_writer->appendValues(&mesh.normals.front().x, mesh.normals.size() * 3);
+		m_writer->appendValues(&mesh.normals.front()[0], mesh.normals.size() * 3);
 		normalSource.finish();
 	}
 
