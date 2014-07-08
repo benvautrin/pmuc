@@ -19,6 +19,9 @@
  * MA 02110-1301  USA
  */
 
+// Only compile if OpenCOLLADA is available
+#ifdef OPENCOLLADASW_FOUND
+
 #include "colladaconverter.h"
 #include "COLLADAConverter.h"
 
@@ -837,3 +840,5 @@ void COLLADAConverter::writeGeometryWithNormals(const std::vector<float>& matrix
     m[11] -= m_translations.back()[2];
     m_model->groupStack().back()->addGeometry(gid, m);
 }
+
+#endif // OPENCOLLADASW_FOUND

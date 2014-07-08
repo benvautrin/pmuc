@@ -24,9 +24,6 @@
 #include <iostream>
 
 Vector3F::Vector3F() {
-/*    m_values[0] = 0;
-    m_values[1] = 0;
-    m_values[2] = 0;*/
 }
 
 Vector3F::Vector3F(const float& x, const float& y, const float& z) {

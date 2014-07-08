@@ -19,6 +19,9 @@
  * MA 02110-1301  USA
  */
 
+// Only compile if XIOT is available.
+#ifdef XIOT_FOUND
+
 #include "x3dconverter.h"
 
 #include <iostream>
@@ -933,3 +936,5 @@ void X3DConverter::endShape() {
     m_writers.back()->endNode(); // Shape
     m_writers.back()->endNode(); // Transform
 }
+
+#endif // XIOT_FOUND

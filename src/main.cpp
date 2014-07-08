@@ -26,9 +26,15 @@
 #include "optionparser.h"
 #include "api/rvmparser.h"
 #include "converters/dummyreader.h"
-#include "converters/x3dconverter.h"
-#include "converters/colladaconverter.h"
 #include "converters/dslconverter.h"
+
+#ifdef XIOT_FOUND
+#include "converters/x3dconverter.h"
+#endif // XIOT_FOUND
+
+#ifdef OPENCOLLADASW_FOUND
+#include "converters/colladaconverter.h"
+#endif // OPENCOLLADASW_FOUND
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES // For PI under VC++
@@ -44,13 +50,37 @@
 
 using namespace std;
 
-enum optionIndex { UNKNOWN, HELP, TEST, X3D, X3DB, COLLADA, DSL, DUMMY, SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE, MINSIDES, OBJECT, COLOR, SCALE };
+enum optionIndex { UNKNOWN,
+                   HELP,
+                   TEST,
+#ifdef XIOT_FOUND
+                   X3D,
+                   X3DB,
+#endif // XIOT_FOUND
+#ifdef OPENCOLLADASW_FOUND
+                   COLLADA,
+#endif // OPENCOLLADASW_FOUND
+                   DSL,
+                   DUMMY,
+                   SKIPATT,
+                   SPLIT,
+                   AGGREGATE,
+                   PRIMITIVES,
+                   SIDESIZE,
+                   MINSIDES,
+                   OBJECT,
+                   COLOR,
+                   SCALE };
 const option::Descriptor usage[] = {
     { UNKNOWN,      0, "",  "",              option::Arg::None,      "\nusage: pmuc [options] <rvm file 1> ...\n\nChoose at least one format and one file to convert.\nOptions:" },
     { HELP,         0, "h", "help",          option::Arg::None,      "  --help, -h \tPrint usage and exit." },
+#ifdef XIOT_FOUND
     { X3D,          0, "",  "x3d",           option::Arg::None,      "  --x3d  \tConvert to X3D XML format." },
     { X3DB,         0, "",  "x3db",          option::Arg::None,      "  --x3db  \tConvert to X3D binary format." },
+#endif // XIOT_FOUND
+#ifdef OPENCOLLADASW_FOUND
     { COLLADA,      0, "",  "collada",       option::Arg::None,      "  --collada\tConvert to COLLADA format." },
+#endif // OPENCOLLADASW_FOUND
     { DSL,          0, "",  "dsl",           option::Arg::None,      "  --dsl  \tConvert to DSL language." },
     { DUMMY,        0, "",  "dummy",         option::Arg::None,      "  --dummy\tPrint out the file structure." },
     { SKIPATT,      0, "",  "skipattributes",option::Arg::None,      "  --skipattributes \tIgnore attribute file." },
@@ -69,9 +99,13 @@ const string formatnames[] = {
     "",
     "",
     "",
+#ifdef XIOT_FOUND
     "X3D",
     "X3DB",
+#endif // XIOT_FOUND
+#ifdef OPENCOLLADASW_FOUND
     "COLLADA",
+#endif // OPENCOLLADASW_FOUND
     "DSL",
     "DUMMY",
 };
@@ -99,7 +133,14 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if ((options[X3D] || options[X3DB] || options[COLLADA] || options[DSL] || options[DUMMY]) == 0) {
+    if ((
+#ifdef XIOT_FOUND
+         options[X3D] || options[X3DB] ||
+#endif // XIOT_FOUND
+#ifdef OPENCOLLADASW_FOUND
+         options[COLLADA] ||
+#endif // OPENCOLLADASW_FOUND
+         options[DSL] || options[DUMMY]) == 0) {
         cout << "\nNo format specified.\n";
         option::printUsage(std::cout, usage);
         return 1;
@@ -164,20 +205,24 @@ int main(int argc, char** argv)
         for (int i = 0; i < 10; i++) {
             string filename = primitiveNames[i];
             cout << filename << "." << endl;
-            for (int format = X3D; format <= DUMMY; format++) {
+            for (int format = TEST + 1; format <= DUMMY; format++) {
                 if (options[format].count() > 0) {
                     RVMReader* reader;
                     switch (format) {
+#ifdef XIOT_FOUND
                         case X3D:
                         case X3DB: {
                             string name = filename + ".x3d" + (format == X3D ? "" : "b");
                             reader = new X3DConverter(name, format == X3DB);
                         } break;
+#endif // XIOT_FOUND
 
+#ifdef OPENCOLLADASW_FOUND
                         case COLLADA: {
                             string name = filename + ".dae";
                             reader = new COLLADAConverter(name);
                         } break;
+#endif // OPENCOLLADASW_FOUND
 
                         case DSL: {
                             string name = filename + ".dsl3d";
@@ -256,7 +301,7 @@ int main(int argc, char** argv)
 
     // File conversions.
     if (options[AGGREGATE].count() > 0) {
-        for (int format = X3D; format <= DUMMY; format++) {
+        for (int format = TEST + 1; format <= DUMMY; format++) {
             if (options[format].count() > 0) {
                 time_t start = time(0);
                 RVMReader* reader;
@@ -266,16 +311,20 @@ int main(int argc, char** argv)
                         reader = new DummyReader;
                     } break;
 
+#ifdef XIOT_FOUND
                     case X3D:
                     case X3DB: {
                         string x3dname = name + ".x3d" + (format == X3D ? "" : "b");
                         reader = new X3DConverter(x3dname, format == X3DB);
                     } break;
+#endif // XIOT_FOUND
 
+#ifdef OPENCOLLADASW_FOUND
                     case COLLADA: {
                         string colladaname = name + ".dae";
                         reader = new COLLADAConverter(colladaname);
                     } break;
+#endif // OPENCOLLADASW_FOUND
 
                     case DSL: {
                         string dslname = name + ".dsl3d";
@@ -335,7 +384,7 @@ int main(int argc, char** argv)
     } else {
         for (int file = 0; file < parse.nonOptionsCount(); file++) {
             string filename = parse.nonOption(file);
-            for (int format = X3D; format <= DUMMY; format++) {
+            for (int format = TEST + 1; format <= DUMMY; format++) {
                 if (options[format].count() > 0) {
                     time_t start = time(0);
                     RVMReader* reader;
@@ -344,6 +393,7 @@ int main(int argc, char** argv)
                             reader = new DummyReader;
                         } break;
 
+#ifdef XIOT_FOUND
                         case X3D:
                         case X3DB: {
                             string name = !objectName.empty() ? objectName : filename;
@@ -352,13 +402,16 @@ int main(int argc, char** argv)
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new X3DConverter(name, format == X3DB);
                         } break;
+#endif // XIOT_FOUND
 
+#ifdef OPENCOLLADASW_FOUND
                         case COLLADA: {
                             string name = !objectName.empty() ? objectName : filename;
                             name = name.substr(0, name.rfind(".")) + ".dae";
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new COLLADAConverter(name);
                         } break;
+#endif // OPENCOLLADASW_FOUND
 
                         case DSL: {
                             string name = !objectName.empty() ? objectName : filename;
