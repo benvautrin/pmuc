@@ -167,7 +167,8 @@ enum PrimitiveTypes {
     Snout = 7,
     Cylinder =  8,
     Sphere = 9,
-    Line = 10
+    Line = 10,
+    FacetGroup = 11
 };
 
 
@@ -629,8 +630,8 @@ void COLLADAConverter::startLine(const vector<float>& matrix, const float& thick
        return;
     }
 
-    m_instanceMap.insert(std::make_pair(params, gid));
     gid = createGeometryId();
+    m_instanceMap.insert(std::make_pair(params, gid));
 
     m_writer->appendTextBlock("<!-- RVMLine -->");
     m_writer->openElement(colladaKey[colladaKeys::geometry]);
@@ -675,11 +676,12 @@ void COLLADAConverter::endLine() {
 
 void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
                              const vector<vector<vector<Vertex> > >& vertexes) {
-    m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
     Mesh meshData;
+    string gid = createGeometryId();
+    m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
+
     RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
 
-    string gid = createGeometryId();
     writeMesh(gid, meshData);
     addGeometry(gid, matrix);
 }
