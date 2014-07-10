@@ -34,6 +34,14 @@ struct Mesh {
  std::vector<Vector3F>  normals;
 };
 
+typedef std::pair<Vector3F, Vector3F> Vertex;
+
+typedef struct {
+    std::vector<unsigned long> indices;
+    std::vector<float> positions;
+    std::vector<float> normals;
+} TesselationUserData;
+
 class RVMMeshHelper2
 {
     public:
@@ -140,6 +148,9 @@ class RVMMeshHelper2
          * @return
          */
         static const Mesh makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
+
+
+        static void tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, TesselationUserData* userData);
 };
 
 #endif // RVMMESHHELPER_H
