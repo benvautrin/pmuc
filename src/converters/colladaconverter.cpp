@@ -572,62 +572,10 @@ void COLLADAConverter::endLine() {
 
 void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
                              const vector<vector<vector<Vertex> > >& vertexes) {
-
-    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
-    
     Mesh meshData;
     RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
-
-    m_writer->openElement(colladaKey[colladaKeys::geometry]);
-    m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
-    m_writer->openElement(colladaKey[colladaKeys::mesh]);
-    
-    // Write coordinates source
-    FloatSourceF positionSource(m_writer);
-    positionSource.setId(gid+"C");
-    positionSource.setArrayId(gid+"CA");
-    positionSource.setAccessorCount(unsigned long(meshData.positions.size()));
-    positionSource.setAccessorStride(3);
-    positionSource.getParameterNameList().push_back("X");
-    positionSource.getParameterNameList().push_back("Y");
-    positionSource.getParameterNameList().push_back("Z");
-    positionSource.prepareToAppendValues();
-    m_writer->appendValues(&meshData.positions.front()[0], meshData.positions.size() * 3);
-    positionSource.finish();
-
-   
-    // Write normals source
-    FloatSourceF normalSource(m_writer);
-    normalSource.setId(gid+"N");
-    normalSource.setArrayId(gid+"NA");
-    normalSource.setAccessorCount(unsigned long(meshData.normals.size()));
-    normalSource.setAccessorStride(3);
-    normalSource.getParameterNameList().push_back("X");
-    normalSource.getParameterNameList().push_back("Y");
-    normalSource.getParameterNameList().push_back("Z");
-    normalSource.prepareToAppendValues();
-    m_writer->appendValues(&meshData.normals.front()[0], meshData.normals.size() * 3);
-    normalSource.finish();
-
-    // Write polygons
-    Triangles p(m_writer);
-    p.setCount(unsigned long(meshData.positionIndex.size() / 3));
-	p.setMaterial("geometryMaterial");
-	p.getInputList().push_back(Input(InputSemantic::POSITION, URI("#" + gid + "C"), 0));
-    p.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 0));
-	p.prepareToAppendValues();
-    p.appendValues(meshData.positionIndex);
-    p.finish();
-    
-    m_writer->closeElement(); // mesh
-    m_writer->closeElement(); // geometry
-
-    vector<float> m = matrix;
-    m[9] -= m_translations.back()[0];
-    m[10] -= m_translations.back()[1];
-    m[11] -= m_translations.back()[2];
-    m_model->groupStack().back()->addGeometry(gid, m);
+    writeMesh(matrix, meshData);
 }
 
 void COLLADAConverter::endFacetGroup() {
