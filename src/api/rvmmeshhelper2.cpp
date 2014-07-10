@@ -77,8 +77,8 @@ static const float cube[] = {
 };
 
 void CALLBACK tessVertexData(void * vertex_data, void * polygon_data) {
-    TesselationUserData* userData = (TesselationUserData*) polygon_data;
-    userData->indices.push_back((unsigned long)vertex_data);
+    Mesh* userData = (Mesh*) polygon_data;
+    userData->positionIndex.push_back((unsigned long)vertex_data);
 }
 void CALLBACK tessEdgeFlag(GLboolean flag, void * polygon_data) {
 }
@@ -88,14 +88,10 @@ void CALLBACK tessError(GLenum err) {
 }
 
 void CALLBACK tessCombineData(GLdouble newVert[3], GLdouble *neighbourVert[4], GLfloat neighborWeight[4], void **outData, void * polygon_data) {
-    TesselationUserData* userData = (TesselationUserData*) polygon_data;
-    unsigned long index = userData->positions.size() / 3;
-    userData->positions.push_back(float(newVert[0]));
-    userData->positions.push_back(float(newVert[1]));
-    userData->positions.push_back(float(newVert[2]));
-    userData->normals.push_back(0);
-    userData->normals.push_back(1);
-    userData->normals.push_back(0);
+    Mesh* userData = (Mesh*) polygon_data;
+    unsigned long index = userData->positions.size();
+    userData->positions.push_back(Vector3F(newVert[0], newVert[1], newVert[2]));
+    userData->normals.push_back(Vector3F(0.0f, 1.0f, 0.0f));
     *outData = (void*)index;
 };
 
@@ -786,7 +782,7 @@ pair<int, bool> createIndex( std::vector<Vertex>& references, const Vertex &newV
     return make_pair(results, false);
 }
 
-void RVMMeshHelper2::tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, TesselationUserData* userData) {
+void RVMMeshHelper2::tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, Mesh* userData) {
     GLUtesselator *tobj = gluNewTess();
     vector<Vertex> indexedVertices;
     vector<unsigned long> indexArray;
@@ -804,16 +800,11 @@ void RVMMeshHelper2::tesselateFacetGroup(const std::vector<std::vector<std::vect
                 pair<int, bool> res = createIndex(indexedVertices, vertices[i][j][k]);
                 indexArray.push_back(res.first);
                 if(res.second) {
-                    userData->positions.push_back(vertices[i][j][k].first.x());
-                    userData->positions.push_back(vertices[i][j][k].first.y());
-                    userData->positions.push_back(vertices[i][j][k].first.z());
-                    userData->normals.push_back(vertices[i][j][k].second.x());
-                    userData->normals.push_back(vertices[i][j][k].second.y());
-                    userData->normals.push_back(vertices[i][j][k].second.z());
+                    userData->positions.push_back(vertices[i][j][k].first);
+                    userData->normals.push_back(vertices[i][j][k].second);
                 }
                 np++;
             }
-
         }
     }
 

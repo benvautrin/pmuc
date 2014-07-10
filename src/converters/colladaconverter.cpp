@@ -576,8 +576,8 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
     
-    TesselationUserData userData;
-    RVMMeshHelper2::tesselateFacetGroup(vertexes, &userData);
+    Mesh meshData;
+    RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
 
     m_writer->openElement(colladaKey[colladaKeys::geometry]);
     m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
@@ -587,13 +587,13 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     FloatSourceF positionSource(m_writer);
     positionSource.setId(gid+"C");
     positionSource.setArrayId(gid+"CA");
-    positionSource.setAccessorCount(userData.positions.size() / 3);
+    positionSource.setAccessorCount(unsigned long(meshData.positions.size()));
     positionSource.setAccessorStride(3);
     positionSource.getParameterNameList().push_back("X");
     positionSource.getParameterNameList().push_back("Y");
     positionSource.getParameterNameList().push_back("Z");
     positionSource.prepareToAppendValues();
-    positionSource.appendValues(userData.positions);
+    m_writer->appendValues(&meshData.positions.front()[0], meshData.positions.size() * 3);
     positionSource.finish();
 
    
@@ -601,23 +601,23 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     FloatSourceF normalSource(m_writer);
     normalSource.setId(gid+"N");
     normalSource.setArrayId(gid+"NA");
-    normalSource.setAccessorCount(userData.normals.size() / 3);
+    normalSource.setAccessorCount(unsigned long(meshData.normals.size()));
     normalSource.setAccessorStride(3);
     normalSource.getParameterNameList().push_back("X");
     normalSource.getParameterNameList().push_back("Y");
     normalSource.getParameterNameList().push_back("Z");
     normalSource.prepareToAppendValues();
-    normalSource.appendValues(userData.normals);
+    m_writer->appendValues(&meshData.normals.front()[0], meshData.normals.size() * 3);
     normalSource.finish();
 
     // Write polygons
     Triangles p(m_writer);
-    p.setCount(userData.indices.size() / 3);
+    p.setCount(unsigned long(meshData.positionIndex.size() / 3));
 	p.setMaterial("geometryMaterial");
 	p.getInputList().push_back(Input(InputSemantic::POSITION, URI("#" + gid + "C"), 0));
     p.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 0));
 	p.prepareToAppendValues();
-    p.appendValues(userData.indices);
+    p.appendValues(meshData.positionIndex);
     p.finish();
     
     m_writer->closeElement(); // mesh
