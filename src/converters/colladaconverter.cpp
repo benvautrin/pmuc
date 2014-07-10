@@ -571,220 +571,29 @@ void COLLADAConverter::endLine() {
 }
 
 void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
-                             const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
+                             const vector<vector<vector<Vertex> > >& vertexes) {
 
-    unsigned long np = 0;
-	m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
-   /* vector<float> nc;
-    vector<float> nn;
+    string gid = "G" + to_string((long long)m_model->geometryId()++);
+    m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
     
-    for (unsigned int i = 0; i < vertexes.size(); i++) {
-        for (unsigned int j = 0; j < vertexes[i].size(); j++) {
-            for (unsigned int k = 0; k < vertexes[i][j].size(); k++) {
-                nc.push_back(vertexes[i][j][k].first.x());
-                nc.push_back(vertexes[i][j][k].first.y());
-                nc.push_back(vertexes[i][j][k].first.z());
-                nn.push_back(vertexes[i][j][k].second.x());
-                nn.push_back(vertexes[i][j][k].second.y());
-                nn.push_back(vertexes[i][j][k].second.z());
-            }
-            np++;
-        }
-    }*/
-    vector<int> indexes;
-    vector<float> coordinates;
-    vector<int> normalindexes;
-    vector<float> normals;
-    vector<unsigned long> patches;
-
-    for (unsigned int i = 0; i < vertexes.size(); i++) { // Patches
-        if (vertexes[i].size() == 1) {
-            int j = 0;
-            if (vertexes[i][0].size() < 3) {
-                continue;
-            }
-            patches.push_back(vertexes[i][j].size());
-            for (unsigned int k = 0; k < vertexes[i][j].size(); k++) { // Vertexes
-                int ci = -1;
-                int ni = -1;
-                vector<float> c(3, 0); c[0] = vertexes[i][j][k].first[0]; c[1] = vertexes[i][j][k].first[1]; c[2] = vertexes[i][j][k].first[2];
-                vector<float> n(3, 0); n[0] = vertexes[i][j][k].second[0]; n[1] = vertexes[i][j][k].second[1]; n[2] = vertexes[i][j][k].second[2];
-                // Try to find a corresponding point or insert the new one.
-                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
-                    if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
-                        ci = l/3;
-                        continue;
-                    }
-                }
-                if (ci == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        coordinates.push_back(c[l]);
-                    }
-                    indexes.push_back(coordinates.size()/3-1);
-                } else {
-                    indexes.push_back(ci);
-                }
-                // Try to find a corresponding vector or insert the new one.
-                for (unsigned int l = 0; l < normals.size(); l += 3) {
-                    if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
-                        ni = l/3;
-                        continue;
-                    }
-                }
-                if (ni == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        normals.push_back(n[l]);
-                    }
-                    normalindexes.push_back(normals.size()/3-1);
-                } else {
-                    normalindexes.push_back(ni);
-                }
-            }
-        } else {
-            vector<pair<Vector3F, Vector3F> > polygon(vertexes[i][0]);
-            vector<vector<pair<Vector3F, Vector3F> > > shapes;
-            int reorder = 0;
-            // Close shapes
-            polygon.push_back(polygon[0]);
-            for (unsigned int j = 1; j < vertexes[i].size(); j++) {
-                shapes.push_back(vertexes[i][j]);
-            }
-            // Theorical max reorderings...
-            int maxreorder = (shapes.size() * (shapes.size() + 1)) / 2;
-            // Find non-crossing links and insert sub shapes
-            while (!shapes.empty()) {
-                vector<pair<Vector3F, Vector3F> > shape(shapes.back());
-                bool noncrossing = true;
-                int pi, si;
-                for (unsigned int k = 0; k < (polygon.size()-1) * (shape.size()); k++) {
-                    noncrossing = true;
-                    // Choose one segment between the polygon and the shape
-                    pi = k % (polygon.size()-1);
-                    si = k / (polygon.size()-1);
-                    // And test for collision with polygon
-                    for (unsigned int l = 0; l < polygon.size()-1; l++) {
-                        // Double check, probably for computing errors... How can we fix that ?
-                        if (intersects(polygon[pi].first, shape[si].first, polygon[l].first, polygon[l+1].first) ||
-                                intersects(shape[si].first, polygon[pi].first, polygon[l].first, polygon[l+1].first)) {
-                            noncrossing = false;
-                            continue;
-                        }
-                    }
-                    // And with shapes
-                    if (noncrossing && shapes.size()) {
-                        for (unsigned int l = 0; l < shapes.size(); l++) {
-                            for (unsigned int m = 0; m < shapes[l].size(); m++) {
-                                if (intersects(polygon[pi].first, shape[si].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first) ||
-                                        intersects(shape[si].first, polygon[pi].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first)) {
-                                    noncrossing = false;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    if (noncrossing) {
-                        break;
-                    }
-                }
-                if (!noncrossing) {
-                    // Very uncommon... Added a safe guard for infinite loops with theorical max (see over maxreorder). Max actual reorderings found: 47. Takes a looong time.
-                    reorder++;
-                    if (reorder > maxreorder) {
-                        cout << "Could not find the decomposition of a face set. " << endl;
-                        cout << "Ignoring one shape !!!!" << endl;
-                        cout << reorder << " " << maxreorder << endl;
-                    } else {
-                        // Reordering shapes
-                        shapes.insert(shapes.begin(), shape);
-                    }
-                } else {
-                    /* New implementation compatible with VC2010 - inserts incompatibility due to alignment problem. */
-					vector<pair<Vector3F, Vector3F> > newpolygon;
-					for (int k = 0; k < pi + 1; k++) {
-						newpolygon.push_back(polygon[k]);
-					}
-                    for (unsigned int k = 0; k < shape.size() + 1; k++) {
-                        newpolygon.push_back(shape[(k + si) % shape.size()]);
-                    }
-					for (unsigned int k = pi; k < polygon.size(); k++) {
-						newpolygon.push_back(polygon[k]);
-					}
-					polygon.swap(newpolygon);
-                }
-                shapes.pop_back();
-            }
-            // Check polygon -- For debugging purposes.
-            /*
-            for (unsigned int k = 0; k < polygon.size() - 1; k++) {
-                for (unsigned int l = k; l < polygon.size(); l++) {
-                    if (intersect(polygon[k].first, polygon[k+1].first, polygon[l].first, polygon[l == polygon.size()-1 ? 0 : l+1].first)) {
-                        // Should never show !
-                        cout << "Collision on " << m_groups.back() << ": " << k << " " << l << endl;
-                    }
-                }
-            }
-            */
-            // Then, insert polygon.
-            if (polygon.size() < 3) {
-                continue;
-            }
-            patches.push_back(polygon.size());
-            for (unsigned int k = 0; k < polygon.size(); k++) { // Vertexes
-                int ci = -1;
-                int ni = -1;
-                vector<float> c(3, 0); c[0] = polygon[k].first[0]; c[1] = polygon[k].first[1]; c[2] = polygon[k].first[2];
-                vector<float> n(3, 0); n[0] = polygon[k].second[0]; n[1] = polygon[k].second[1]; n[2] = polygon[k].second[2];
-                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
-                    if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
-                        ci = l/3;
-                        continue;
-                    }
-                }
-                if (ci == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        coordinates.push_back(c[l]);
-                    }
-                    indexes.push_back(coordinates.size()/3-1);
-                } else {
-                    indexes.push_back(ci);
-                }
-                for (unsigned int l = 0; l < normals.size(); l += 3) {
-                    if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
-                        ni = l/3;
-                        continue;
-                    }
-                }
-                if (ni == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        normals.push_back(n[l]);
-                    }
-                    normalindexes.push_back(normals.size()/3-1);
-                } else {
-                    normalindexes.push_back(ni);
-                }
-            }
-        }
-        indexes.push_back(-1);
-        normalindexes.push_back(-1);
-    }
+    TesselationUserData userData;
+    RVMMeshHelper2::tesselateFacetGroup(vertexes, &userData);
 
     m_writer->openElement(colladaKey[colladaKeys::geometry]);
-    string gid = "G" + to_string((long long)m_model->geometryId()++);
     m_writer->appendAttribute(colladaKey[colladaKeys::id], gid);
     m_writer->openElement(colladaKey[colladaKeys::mesh]);
-    
     
     // Write coordinates source
     FloatSourceF positionSource(m_writer);
     positionSource.setId(gid+"C");
     positionSource.setArrayId(gid+"CA");
-    positionSource.setAccessorCount(coordinates.size() / 3);
+    positionSource.setAccessorCount(userData.positions.size() / 3);
     positionSource.setAccessorStride(3);
     positionSource.getParameterNameList().push_back("X");
     positionSource.getParameterNameList().push_back("Y");
     positionSource.getParameterNameList().push_back("Z");
     positionSource.prepareToAppendValues();
-    positionSource.appendValues(coordinates);
+    positionSource.appendValues(userData.positions);
     positionSource.finish();
 
    
@@ -792,33 +601,23 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     FloatSourceF normalSource(m_writer);
     normalSource.setId(gid+"N");
     normalSource.setArrayId(gid+"NA");
-    normalSource.setAccessorCount(normals.size() / 3);
+    normalSource.setAccessorCount(userData.normals.size() / 3);
     normalSource.setAccessorStride(3);
     normalSource.getParameterNameList().push_back("X");
     normalSource.getParameterNameList().push_back("Y");
     normalSource.getParameterNameList().push_back("Z");
     normalSource.prepareToAppendValues();
-    normalSource.appendValues(normals);
+    normalSource.appendValues(userData.normals);
     normalSource.finish();
-    
-    
 
     // Write polygons
-    Polylist p(m_writer);
-    p.setCount(patches.size());
+    Triangles p(m_writer);
+    p.setCount(userData.indices.size() / 3);
 	p.setMaterial("geometryMaterial");
 	p.getInputList().push_back(Input(InputSemantic::POSITION, URI("#" + gid + "C"), 0));
-    p.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 1));
-    p.getVCountList().swap(patches);
+    p.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 0));
 	p.prepareToAppendValues();
-    for(size_t i = 0; i < indexes.size(); i++) {
-        int index = indexes.at(i);
-        if(index != -1) {
-            m_writer->appendValues(index, normalindexes.at(i));
-        }
-        
-    }
-	
+    p.appendValues(userData.indices);
     p.finish();
     
     m_writer->closeElement(); // mesh
