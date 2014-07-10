@@ -157,46 +157,19 @@ static String colladaKey[] = {
 	"polygons",
 };
 
-// From http://paulbourke.net/geometry/pointlineplane/lineline.c
-bool intersects(const Vector3F& p1, const Vector3F& p2, const Vector3F& p3, const Vector3F& p4) {
-    if (p1.equals(p2) || p1.equals(p3) || p1.equals(p4) || p2.equals(p3) || p2.equals(p4) || p3.equals(p4)) {
-        return false;
-    }
-    Vector3F p13 = p1 - p3;
-    Vector3F p43 = p4 - p3;
-    if (abs(p43[0]) < .001 && abs(p43[1]) < .001 && abs(p43[2]) < .001)
-        return false;
-    Vector3F p21 = p2 - p1;
-    if (abs(p21[0]) < .001 && abs(p21[1]) < .001 && abs(p21[2]) < .001)
-        return false;
+enum PrimitiveTypes {
+    Pyramid = 1,
+    Box = 2,
+    RectangularTorus = 3,
+    CircularTorus = 4,
+    EllipticalDish = 5,
+    SphericalDish = 6,
+    Snout = 7,
+    Cylinder =  8,
+    Sphere = 9,
+    Line = 10
+};
 
-    float d1343 = p13 * p43;
-    float d4321 = p43 * p21;
-    float d1321 = p13 * p21;
-    float d4343 = p43 * p43;
-    float d2121 = p21 * p21;
-
-    double denom = d2121 * d4343 - d4321 * d4321;
-    if (abs(denom) < 0.001) {
-        return false;
-    }
-    double numer = d1343 * d4321 - d1321 * d4343;
-
-    float x1 = float(numer / denom);
-    float x2 = (d1343 + d4321 * x1) / d4343;
-    if (x1 > 1 || x1 < 0 || x2 > 1 || x2 < 0)
-        return false;
-
-    Vector3F pa = p1 + p21 * x1;
-    Vector3F pb = p3 + p43 * x2;
-
-    Vector3F papb = pb - pa;
-    float n2 = papb * papb;
-    if (n2 > 0.001)
-        return false;
-
-    return true;
-}
 
 class CCGroup {
     public:
@@ -420,7 +393,24 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
 	m_writer->appendTextBlock("<!-- RVMPyramid -->");
-    writeMesh(matrix, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Pyramid);
+    params.push_back(xbottom);
+    params.push_back(ybottom);
+    params.push_back(xtop);
+    params.push_back(ytop);
+    params.push_back(height);
+    params.push_back(xoffset);
+    params.push_back(yoffset);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endPyramid() {
@@ -432,7 +422,20 @@ void COLLADAConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
 	m_writer->appendTextBlock("<!-- RVMBox -->");
-	writeMesh(matrix, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Box);
+    params.push_back(xlength);
+    params.push_back(ylength);
+    params.push_back(zlength);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
+
 }
 
 void COLLADAConverter::endBox() {
@@ -445,7 +448,21 @@ void COLLADAConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     m_writer->appendTextBlock("<!-- RVMRectangularTorus -->");
-	writeMesh(matrix, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::RectangularTorus);
+    params.push_back(rinside);
+    params.push_back(routside);
+    params.push_back(height);
+    params.push_back(angle);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
+
 }
 
 void COLLADAConverter::endRectangularTorus() {
@@ -457,7 +474,20 @@ void COLLADAConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& routside,
                                 const float& angle) {
     m_writer->appendTextBlock("<!-- RVMCircularTorus -->");
-    writeMesh(matrix, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::CircularTorus);
+    params.push_back(rinside);
+    params.push_back(routside);
+    params.push_back(angle);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endCircularTorus() {
@@ -467,8 +497,20 @@ void COLLADAConverter::endCircularTorus() {
 void COLLADAConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
-	m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
-    writeMesh(matrix, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
+	m_writer->appendTextBlock("<!-- RVMEllipticalDish -->");
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::EllipticalDish);
+    params.push_back(diameter);
+    params.push_back(radius);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endEllipticalDish() {
@@ -479,7 +521,19 @@ void COLLADAConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
     m_writer->appendTextBlock("<!-- RVMSphericalDish -->");
-    writeMesh(matrix, RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::SphericalDish);
+    params.push_back(diameter);
+    params.push_back(height);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endSphericalDish() {
@@ -497,7 +551,22 @@ void COLLADAConverter::startSnout(const vector<float>& matrix,
                         const float& unknown3,
                         const float& unknown4) {
 	m_writer->appendTextBlock("<!-- RVMSnout -->");
-    writeMesh(matrix, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Snout);
+    params.push_back(dtop);
+    params.push_back(dbottom);
+    params.push_back(height);
+    params.push_back(xoffset);
+    params.push_back(yoffset);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endSnout() {
@@ -508,7 +577,18 @@ void COLLADAConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
 	m_writer->appendTextBlock("<!-- RVMCylinder -->");
-    writeMesh(matrix, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Cylinder);
+    params.push_back(radius);
+    params.push_back(height);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endCylinder() {
@@ -518,7 +598,19 @@ void COLLADAConverter::endCylinder() {
 void COLLADAConverter::startSphere(const vector<float>& matrix,
                          const float& diameter) {
     m_writer->appendTextBlock("<!-- RVMSphere -->");
-    writeMesh(matrix, RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides));
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Sphere);
+    params.push_back(diameter);
+
+    string gid = getInstanceName(params);
+    if(gid.empty()) {
+       gid = createGeometryId();
+       writeMesh(gid, RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides));
+       m_instanceMap.insert(std::make_pair(params, gid));
+    }
+    addGeometry(gid, matrix);
+
 }
 
 void COLLADAConverter::endSphere() {
@@ -527,7 +619,18 @@ void COLLADAConverter::endSphere() {
 
 void COLLADAConverter::startLine(const vector<float>& matrix, const float& thickness, const float& length) {
 
-    string gid = "G" + to_string((long long)m_model->geometryId()++);
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Line);
+    params.push_back(length); // thickness not taken into account yet
+
+    string gid = getInstanceName(params);
+    if(!gid.empty()) {
+       m_model->groupStack().back()->addGeometry(gid, matrix);
+       return;
+    }
+
+    m_instanceMap.insert(std::make_pair(params, gid));
+    gid = createGeometryId();
 
     m_writer->appendTextBlock("<!-- RVMLine -->");
     m_writer->openElement(colladaKey[colladaKeys::geometry]);
@@ -575,16 +678,40 @@ void COLLADAConverter::startFacetGroup(const vector<float>& matrix,
     m_writer->appendTextBlock("<!-- RMVFacetGroup -->");
     Mesh meshData;
     RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
-    writeMesh(matrix, meshData);
+
+    string gid = createGeometryId();
+    writeMesh(gid, meshData);
+    addGeometry(gid, matrix);
 }
 
 void COLLADAConverter::endFacetGroup() {
     // in start.
 }
 
-void COLLADAConverter::writeMesh(const std::vector<float>& matrix, const Mesh &mesh) {
-	string gid = "G" + to_string((long long)m_model->geometryId()++);
-    bool hasNormals = mesh.normals.size() > 0;
+std::string COLLADAConverter::createGeometryId() {
+        return "G" + to_string((long long)m_model->geometryId()++);
+}
+
+std::string COLLADAConverter::getInstanceName(const std::vector<float> &params) {
+    InstanceMap::iterator I = m_instanceMap.find(params);
+    if(I != m_instanceMap.end()) {
+       //cout << "Found instance: " << params << " " <<  gid <<endl;
+       return (*I).second;
+    }
+    return "";
+}
+
+
+void COLLADAConverter::addGeometry(const std::string &name, const vector<float>& matrix) {
+    vector<float> m = matrix;
+    m[9] -= m_translations.back()[0];
+    m[10] -= m_translations.back()[1];
+    m[11] -= m_translations.back()[2];
+    m_model->groupStack().back()->addGeometry(name, m);
+}
+
+void COLLADAConverter::writeMesh(const std::string &gid, const Mesh &mesh) {
+	bool hasNormals = mesh.normals.size() > 0;
 	bool hasNormalIndex = mesh.normalIndex.size() > 0;
 
 	m_writer->openElement(colladaKey[colladaKeys::geometry]);
@@ -642,12 +769,6 @@ void COLLADAConverter::writeMesh(const std::vector<float>& matrix, const Mesh &m
 
 	m_writer->closeElement(); // mesh
     m_writer->closeElement(); // geometry
-
-    vector<float> m = matrix;
-    m[9] -= m_translations.back()[0];
-    m[10] -= m_translations.back()[1];
-    m[11] -= m_translations.back()[2];
-    m_model->groupStack().back()->addGeometry(gid, m);
 }
 
 #endif // OPENCOLLADASW_FOUND
