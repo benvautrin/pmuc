@@ -23,7 +23,6 @@
 #ifdef OPENCOLLADASW_FOUND
 
 #include "colladaconverter.h"
-#include "COLLADAConverter.h"
 
 #include <iostream>
 #include <set>

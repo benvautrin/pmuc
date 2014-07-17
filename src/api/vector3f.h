@@ -23,6 +23,7 @@
 #define Vector3F_H
 
 #include <vector>
+#include <ostream>
 
 /**
  * @brief Class representing a 3D vector or point.
