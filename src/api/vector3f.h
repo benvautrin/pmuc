@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <ostream>
+#include <cmath>
 
 /**
  * @brief Class representing a 3D vector or point.

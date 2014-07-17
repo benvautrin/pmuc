@@ -22,17 +22,17 @@
 #include "rvmmeshhelper2.h"
 
 #include <iostream>
+#include <algorithm>
 
 #ifdef _WIN32
   #include "windows.h"
 #endif
 
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 #ifndef WIN32
 #  define CALLBACK
-#  define APIENTRY
 #endif /* !WIN32 */
 
 #ifdef _MSC_VER
@@ -46,15 +46,6 @@ using namespace std;
 RVMMeshHelper2::RVMMeshHelper2()
 {
 }
-
-static vector<float> midpoint(const vector<float>& p1, const vector<float>& p2) {
-    vector<float> mp;
-    mp.push_back((p1[0] + p2[0]) / 2.f);
-    mp.push_back((p1[1] + p2[1]) / 2.f);
-    mp.push_back((p1[2] + p2[2]) / 2.f);
-    return mp;
-}
-
 
 static vector<float> cross(const vector<float>& v1, const vector<float>& v2) {
     vector<float> c(3, 0);
@@ -708,7 +699,6 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const float& dishradius, const floa
 
     float radius = (dishradius*dishradius + height*height) / (2*height);
     float angle = asin(1-height/radius);
-    float hd = dishradius;
     int csides = int(2*M_PI * radius / maxSideSize);
     if (csides < minSides) {
         csides = minSides;
