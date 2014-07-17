@@ -20,7 +20,6 @@
  */
 
 #include "colladaconverter.h"
-#include "COLLADAConverter.h"
 
 #include <iostream>
 #include <set>
