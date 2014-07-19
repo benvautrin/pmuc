@@ -47,15 +47,6 @@ RVMMeshHelper2::RVMMeshHelper2()
 {
 }
 
-static vector<float> cross(const vector<float>& v1, const vector<float>& v2) {
-    vector<float> c(3, 0);
-    c[0] = v1[1]*v2[2] - v2[1]*v1[2];
-    c[1] = -v1[0]*v2[2] + v2[0]*v1[2];
-    c[2] = v1[0]*v2[1] - v2[1]*v1[1];
-    return c;
-}
-
-
 static const float cube[] = {
     -.5, -.5, -.5,
     .5, -.5, -.5,
@@ -763,7 +754,7 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const float& dishradius, const floa
 
 pair<int, bool> createIndex( std::vector<Vertex>& references, const Vertex &newValue )
 {
-    int results = std::find( references.begin(), references.end(), newValue )
+    unsigned int results = std::find( references.begin(), references.end(), newValue )
                                     - references.begin();
     if ( results == references.size() ) {
         references.push_back( newValue );
