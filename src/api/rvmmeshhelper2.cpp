@@ -72,7 +72,7 @@ void CALLBACK tessError(GLenum err) {
 void CALLBACK tessCombineData(GLdouble newVert[3], GLdouble *neighbourVert[4], GLfloat neighborWeight[4], void **outData, void * polygon_data) {
     Mesh* userData = (Mesh*) polygon_data;
     unsigned long index = userData->positions.size();
-    userData->positions.push_back(Vector3F(newVert[0], newVert[1], newVert[2]));
+    userData->positions.push_back(Vector3F(float(newVert[0]), float(newVert[1]), float(newVert[2])));
     userData->normals.push_back(Vector3F(0.0f, 1.0f, 0.0f));
     *outData = (void*)index;
 };
