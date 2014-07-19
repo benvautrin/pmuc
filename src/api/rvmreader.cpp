@@ -24,7 +24,7 @@
 RVMReader::RVMReader() :
     m_primitives(false),
     m_split(false),
-    m_minSides(8),
+    m_minSides(16),
     m_maxSideSize(10) {
 }
 

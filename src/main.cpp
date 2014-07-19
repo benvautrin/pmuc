@@ -182,7 +182,7 @@ int main(int argc, char** argv)
         }
     }
 
-    int scale = 1.;
+    float scale = 1.;
     if (options[SCALE].count()) {
         scale = (float)atof(options[SCALE].arg);
     }
