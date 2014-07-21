@@ -23,6 +23,8 @@
 #define Vector3F_H
 
 #include <vector>
+#include <ostream>
+#include <cmath>
 
 /**
  * @brief Class representing a 3D vector or point.
@@ -62,6 +64,20 @@ class Vector3F
             return m_values[2];
         }
 
+        float squaredNorm() const { return x()*x() + y()*y() + z()*z(); }
+
+        float normalize() {
+            const float n = squaredNorm();
+            if(n != 0) {
+                float mag = 1.0f / sqrt(n);
+                m_values[0] *= mag;
+                m_values[1] *= mag;
+                m_values[2] *= mag;
+                return mag;
+            }
+            return 0.f;
+        }
+
         inline bool equals(const Vector3F& v) const {
             return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
         }
@@ -72,6 +88,15 @@ class Vector3F
         friend float operator*(const Vector3F& p1, const Vector3F& p2);
         friend Vector3F operator*(const Vector3F& v, float f);
         friend std::ostream& operator<<(std::ostream& out, const Vector3F& vec);
+
+        friend bool operator!=(const Vector3F &a, const Vector3F &b) {
+            return !(a==b);
+        };
+
+        friend bool operator==(const Vector3F &a, const Vector3F &b) {
+           const float epsilon = 1.0E-10f;
+           return (a-b).squaredNorm() < epsilon;
+        }
 
     private:
         float m_values[3];

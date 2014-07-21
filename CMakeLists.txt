@@ -3,6 +3,13 @@ cmake_minimum_required(VERSION 2.8)
 
 SET(CMAKE_MODULE_PATH "${pmuc_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
+find_package(OpenGL REQUIRED)
+
+# Set C++11 flags to makesome function work
+if(UNIX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x")
+endif()
+
 find_package(XIOT)
 if (XIOT_FOUND)
     include_directories( ${XIOT_INCLUDE_DIR} )
@@ -33,7 +40,7 @@ endif (ICONV_FOUND)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST} ${APISRC_LIST} ${CONVERTERSSRC_LIST})
 if (XIOT_FOUND)
-    target_link_libraries(${PROJECT_NAME} ${OPENCOLLADASW_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${OPENCOLLADASW_LIBRARIES} ${OPENGL_LIBRARIES})
 endif (XIOT_FOUND)
 if (OPENCOLLADASW_FOUND)
     target_link_libraries(${PROJECT_NAME} ${XIOT_LIBRARY})

@@ -25,8 +25,11 @@
 #include <COLLADASWStreamWriter.h>
 
 #include "../api/rvmreader.h"
+#include "../api/rvmmeshhelper2.h"
 
 class CCModel;
+
+typedef std::map<std::vector<float>, std::string> InstanceMap;
 
 class COLLADAConverter : public RVMReader
 {
@@ -122,15 +125,15 @@ class COLLADAConverter : public RVMReader
         virtual void endFacetGroup();
 
     private:        
-        void writeGeometryWithoutNormals(const std::vector<float>& matrix,
-                                         const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >& vertexes);
 
-        void writeGeometryWithNormals(const std::vector<float>& matrix,
-                                      const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > >& vertexes);
+        void writeMesh(const std::string &gid, const Mesh& mesh);
+        void addGeometry(const std::string &gid, const std::vector<float>& matrix);
+        std::string getInstanceName(const std::vector<float> &params);
+        std::string createGeometryId();
 
         COLLADASW::StreamWriter* m_writer;
         std::vector<std::vector<float> > m_translations;
-
+        InstanceMap m_instanceMap;
         CCModel* m_model;
 };
 
