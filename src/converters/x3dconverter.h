@@ -23,6 +23,7 @@
 #define X3DCONVERTER_H
 
 #include "../api/rvmreader.h"
+#include "../api/rvmmeshhelper2.h"
 
 namespace XIOT {
     class X3DWriter;
@@ -124,6 +125,8 @@ class X3DConverter : public RVMReader
     private:
         void startShape(const std::vector<float>& matrix);
         void endShape();
+
+        void startIndexedTriangleSet(const Mesh& matrix);
 
         std::vector<XIOT::X3DWriter*> m_writers;
         std::vector<std::vector<float> > m_translations;
