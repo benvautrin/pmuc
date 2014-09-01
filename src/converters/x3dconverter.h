@@ -23,7 +23,7 @@
 #define X3DCONVERTER_H
 
 #include "../api/rvmreader.h"
-#include "../api/rvmmeshhelper2.h"
+#include "../api/rvmmeshhelper.h"
 
 namespace XIOT {
     class X3DWriter;

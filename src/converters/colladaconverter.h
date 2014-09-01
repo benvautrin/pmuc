@@ -25,7 +25,7 @@
 #include <COLLADASWStreamWriter.h>
 
 #include "../api/rvmreader.h"
-#include "../api/rvmmeshhelper2.h"
+#include "../api/rvmmeshhelper.h"
 
 class CCModel;
 

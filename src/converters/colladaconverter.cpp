@@ -34,7 +34,6 @@
 
 #include "../api/rvmcolorhelper.h"
 #include "../api/rvmmeshhelper.h"
-#include "../api/rvmmeshhelper2.h"
 
 using namespace std;
 using namespace COLLADASW;

@@ -37,7 +37,7 @@
 #include <Eigen/SVD>
 
 #include "../api/rvmcolorhelper.h"
-#include "../api/rvmmeshhelper2.h"
+#include "../api/rvmmeshhelper.h"
 #include "../api/vector3f.h"
 
 using namespace std;
