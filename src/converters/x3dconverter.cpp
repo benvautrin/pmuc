@@ -118,23 +118,15 @@ void X3DConverter::startModel(const string& projectName, const string& name) {
     MFString info;
     info.push_back("info");
     m_writers.back()->setMFString(ID::info, info);
+    m_writers.back()->startNode(ID::MetadataSet);
     if (!projectName.empty()) {
-        m_writers.back()->startNode(ID::MetadataString);
-        m_writers.back()->setSFString(ID::name, "projectName");
-        MFString pN;
-        pN.push_back(projectName);
-        m_writers.back()->setMFString(ID::value, pN);
-        m_writers.back()->endNode();
+        writeMetaDataString("projectName", projectName);
     }
     if (!name.empty()) {
-        m_writers.back()->startNode(ID::MetadataString);
-        m_writers.back()->setSFString(ID::name, "name");
-        MFString n;
-        n.push_back(name);
-        m_writers.back()->setMFString(ID::value, n);
-        m_writers.back()->endNode();
+        writeMetaDataString("name", name);
     }
-    m_writers.back()->endNode();
+    m_writers.back()->endNode(); // MetaDataSet
+    m_writers.back()->endNode(); // WorldInfo
     m_writers.back()->startNode(ID::Background);
     m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
     m_writers.back()->endNode();
@@ -213,12 +205,7 @@ void X3DConverter::endMetaData() {
 }
 
 void X3DConverter::startMetaDataPair(const string &name, const string &value) {
-    m_writers.back()->startNode(ID::MetadataString);
-    m_writers.back()->setSFString(ID::name, name);
-    vector<string> v; v.push_back(value);
-    m_writers.back()->setMFString(ID::value, v);
-    m_writers.back()->setSFString(ID::containerField, "metadata");
-    m_writers.back()->endNode();
+    writeMetaDataString(name, value);
 }
 
 void X3DConverter::endMetaDataPair() {
@@ -387,11 +374,11 @@ void X3DConverter::startLine(const vector<float>& matrix,
     c.push_back(startx); c.push_back(0); c.push_back(0);
     c.push_back(endx); c.push_back(0); c.push_back(0);
     m_writers.back()->setMFFloat(ID::point, c);
-    m_writers.back()->endNode();
+    m_writers.back()->endNode(); // Coordinate
 }
 
 void X3DConverter::endLine() {
-    m_writers.back()->endNode();
+    m_writers.back()->endNode(); // LineSet
     endShape();
 }
 
@@ -510,6 +497,15 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
 void X3DConverter::endShape() {
     m_writers.back()->endNode(); // Shape
     m_writers.back()->endNode(); // Transform
+}
+
+void X3DConverter::writeMetaDataString(const string &name, const string &value) {
+    m_writers.back()->startNode(ID::MetadataString);
+    m_writers.back()->setSFString(ID::name, name);
+    vector<string> v; v.push_back(escapeXMLAttribute(value));
+    m_writers.back()->setMFString(ID::value, v);
+    //m_writers.back()->setSFString(ID::containerField, "metadata");
+    m_writers.back()->endNode();
 }
 
 #endif // XIOT_FOUND

@@ -127,6 +127,7 @@ class X3DConverter : public RVMReader
         void endShape();
 
         void startIndexedTriangleSet(const Mesh& matrix);
+        void writeMetaDataString(const std::string &name, const std::string &value);
 
         std::vector<XIOT::X3DWriter*> m_writers;
         std::vector<std::vector<float> > m_translations;
