@@ -126,7 +126,7 @@ class COLLADAConverter : public RVMReader
 
     private:        
 
-        void writeMesh(const std::string &gid, const Mesh& mesh);
+        void writeMesh(const std::string &gid, const Mesh& mesh, const std::string comment = "");
         void addGeometry(const std::string &gid, const std::vector<float>& matrix);
         std::string getInstanceName(const std::vector<float> &params);
         std::string createGeometryId();
