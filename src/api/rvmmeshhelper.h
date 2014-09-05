@@ -34,6 +34,22 @@ struct Mesh {
  std::vector<Vector3F>  normals;
 };
 
+
+enum PrimitiveTypes {
+    Pyramid = 1,
+    Box = 2,
+    RectangularTorus = 3,
+    CircularTorus = 4,
+    EllipticalDish = 5,
+    SphericalDish = 6,
+    Snout = 7,
+    Cylinder =  8,
+    Sphere = 9,
+    Line = 10,
+    FacetGroup = 11
+};
+
+
 typedef std::pair<Vector3F, Vector3F> Vertex;
 
 class RVMMeshHelper2

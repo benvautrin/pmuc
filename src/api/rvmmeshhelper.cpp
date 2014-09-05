@@ -47,15 +47,32 @@ RVMMeshHelper2::RVMMeshHelper2()
 {
 }
 
-static const float cube[] = {
-    -.5, -.5, -.5,
-    .5, -.5, -.5,
-    .5, .5, -.5,
-    -.5, .5, -.5,
-    -.5, -.5, .5,
-    .5, -.5, .5,
-    .5, .5, .5,
-    -.5, .5, .5,
+static const float cube_positions[] = {
+   -1.0f,-1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,   1.0f, 1.0f,-1.0f,   1.0f,-1.0f,-1.0f,
+    -1.0f,-1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,   1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f,-1.0f,  -1.0f,-1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f,-1.0f,
+    1.0f,-1.0f,-1.0f,   1.0f,-1.0f, 1.0f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,
+    -1.0f, 1.0f,-1.0f,  -1.0f, 1.0f, 1.0f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,
+    -1.0f,-1.0f,-1.0f,  -1.0f,-1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f
+};
+
+static const float cube_normals[] = {
+   0.0f, 0.0f,-1.0f,
+   0.0f, 0.0f, 1.0f,
+  -1.0f, 0.0f, 0.0f,
+   1.0f, 0.0f, 0.0f,
+   0.0f, 1.0f, 0.0f,
+   0.0f, -1.0f, 0.0f,
+};
+
+
+static const unsigned long cube_index[] = {
+    0,1,2, 2,3,0,
+    4,7,5, 5,7,6,
+    8,9,10, 10,11,8,
+    12,14,13, 14,12,15,
+    16,17,18, 18,19,16,
+    20,22,21, 22,20,23
 };
 
 void CALLBACK tessVertexData(void * vertex_data, void * polygon_data) {
@@ -79,41 +96,27 @@ void CALLBACK tessCombineData(GLdouble newVert[3], GLdouble *neighbourVert[4], G
 
 const Mesh RVMMeshHelper2::makeBox(const float& x, const float &y, const float &z, const float &maxSideSize, const int &minSides) {
     vector<Vector3F> points;
-    for (int i = 0; i < 8; i++) {
-        Vector3F point;
-        point[0] = cube[i*3] * x;
-        point[1] = cube[i*3+1] * y;
-        point[2] = cube[i*3+2] * z;
+    vector<Vector3F> normals;
+    for (int i = 0; i < 24; i++) {
+        Vector3F point, normal;
+        point[0] = cube_positions[i*3] * x * 0.5f;
+        point[1] = cube_positions[i*3+1] * y * 0.5f;
+        point[2] = cube_positions[i*3+2] * z * 0.5f;
+        normal[0] = cube_normals[i/4*3];
+        normal[1] = cube_normals[i/4*3+1];
+        normal[2] = cube_normals[i/4*3+2];
         points.push_back(point);
-    }
-    vector<unsigned long> index;
-    for (int i = 0; i < 4; i++) {
-        index.push_back(i);
-        index.push_back(i == 3 ? 0 : i+1);
-        index.push_back(i+4);
-        index.push_back(i == 3 ? 0 : i+1);
-        index.push_back(i == 3 ? 4 : i+5);
-        index.push_back(i+4);
+        normals.push_back(normal);
     }
 
-	vector<int> findex(3, 0);
-    index.push_back(0);
-	index.push_back(2);
-	index.push_back(1);
-    index.push_back(0);
-	index.push_back(3);
-	index.push_back(2);
-    index.push_back(4);
-	index.push_back(5);
-	index.push_back(6);
-    index.push_back(4);
-	index.push_back(6);
-	index.push_back(7);
+    // Copy the index of the box
+    vector<unsigned long> index (cube_index, cube_index + sizeof(cube_index) / sizeof(cube_index[0]) );
 
-	Mesh result;
-	result.positions = points;
-	result.positionIndex = index;
-	return result;
+    Mesh result;
+    result.positions = points;
+    result.positionIndex = index;
+    result.normals = normals;
+    return result;
 }
 
 const Mesh RVMMeshHelper2::makeSphere(const float& radius, const float& maxSideSize, const int& minSides) {
