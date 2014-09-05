@@ -69,7 +69,8 @@ string escapeXMLAttribute(const string& value) {
 
 X3DConverter::X3DConverter(const string& filename, bool binary) :
     RVMReader(),
-    m_binary(binary)
+    m_binary(binary),
+    m_id(0)
 {
     X3DWriter* writer = binary ? (X3DWriter*)new X3DWriterFI() : (X3DWriter*)new X3DWriterXML();
     writer->setProperty(Property::IntEncodingAlgorithm, (void*)Encoder::DeltazlibIntArrayEncoder);
@@ -220,9 +221,27 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
 
-    Mesh c = RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
     startShape(matrix);
-    startIndexedTriangleSet(c);
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Pyramid);
+    params.push_back(xbottom);
+    params.push_back(ybottom);
+    params.push_back(xtop);
+    params.push_back(ytop);
+    params.push_back(height);
+    params.push_back(xoffset);
+    params.push_back(yoffset);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
+    }
 }
 
 void X3DConverter::endPyramid() {
@@ -235,12 +254,25 @@ void X3DConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
     startShape(matrix);
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Box);
+    params.push_back(xlength);
+    params.push_back(ylength);
+    params.push_back(zlength);
+
     if (m_primitives) {
         m_writers.back()->startNode(ID::Box);
         m_writers.back()->setSFVec3f(ID::size, xlength, ylength, zlength);
     } else {
-        Mesh c = RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
-        startIndexedTriangleSet(c);
+        pair<string,int> gid = getInstanceName(params);
+        if(gid.first.empty()) {
+            gid.first = createGeometryId();
+            Mesh c = RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
+            gid.second = startMeshGeometry(c, gid.first);
+            m_instanceMap.insert(std::make_pair(params, gid));
+        } else {
+            writeMeshInstance(gid.second, gid.first);
+        }
     }
 }
 
@@ -254,9 +286,23 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& routside,
                                    const float& height,
                                    const float& angle) {
-    Mesh c = RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
     startShape(matrix);
-    startIndexedTriangleSet(c);
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::RectangularTorus);
+    params.push_back(rinside);
+    params.push_back(routside);
+    params.push_back(height);
+    params.push_back(angle);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
+    }
 }
 
 void X3DConverter::endRectangularTorus() {
@@ -270,7 +316,23 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& angle) {
     Mesh c = RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
     startShape(matrix);
-    startIndexedTriangleSet(c);
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::CircularTorus);
+    params.push_back(rinside);
+    params.push_back(routside);
+    params.push_back(angle);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
+    }
+
 }
 
 void X3DConverter::endCircularTorus() {
@@ -281,9 +343,22 @@ void X3DConverter::endCircularTorus() {
 void X3DConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
-    Mesh c = RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
     startShape(matrix);
-    startIndexedTriangleSet(c);
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::EllipticalDish);
+    params.push_back(diameter);
+    params.push_back(radius);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
+    }
 }
 
 void X3DConverter::endEllipticalDish() {
@@ -294,9 +369,22 @@ void X3DConverter::endEllipticalDish() {
 void X3DConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
-    Mesh c = RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
     startShape(matrix);
-    startIndexedTriangleSet(c);
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::SphericalDish);
+    params.push_back(diameter);
+    params.push_back(height);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
+    }
 }
 
 void X3DConverter::endSphericalDish() {
@@ -317,9 +405,25 @@ void X3DConverter::startSnout(const vector<float>& matrix,
     if (height == 0 && dbottom == 0 && dtop == 0) { // Degenerated snout...
         return;
     }
-    Mesh c = RVMMeshHelper2::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
     startShape(matrix);
-    startIndexedTriangleSet(c);
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Snout);
+    params.push_back(dtop);
+    params.push_back(dbottom);
+    params.push_back(height);
+    params.push_back(xoffset);
+    params.push_back(yoffset);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        Mesh c = RVMMeshHelper2::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
+        gid.first = createGeometryId();
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
+    }
 }
 
 void X3DConverter::endSnout() {
@@ -331,13 +435,27 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
     startShape(matrix);
+
     if (m_primitives) {
         m_writers.back()->startNode(ID::Cylinder);
         m_writers.back()->setSFFloat(ID::radius, radius);
         m_writers.back()->setSFFloat(ID::height, height);
     } else {
-        Mesh c = RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides);
-        startIndexedTriangleSet(c);
+        std::vector<float> params;
+        params.push_back(PrimitiveTypes::Cylinder);
+        params.push_back(radius);
+        params.push_back(height);
+
+        pair<string,int> gid = getInstanceName(params);
+        if(gid.first.empty()) {
+            gid.first = createGeometryId();
+            Mesh c = RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides);
+            gid.second = startMeshGeometry(c, gid.first);
+            m_instanceMap.insert(std::make_pair(params, gid));
+        } else {
+            writeMeshInstance(gid.second, gid.first);
+        }
+
     }
 }
 
@@ -353,8 +471,19 @@ void X3DConverter::startSphere(const vector<float>& matrix,
         m_writers.back()->startNode(ID::Sphere);
         m_writers.back()->setSFFloat(ID::radius, diameter/2);
     } else {
-        Mesh c = RVMMeshHelper2::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
-        startIndexedTriangleSet(c);
+        std::vector<float> params;
+        params.push_back(PrimitiveTypes::Sphere);
+        params.push_back(diameter);
+
+        pair<string,int> gid = getInstanceName(params);
+        if(gid.first.empty()) {
+            Mesh c = RVMMeshHelper2::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
+            gid.first = createGeometryId();
+            gid.second = startMeshGeometry(c, gid.first);
+            m_instanceMap.insert(std::make_pair(params, gid));
+        } else {
+            writeMeshInstance(gid.second, gid.first);
+        }
     }
 }
 
@@ -382,9 +511,10 @@ void X3DConverter::endLine() {
     endShape();
 }
 
-void X3DConverter::startIndexedTriangleSet(const Mesh &mesh) {
+int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
     bool hasNormals = mesh.normals.size() > 0;
     bool hasNormalIndex = mesh.normalIndex.size() > 0;
+    int meshType;
 
     // Not nice, but okay for now
     vector<int> index;
@@ -396,7 +526,11 @@ void X3DConverter::startIndexedTriangleSet(const Mesh &mesh) {
     }
 
     if(hasNormalIndex) { // We have to use a IndexedFaceSet
-        m_writers.back()->startNode(ID::IndexedFaceSet);
+        meshType = ID::IndexedFaceSet;
+        m_writers.back()->startNode(meshType);
+        if(!id.empty()) {
+            m_writers.back()->setSFString(ID::DEF, id);
+        }
         m_writers.back()->setSFBool(ID::solid, false);
 
         vector<int> nindex;
@@ -416,7 +550,11 @@ void X3DConverter::startIndexedTriangleSet(const Mesh &mesh) {
         }
         m_writers.back()->setMFInt32(ID::normalIndex, nindex);
     } else {
-        m_writers.back()->startNode(ID::IndexedTriangleSet);
+        meshType = ID::IndexedTriangleSet;
+        m_writers.back()->startNode(meshType);
+        if(!id.empty()) {
+            m_writers.back()->setSFString(ID::DEF, id);
+        }
         m_writers.back()->setSFBool(ID::solid, false);
         for (unsigned int i = 0; i < mesh.positionIndex.size(); i++) {
             index.push_back(mesh.positionIndex.at(i));
@@ -440,6 +578,7 @@ void X3DConverter::startIndexedTriangleSet(const Mesh &mesh) {
         m_writers.back()->setMFFloat(ID::vector, normals);
         m_writers.back()->endNode();
     }
+    return meshType;
 }
 
 
@@ -448,7 +587,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
     startShape(matrix);
     Mesh meshData;
     RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
-    startIndexedTriangleSet(meshData);
+    startMeshGeometry(meshData, "");
 }
 
 void X3DConverter::endFacetGroup() {
@@ -506,6 +645,23 @@ void X3DConverter::writeMetaDataString(const string &name, const string &value) 
     m_writers.back()->setMFString(ID::value, v);
     //m_writers.back()->setSFString(ID::containerField, "metadata");
     m_writers.back()->endNode();
+}
+
+void X3DConverter::writeMeshInstance(int meshType, const std::string &use) {
+    m_writers.back()->startNode(meshType);
+    m_writers.back()->setSFString(ID::USE, use);
+}
+
+std::string X3DConverter::createGeometryId() {
+        return "G" + to_string(m_id++);
+}
+
+std::pair<std::string, int> X3DConverter::getInstanceName(const std::vector<float> &params) {
+    X3DInstanceMap::iterator I = m_instanceMap.find(params);
+    if(I != m_instanceMap.end()) {
+       return (*I).second;
+    }
+    return std::make_pair("", 0);
 }
 
 #endif // XIOT_FOUND

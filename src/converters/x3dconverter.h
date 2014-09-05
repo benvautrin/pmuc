@@ -25,9 +25,14 @@
 #include "../api/rvmreader.h"
 #include "../api/rvmmeshhelper.h"
 
+#include <utility>
+#include <map>
+
 namespace XIOT {
     class X3DWriter;
 }
+
+typedef std::map<std::vector<float>, std::pair<std::string,int>> X3DInstanceMap;
 
 class X3DConverter : public RVMReader
 {
@@ -126,8 +131,15 @@ class X3DConverter : public RVMReader
         void startShape(const std::vector<float>& matrix);
         void endShape();
 
-        void startIndexedTriangleSet(const Mesh& matrix);
+        int startMeshGeometry(const Mesh& mesh, const std::string &id);
+        void writeMeshInstance(int meshType, const std::string &use);
+
         void writeMetaDataString(const std::string &name, const std::string &value);
+        std::pair<std::string, int> getInstanceName(const std::vector<float> &params);
+        std::string createGeometryId();
+
+        X3DInstanceMap m_instanceMap;
+        int m_id;
 
         std::vector<XIOT::X3DWriter*> m_writers;
         std::vector<std::vector<float> > m_translations;
