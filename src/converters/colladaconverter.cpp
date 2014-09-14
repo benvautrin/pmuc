@@ -34,7 +34,6 @@
 
 #include "../api/rvmcolorhelper.h"
 #include "../api/rvmmeshhelper.h"
-#include "../api/rvmmeshhelper2.h"
 
 using namespace std;
 using namespace COLLADASW;
@@ -155,20 +154,6 @@ static String colladaKey[] = {
 	"ph",
 	"h",
 	"polygons",
-};
-
-enum PrimitiveTypes {
-    Pyramid = 1,
-    Box = 2,
-    RectangularTorus = 3,
-    CircularTorus = 4,
-    EllipticalDish = 5,
-    SphericalDish = 6,
-    Snout = 7,
-    Cylinder =  8,
-    Sphere = 9,
-    Line = 10,
-    FacetGroup = 11
 };
 
 

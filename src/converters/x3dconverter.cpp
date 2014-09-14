@@ -69,7 +69,8 @@ string escapeXMLAttribute(const string& value) {
 
 X3DConverter::X3DConverter(const string& filename, bool binary) :
     RVMReader(),
-    m_binary(binary)
+    m_binary(binary),
+    m_id(0)
 {
     X3DWriter* writer = binary ? (X3DWriter*)new X3DWriterFI() : (X3DWriter*)new X3DWriterXML();
     writer->setProperty(Property::IntEncodingAlgorithm, (void*)Encoder::DeltazlibIntArrayEncoder);
@@ -114,30 +115,22 @@ void X3DConverter::endHeader() {
 }
 
 void X3DConverter::startModel(const string& projectName, const string& name) {
-    m_writers.back()->startNode(ID::WorldInfo);
+    startNode(ID::WorldInfo);
     MFString info;
     info.push_back("info");
     m_writers.back()->setMFString(ID::info, info);
+    startNode(ID::MetadataSet);
     if (!projectName.empty()) {
-        m_writers.back()->startNode(ID::MetadataString);
-        m_writers.back()->setSFString(ID::name, "projectName");
-        MFString pN;
-        pN.push_back(projectName);
-        m_writers.back()->setMFString(ID::value, pN);
-        m_writers.back()->endNode();
+        writeMetaDataString("projectName", projectName, true);
     }
     if (!name.empty()) {
-        m_writers.back()->startNode(ID::MetadataString);
-        m_writers.back()->setSFString(ID::name, "name");
-        MFString n;
-        n.push_back(name);
-        m_writers.back()->setMFString(ID::value, n);
-        m_writers.back()->endNode();
+        writeMetaDataString("name", name, true);
     }
-    m_writers.back()->endNode();
-    m_writers.back()->startNode(ID::Background);
+    endNode(ID::MetadataSet); // MetaDataSet
+    endNode(ID::WorldInfo); // WorldInfo
+    startNode(ID::Background);
     m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
-    m_writers.back()->endNode();
+    endNode(ID::Background);
 }
 
 void X3DConverter::endModel() {
@@ -159,7 +152,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
     m_groups.push_back(name);
 
     if (m_split) {
-        m_writers.back()->startNode(ID::Inline);
+        startNode(ID::Inline);
         m_writers.back()->setSFString(ID::url, x3dName + ".x3d");
 
         X3DWriter* writer = m_binary ? (X3DWriter*)new X3DWriterFI() : (X3DWriter*)new X3DWriterXML();
@@ -170,11 +163,11 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
         multimap<std::string, std::string> meta;
         meta.insert(pair<string, string>("generator", "Plant Mock-Up Converter 0.1"));
         m_writers.back()->startX3DDocument(Immersive, VERSION_3_0, &meta, false);
-        m_writers.back()->startNode(ID::Background);
+        startNode(ID::Background);
         m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
-        m_writers.back()->endNode();
+        endNode(ID::Background);
     }
-    m_writers.back()->startNode(ID::Transform);
+    startNode(ID::Transform);
 	// Problems with encoding and unicity so changed name from DEF storage to metadata. See after translation.
     //m_writers.back()->setSFString(ID::DEF, x3dName);
     m_writers.back()->setSFVec3f(ID::translation,
@@ -184,41 +177,34 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
     m_translations.push_back(translation);
 
     // PDMS name as metadata.
-    m_writers.back()->startNode(ID::MetadataString);
-    m_writers.back()->setSFString(ID::name, "pdmsName");
-    vector<string> v; v.push_back(escapeXMLAttribute(name));
-    m_writers.back()->setMFString(ID::value, v);
-    m_writers.back()->setSFString(ID::containerField, "metadata");
-    m_writers.back()->endNode();
+    // writeMetaDataString("pdms", name);
 }
 
 void X3DConverter::endGroup() {
     m_translations.pop_back();
     m_materials.pop_back();
     m_groups.pop_back();
-    m_writers.back()->endNode(); // Transform
+    endNode(ID::Transform); // Transform
     if (m_split) {
         m_writers.back()->endX3DDocument();
         m_writers.back()->flush();
         m_writers.back()->closeFile();
         m_writers.pop_back();
-        m_writers.back()->endNode();
+        endNode(ID::Inline);
     }
 }
 
 void X3DConverter::startMetaData() {
+    startNode(ID::MetadataSet);
+    m_writers.back()->setSFString(ID::containerField, "metadata");
 }
 
 void X3DConverter::endMetaData() {
+    endNode(ID::MetadataSet); // MetadataSet
 }
 
 void X3DConverter::startMetaDataPair(const string &name, const string &value) {
-    m_writers.back()->startNode(ID::MetadataString);
-    m_writers.back()->setSFString(ID::name, name);
-    vector<string> v; v.push_back(value);
-    m_writers.back()->setMFString(ID::value, v);
-    m_writers.back()->setSFString(ID::containerField, "metadata");
-    m_writers.back()->endNode();
+    writeMetaDataString(name, value, true);
 }
 
 void X3DConverter::endMetaDataPair() {
@@ -232,31 +218,32 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
                           const float& height,
                           const float& xoffset,
                           const float& yoffset) {
+
     startShape(matrix);
-    pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
-    vector<int> index;
-    vector<float> coordinates;
-    for (unsigned int i = 0; i < c.first.size(); i++) {
-        for (unsigned int j = 0; j < c.first[i].size(); j++) {
-            coordinates.push_back(c.first[i][j]);
-        }
-    }
-    for (unsigned int i = 0; i < c.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second[i].size(); j++) {
-            index.push_back(c.second[i][j]);
-        }
-    }
-    if (index.size() != 0) { // Seems to happen with all parameters set to 0.
-        m_writers.back()->startNode(ID::IndexedTriangleSet);
-        m_writers.back()->setMFInt32(ID::index, index);
-        m_writers.back()->startNode(ID::Coordinate);
-        m_writers.back()->setMFFloat(ID::point, coordinates);
-        m_writers.back()->endNode(); // Coordinate
-        m_writers.back()->endNode(); // IndexedFaceSet
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Pyramid);
+    params.push_back(xbottom);
+    params.push_back(ybottom);
+    params.push_back(xtop);
+    params.push_back(ytop);
+    params.push_back(height);
+    params.push_back(xoffset);
+    params.push_back(yoffset);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
     }
 }
 
 void X3DConverter::endPyramid() {
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -265,33 +252,30 @@ void X3DConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
     startShape(matrix);
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Box);
+    params.push_back(xlength);
+    params.push_back(ylength);
+    params.push_back(zlength);
+
     if (m_primitives) {
-        m_writers.back()->startNode(ID::Box);
+        startNode(ID::Box);
         m_writers.back()->setSFVec3f(ID::size, xlength, ylength, zlength);
     } else {
-        m_writers.back()->startNode(ID::IndexedTriangleSet);
-        pair<vector<vector<float> >, vector<vector<int> > > c = RVMMeshHelper::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
-        vector<int> index;
-        vector<float> coordinates;
-        for (unsigned int i = 0; i < c.first.size(); i++) {
-            for (unsigned int j = 0; j < 3; j++) {
-                coordinates.push_back(c.first[i][j]);
-            }
+        pair<string,int> gid = getInstanceName(params);
+        if(gid.first.empty()) {
+            gid.first = createGeometryId();
+            Mesh c = RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
+            gid.second = startMeshGeometry(c, gid.first);
+            m_instanceMap.insert(std::make_pair(params, gid));
+        } else {
+            writeMeshInstance(gid.second, gid.first);
         }
-        for (unsigned int i = 0; i < c.second.size(); i++) {
-            for (unsigned int j = 0; j < c.second[i].size(); j++) {
-                index.push_back(c.second[i][j]);
-            }
-        }
-        m_writers.back()->setMFInt32(ID::index, index);
-        m_writers.back()->startNode(ID::Coordinate);
-        m_writers.back()->setMFFloat(ID::point, coordinates);
-        m_writers.back()->endNode();
     }
 }
 
 void X3DConverter::endBox() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -301,44 +285,26 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedTriangleSet);
-    pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
-    vector<int> index;
-    vector<float> coordinates;
-    for (unsigned int i = 0; i < c.first.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            coordinates.push_back(c.first.first[i][j]);
-        }
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::RectangularTorus);
+    params.push_back(rinside);
+    params.push_back(routside);
+    params.push_back(height);
+    params.push_back(angle);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
     }
-    for (unsigned int i = 0; i < c.first.second.size(); i++) {
-        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-            index.push_back(c.first.second[i][j]);
-        }
-    }
-    vector<int> normalindex;
-    vector<float> normals;
-    for (unsigned int i = 0; i < c.second.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            normals.push_back(c.second.first[i][j]);
-        }
-    }
-    for (unsigned int i = 0; i < c.second.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-            normalindex.push_back(c.second.second[i][j]);
-        }
-    }
-    m_writers.back()->setMFInt32(ID::index, index);
-    m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
-    m_writers.back()->startNode(ID::Normal);
-    m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode();
 }
 
 void X3DConverter::endRectangularTorus() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -346,45 +312,29 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& rinside,
                                 const float& routside,
                                 const float& angle) {
+    Mesh c = RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedTriangleSet);
-    pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
-    vector<int> index;
-    vector<float> coordinates;
-    for (unsigned int i = 0; i < c.first.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            coordinates.push_back(c.first.first[i][j]);
-        }
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::CircularTorus);
+    params.push_back(rinside);
+    params.push_back(routside);
+    params.push_back(angle);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
     }
-    for (unsigned int i = 0; i < c.first.second.size(); i++) {
-        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-            index.push_back(c.first.second[i][j]);
-        }
-    }
-    vector<int> normalindex;
-    vector<float> normals;
-    for (unsigned int i = 0; i < c.second.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            normals.push_back(c.second.first[i][j]);
-        }
-    }
-    for (unsigned int i = 0; i < c.second.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-            normalindex.push_back(c.second.second[i][j]);
-        }
-    }
-    m_writers.back()->setMFInt32(ID::index, index);
-    m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
-    m_writers.back()->startNode(ID::Normal);
-    m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode();
+
 }
 
 void X3DConverter::endCircularTorus() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -392,45 +342,25 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& diameter,
                                  const float& radius) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedTriangleSet);
-    pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
-    vector<int> index;
-    vector<float> coordinates;
-    for (unsigned int i = 0; i < c.first.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            coordinates.push_back(c.first.first[i][j]);
-        }
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::EllipticalDish);
+    params.push_back(diameter);
+    params.push_back(radius);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
     }
-    for (unsigned int i = 0; i < c.first.second.size(); i++) {
-        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-            index.push_back(c.first.second[i][j]);
-        }
-    }
-    vector<int> normalindex;
-    vector<float> normals;
-    for (unsigned int i = 0; i < c.second.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            normals.push_back(c.second.first[i][j]);
-        }
-    }
-    for (unsigned int i = 0; i < c.second.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-            normalindex.push_back(c.second.second[i][j]);
-        }
-    }
-    m_writers.back()->setMFInt32(ID::index, index);
-    m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-    m_writers.back()->setSFBool(ID::solid, false);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
-    m_writers.back()->startNode(ID::Normal);
-    m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode();
 }
 
 void X3DConverter::endEllipticalDish() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -438,45 +368,25 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedTriangleSet);
-    pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
-    vector<int> index;
-    vector<float> coordinates;
-    for (unsigned int i = 0; i < c.first.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            coordinates.push_back(c.first.first[i][j]);
-        }
+
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::SphericalDish);
+    params.push_back(diameter);
+    params.push_back(height);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        gid.first = createGeometryId();
+        Mesh c = RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
     }
-    for (unsigned int i = 0; i < c.first.second.size(); i++) {
-        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-            index.push_back(c.first.second[i][j]);
-        }
-    }
-    vector<int> normalindex;
-    vector<float> normals;
-    for (unsigned int i = 0; i < c.second.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            normals.push_back(c.second.first[i][j]);
-        }
-    }
-    for (unsigned int i = 0; i < c.second.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-            normalindex.push_back(c.second.second[i][j]);
-        }
-    }
-    m_writers.back()->setMFInt32(ID::index, index);
-    m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-    m_writers.back()->setSFBool(ID::solid, false);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
-    m_writers.back()->startNode(ID::Normal);
-    m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode();
 }
 
 void X3DConverter::endSphericalDish() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -490,101 +400,69 @@ void X3DConverter::startSnout(const vector<float>& matrix,
                         const float& unknown2,
                         const float& unknown3,
                         const float& unknown4) {
+    startShape(matrix);
+
     if (height == 0 && dbottom == 0 && dtop == 0) { // Degenerated snout...
+        startNode(ID::IndexedFaceSet);
+        cerr << "Error: Found degenerated snout. Skipping data ..." << endl;
         return;
     }
 
-    startShape(matrix);
-    pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
-    vector<int> index;
-    vector<float> coordinates;
-    for (unsigned int i = 0; i < c.first.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            coordinates.push_back(c.first.first[i][j]);
-        }
+    std::vector<float> params;
+    params.push_back(PrimitiveTypes::Snout);
+    params.push_back(dtop);
+    params.push_back(dbottom);
+    params.push_back(height);
+    params.push_back(xoffset);
+    params.push_back(yoffset);
+
+    pair<string,int> gid = getInstanceName(params);
+    if(gid.first.empty()) {
+        Mesh c = RVMMeshHelper2::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
+        gid.first = createGeometryId();
+        gid.second = startMeshGeometry(c, gid.first);
+        m_instanceMap.insert(std::make_pair(params, gid));
+    } else {
+        writeMeshInstance(gid.second, gid.first);
     }
-    for (unsigned int i = 0; i < c.first.second.size(); i++) {
-        for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-            index.push_back(c.first.second[i][j]);
-        }
-    }
-    vector<int> normalindex;
-    vector<float> normals;
-    for (unsigned int i = 0; i < c.second.first.size(); i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            normals.push_back(c.second.first[i][j]);
-        }
-    }
-    for (unsigned int i = 0; i < c.second.second.size(); i++) {
-        for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-            normalindex.push_back(c.second.second[i][j]);
-        }
-    }
-    m_writers.back()->startNode(ID::IndexedTriangleSet);
-    m_writers.back()->setSFBool(ID::solid, false);
-    m_writers.back()->setMFInt32(ID::index, index);
-    m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode(); // Coordinate
-    m_writers.back()->startNode(ID::Normal);
-    m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode(); // Normal
-    m_writers.back()->endNode(); // IndexedFaceSet
-    endShape();
 }
 
 void X3DConverter::endSnout() {
+    endNode(ID::IndexedFaceSet);
+    endShape();
 }
 
 void X3DConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
     startShape(matrix);
+
     if (m_primitives) {
-        m_writers.back()->startNode(ID::Cylinder);
+        startNode(ID::Cylinder);
         m_writers.back()->setSFFloat(ID::radius, radius);
         m_writers.back()->setSFFloat(ID::height, height);
     } else {
-        m_writers.back()->startNode(ID::IndexedTriangleSet);
-        pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeCylinder(radius, height, m_maxSideSize, m_minSides);
-        vector<int> index;
-        vector<float> coordinates;
-        for (unsigned int i = 0; i < c.first.first.size(); i++) {
-            for (unsigned int j = 0; j < 3; j++) {
-                coordinates.push_back(c.first.first[i][j]);
-            }
+        std::vector<float> params;
+        params.push_back(PrimitiveTypes::Cylinder);
+        params.push_back(radius);
+        params.push_back(height);
+
+        pair<string,int> gid = getInstanceName(params);
+        if(gid.first.empty()) {
+            gid.first = createGeometryId();
+            Mesh c = RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides);
+            gid.second = startMeshGeometry(c, gid.first);
+            m_instanceMap.insert(std::make_pair(params, gid));
+        } else {
+            writeMeshInstance(gid.second, gid.first);
         }
-        for (unsigned int i = 0; i < c.first.second.size(); i++) {
-            for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-                index.push_back(c.first.second[i][j]);
-            }
-        }
-        vector<int> normalindex;
-        vector<float> normals;
-        for (unsigned int i = 0; i < c.second.first.size(); i++) {
-            for (unsigned int j = 0; j < 3; j++) {
-                normals.push_back(c.second.first[i][j]);
-            }
-        }
-        for (unsigned int i = 0; i < c.second.second.size(); i++) {
-            for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-                normalindex.push_back(c.second.second[i][j]);
-            }
-        }
-        m_writers.back()->setMFInt32(ID::index, index);
-        m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-        m_writers.back()->startNode(ID::Coordinate);
-        m_writers.back()->setMFFloat(ID::point, coordinates);
-        m_writers.back()->endNode();
-        m_writers.back()->startNode(ID::Normal);
-        m_writers.back()->setMFFloat(ID::vector, normals);
-        m_writers.back()->endNode();
+
     }
 }
 
 void X3DConverter::endCylinder() {
-    m_writers.back()->endNode();
+
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -592,48 +470,27 @@ void X3DConverter::startSphere(const vector<float>& matrix,
                          const float& diameter) {
     startShape(matrix);
     if (m_primitives) {
-        m_writers.back()->startNode(ID::Sphere);
+        startNode(ID::Sphere);
         m_writers.back()->setSFFloat(ID::radius, diameter/2);
     } else {
-        m_writers.back()->startNode(ID::IndexedTriangleSet);
-        pair<pair<vector<vector<float> >, vector<vector<int> > >, pair<vector<vector<float> >, vector<vector<int> > > > c = RVMMeshHelper::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
-        vector<int> index;
-        vector<float> coordinates;
-        for (unsigned int i = 0; i < c.first.first.size(); i++) {
-            for (unsigned int j = 0; j < 3; j++) {
-                coordinates.push_back(c.first.first[i][j]);
-            }
+        std::vector<float> params;
+        params.push_back(PrimitiveTypes::Sphere);
+        params.push_back(diameter);
+
+        pair<string,int> gid = getInstanceName(params);
+        if(gid.first.empty()) {
+            Mesh c = RVMMeshHelper2::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
+            gid.first = createGeometryId();
+            gid.second = startMeshGeometry(c, gid.first);
+            m_instanceMap.insert(std::make_pair(params, gid));
+        } else {
+            writeMeshInstance(gid.second, gid.first);
         }
-        for (unsigned int i = 0; i < c.first.second.size(); i++) {
-            for (unsigned int j = 0; j < c.first.second[i].size(); j++) {
-                index.push_back(c.first.second[i][j]);
-            }
-        }
-        vector<int> normalindex;
-        vector<float> normals;
-        for (unsigned int i = 0; i < c.second.first.size(); i++) {
-            for (unsigned int j = 0; j < 3; j++) {
-                normals.push_back(c.second.first[i][j]);
-            }
-        }
-        for (unsigned int i = 0; i < c.second.second.size(); i++) {
-            for (unsigned int j = 0; j < c.second.second[i].size(); j++) {
-                normalindex.push_back(c.second.second[i][j]);
-            }
-        }
-        m_writers.back()->setMFInt32(ID::index, index);
-        m_writers.back()->setMFInt32(ID::normalIndex, normalindex);
-        m_writers.back()->startNode(ID::Coordinate);
-        m_writers.back()->setMFFloat(ID::point, coordinates);
-        m_writers.back()->endNode();
-        m_writers.back()->startNode(ID::Normal);
-        m_writers.back()->setMFFloat(ID::vector, normals);
-        m_writers.back()->endNode();
     }
 }
 
 void X3DConverter::endSphere() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -641,256 +498,102 @@ void X3DConverter::startLine(const vector<float>& matrix,
                        const float& startx,
                        const float& endx) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::LineSet);
+    startNode(ID::LineSet);
     m_writers.back()->setSFInt32(ID::vertexCount, 2);
-    m_writers.back()->startNode(ID::Coordinate);
+    startNode(ID::Coordinate);
     vector<float> c;
     c.push_back(startx); c.push_back(0); c.push_back(0);
     c.push_back(endx); c.push_back(0); c.push_back(0);
     m_writers.back()->setMFFloat(ID::point, c);
-    m_writers.back()->endNode();
+    endNode(ID::Coordinate); // Coordinate
 }
 
 void X3DConverter::endLine() {
-    m_writers.back()->endNode();
+    endNode(ID::LineSet); // LineSet
     endShape();
 }
 
-// From http://paulbourke.net/geometry/pointlineplane/lineline.c
-bool intersect(const Vector3F& p1, const Vector3F& p2, const Vector3F& p3, const Vector3F& p4) {
-    if (p1.equals(p2) || p1.equals(p3) || p1.equals(p4) || p2.equals(p3) || p2.equals(p4) || p3.equals(p4)) {
-        return false;
+int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
+    bool hasNormals = mesh.normals.size() > 0;
+    bool hasNormalIndex = mesh.normalIndex.size() > 0;
+    int meshType;
+
+    // Not nice, but okay for now
+    vector<int> index;
+    vector<float> coordinates;
+    for (unsigned int i = 0; i < mesh.positions.size(); i++) {
+        for (unsigned int j = 0; j < 3; j++) {
+            coordinates.push_back(mesh.positions.at(i)[j]);
+        }
     }
-    Vector3F p13 = p1 - p3;
-    Vector3F p43 = p4 - p3;
-    if (abs(p43[0]) < .001 && abs(p43[1]) < .001 && abs(p43[2]) < .001)
-        return false;
-    Vector3F p21 = p2 - p1;
-    if (abs(p21[0]) < .001 && abs(p21[1]) < .001 && abs(p21[2]) < .001)
-        return false;
 
-    float d1343 = p13 * p43;
-    float d4321 = p43 * p21;
-    float d1321 = p13 * p21;
-    float d4343 = p43 * p43;
-    float d2121 = p21 * p21;
+    if(hasNormalIndex) { // We have to use a IndexedFaceSet
+        meshType = ID::IndexedFaceSet;
+        startNode(meshType);
+        if(!id.empty()) {
+            m_writers.back()->setSFString(ID::DEF, id);
+        }
+        m_writers.back()->setSFBool(ID::solid, false);
 
-    double denom = d2121 * d4343 - d4321 * d4321;
-    if (abs(denom) < 0.001) {
-        return false;
+        vector<int> nindex;
+        for (unsigned int i = 0; i < mesh.positionIndex.size(); i++) {
+            index.push_back(mesh.positionIndex.at(i));
+            if(i%3 == 2) {
+                index.push_back(-1);
+            }
+        }
+        m_writers.back()->setMFInt32(ID::coordIndex, index);
+
+        for (unsigned int i = 0; i < mesh.normalIndex.size(); i++) {
+            nindex.push_back(mesh.normalIndex.at(i));
+            if(i%3 == 2) {
+                nindex.push_back(-1);
+            }
+        }
+        m_writers.back()->setMFInt32(ID::normalIndex, nindex);
+    } else {
+        meshType = ID::IndexedTriangleSet;
+        startNode(meshType);
+        if(!id.empty()) {
+            m_writers.back()->setSFString(ID::DEF, id);
+        }
+        m_writers.back()->setSFBool(ID::solid, false);
+        for (unsigned int i = 0; i < mesh.positionIndex.size(); i++) {
+            index.push_back(mesh.positionIndex.at(i));
+        }
+        m_writers.back()->setMFInt32(ID::index, index);
     }
-    double numer = d1343 * d4321 - d1321 * d4343;
 
-    float x1 = float(numer / denom);
-    float x2 = (d1343 + d4321 * x1) / d4343;
-    if (x1 > 1 || x1 < 0 || x2 > 1 || x2 < 0)
-        return false;
+    startNode(ID::Coordinate);
+    m_writers.back()->setMFFloat(ID::point, coordinates);
+    endNode(ID::Coordinate);
 
-    Vector3F pa = p1 + p21 * x1;
-    Vector3F pb = p3 + p43 * x2;
+    if(hasNormals) {
+        vector<float> normals;
+        for (unsigned int i = 0; i < mesh.normals.size(); i++) {
+            for (unsigned int j = 0; j < 3; j++) {
+                normals.push_back(mesh.normals.at(i)[j]);
+            }
+        }
 
-    Vector3F papb = pb - pa;
-    float n2 = papb * papb;
-    if (n2 > 0.001)
-        return false;
-
-    return true;
+        startNode(ID::Normal);
+        m_writers.back()->setMFFloat(ID::vector, normals);
+        endNode(ID::Normal);
+    }
+    return meshType;
 }
+
 
 void X3DConverter::startFacetGroup(const vector<float>& matrix,
                              const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::IndexedFaceSet);
-
-    vector<int> indexes;
-    vector<float> coordinates;
-    vector<int> normalindexes;
-    vector<float> normals;
-
-    for (unsigned int i = 0; i < vertexes.size(); i++) { // Patches
-        if (vertexes[i].size() == 1) {
-            int j = 0;
-            if (vertexes[i][0].size() < 3) {
-                continue;
-            }
-            for (unsigned int k = 0; k < vertexes[i][j].size(); k++) { // Vertexes
-                int ci = -1;
-                int ni = -1;
-                vector<float> c(3, 0); c[0] = vertexes[i][j][k].first[0]; c[1] = vertexes[i][j][k].first[1]; c[2] = vertexes[i][j][k].first[2];
-                vector<float> n(3, 0); n[0] = vertexes[i][j][k].second[0]; n[1] = vertexes[i][j][k].second[1]; n[2] = vertexes[i][j][k].second[2];
-                // Try to find a corresponding point or insert the new one.
-                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
-                    if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
-                        ci = l/3;
-                        continue;
-                    }
-                }
-                if (ci == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        coordinates.push_back(c[l]);
-                    }
-                    indexes.push_back(coordinates.size()/3-1);
-                } else {
-                    indexes.push_back(ci);
-                }
-                // Try to find a corresponding vector or insert the new one.
-                for (unsigned int l = 0; l < normals.size(); l += 3) {
-                    if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
-                        ni = l/3;
-                        continue;
-                    }
-                }
-                if (ni == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        normals.push_back(n[l]);
-                    }
-                    normalindexes.push_back(normals.size()/3-1);
-                } else {
-                    normalindexes.push_back(ni);
-                }
-            }
-        } else {
-            vector<pair<Vector3F, Vector3F> > polygon(vertexes[i][0]);
-            vector<vector<pair<Vector3F, Vector3F> > > shapes;
-            int reorder = 0;
-            // Close shapes
-            polygon.push_back(polygon[0]);
-            for (unsigned int j = 1; j < vertexes[i].size(); j++) {
-                shapes.push_back(vertexes[i][j]);
-            }
-            // Theorical max reorderings...
-            int maxreorder = (shapes.size() * (shapes.size() + 1)) / 2;
-            // Find non-crossing links and insert sub shapes
-            while (!shapes.empty()) {
-                vector<pair<Vector3F, Vector3F> > shape(shapes.back());
-                bool noncrossing = true;
-                int pi, si;
-                for (unsigned int k = 0; k < (polygon.size()-1) * (shape.size()); k++) {
-                    noncrossing = true;
-                    // Choose one segment between the polygon and the shape
-                    pi = k % (polygon.size()-1);
-                    si = k / (polygon.size()-1);
-                    // And test for collision with polygon
-                    for (unsigned int l = 0; l < polygon.size()-1; l++) {
-                        // Double check, probably for computing errors... How can we fix that ?
-                        if (intersect(polygon[pi].first, shape[si].first, polygon[l].first, polygon[l+1].first) ||
-                                intersect(shape[si].first, polygon[pi].first, polygon[l].first, polygon[l+1].first)) {
-                            noncrossing = false;
-                            continue;
-                        }
-                    }
-                    // And with shapes
-                    if (noncrossing && shapes.size()) {
-                        for (unsigned int l = 0; l < shapes.size(); l++) {
-                            for (unsigned int m = 0; m < shapes[l].size(); m++) {
-                                if (intersect(polygon[pi].first, shape[si].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first) ||
-                                        intersect(shape[si].first, polygon[pi].first, shapes[l][m].first, shapes[l][m == shapes[l].size() - 1 ? 0 : m+1].first)) {
-                                    noncrossing = false;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    if (noncrossing) {
-                        break;
-                    }
-                }
-                if (!noncrossing) {
-                    // Very uncommon... Added a safe guard for infinite loops with theorical max (see over maxreorder). Max actual reorderings found: 47. Takes a looong time.
-                    reorder++;
-                    if (reorder > maxreorder) {
-                        cout << "Could not find the decomposition of a face set. " << m_groups.back() << endl;
-                        cout << "Ignoring one shape !!!!" << endl;
-                        cout << reorder << " " << maxreorder << endl;
-                    } else {
-                        // Reordering shapes
-                        shapes.insert(shapes.begin(), shape);
-                    }
-                } else {
-                    /* New implementation compatible with VC2010 - inserts incompatibility due to alignment problem. */
-					vector<pair<Vector3F, Vector3F> > newpolygon;
-					for (int k = 0; k < pi + 1; k++) {
-						newpolygon.push_back(polygon[k]);
-					}
-                    for (unsigned int k = 0; k < shape.size() + 1; k++) {
-                        newpolygon.push_back(shape[(k + si) % shape.size()]);
-                    }
-					for (unsigned int k = pi; k < polygon.size(); k++) {
-						newpolygon.push_back(polygon[k]);
-					}
-					polygon.swap(newpolygon);
-                }
-                shapes.pop_back();
-            }
-            // Check polygon -- For debugging purposes.
-            /*
-            for (unsigned int k = 0; k < polygon.size() - 1; k++) {
-                for (unsigned int l = k; l < polygon.size(); l++) {
-                    if (intersect(polygon[k].first, polygon[k+1].first, polygon[l].first, polygon[l == polygon.size()-1 ? 0 : l+1].first)) {
-                        // Should never show !
-                        cout << "Collision on " << m_groups.back() << ": " << k << " " << l << endl;
-                    }
-                }
-            }
-            */
-            // Then, insert polygon.
-            if (polygon.size() < 3) {
-                continue;
-            }
-            for (unsigned int k = 0; k < polygon.size(); k++) { // Vertexes
-                int ci = -1;
-                int ni = -1;
-                vector<float> c(3, 0); c[0] = polygon[k].first[0]; c[1] = polygon[k].first[1]; c[2] = polygon[k].first[2];
-                vector<float> n(3, 0); n[0] = polygon[k].second[0]; n[1] = polygon[k].second[1]; n[2] = polygon[k].second[2];
-                for (unsigned int l = 0; l < coordinates.size(); l += 3) {
-                    if (c[0] == coordinates[l] && c[1] == coordinates[l+1] && c[2] == coordinates[l+2]) {
-                        ci = l/3;
-                        continue;
-                    }
-                }
-                if (ci == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        coordinates.push_back(c[l]);
-                    }
-                    indexes.push_back(coordinates.size()/3-1);
-                } else {
-                    indexes.push_back(ci);
-                }
-                for (unsigned int l = 0; l < normals.size(); l += 3) {
-                    if (n[0] == normals[l] && n[1] == normals[l+1] && n[2] == normals[l+2]) {
-                        ni = l/3;
-                        continue;
-                    }
-                }
-                if (ni == -1) {
-                    for (unsigned int l = 0; l < 3; l++) {
-                        normals.push_back(n[l]);
-                    }
-                    normalindexes.push_back(normals.size()/3-1);
-                } else {
-                    normalindexes.push_back(ni);
-                }
-            }
-        }
-        indexes.push_back(-1);
-        normalindexes.push_back(-1);
-    }
-
-    m_writers.back()->setSFBool(ID::solid, false);
-    m_writers.back()->setSFBool(ID::convex, false);
-    m_writers.back()->setSFFloat(ID::creaseAngle, 1.1f);
-    m_writers.back()->setMFInt32(ID::coordIndex, indexes);
-    m_writers.back()->setMFInt32(ID::normalIndex, normalindexes);
-    m_writers.back()->startNode(ID::Coordinate);
-    m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
-    m_writers.back()->startNode(ID::Normal);
-    m_writers.back()->setMFFloat(ID::vector, normals);
-    m_writers.back()->endNode();
+    Mesh meshData;
+    RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
+    startMeshGeometry(meshData, "");
 }
 
 void X3DConverter::endFacetGroup() {
-    m_writers.back()->endNode(); // FaceSet
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -917,24 +620,73 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
     r[2] = (float)aa.axis()(2);
     r[3] = (float)aa.angle();
 
-    m_writers.back()->startNode(ID::Transform);
+    startNode(ID::Transform);
     m_writers.back()->setSFVec3f(ID::translation,
                                  (matrix[9] - m_translations.back()[0]),
                                  (matrix[10] - m_translations.back()[1]),
                                  (matrix[11] - m_translations.back()[2]));
     m_writers.back()->setMFRotation(ID::rotation, r);
-    m_writers.back()->startNode(ID::Shape);
-    m_writers.back()->startNode(ID::Appearance);
-    m_writers.back()->startNode(ID::Material);
+    startNode(ID::Shape);
+    startNode(ID::Appearance);
+    startNode(ID::Material);
     m_writers.back()->setSFColor<vector<float> >(ID::diffuseColor, RVMColorHelper::color(m_materials.back()));
-    m_writers.back()->endNode(); // Material
-    m_writers.back()->endNode(); // Appearance
+    endNode(ID::Material); // Material
+    endNode(ID::Appearance); // Appearance
 
 }
 
 void X3DConverter::endShape() {
-    m_writers.back()->endNode(); // Shape
-    m_writers.back()->endNode(); // Transform
+    endNode(ID::Shape); // Shape
+    endNode(ID::Transform); // Transform
+}
+
+void X3DConverter::writeMetaDataString(const string &name, const string &value, bool isValue) {
+    startNode(ID::MetadataString);
+    m_writers.back()->setSFString(ID::name, name);
+    vector<string> v; v.push_back(escapeXMLAttribute(value));
+    m_writers.back()->setMFString(ID::value, v);
+    if(isValue)
+        m_writers.back()->setSFString(ID::containerField, "value");
+    endNode(ID::MetadataString);
+}
+
+void X3DConverter::writeMeshInstance(int meshType, const std::string &use) {
+    // cerr << "Info: Writing instance of " << X3DTypes::getElementByID(meshType) << endl;
+    startNode(meshType);
+    m_writers.back()->setSFString(ID::USE, use);
+}
+
+
+void X3DConverter::startNode(int id) {
+    m_nodeStack.push_back(id);
+    // cerr << "Info: Starting node " << X3DTypes::getElementByID(id)  << endl;
+    m_writers.back()->startNode(id);
+}
+void X3DConverter::endNode(int should) {
+    if(should != -1) {
+        int hasId = m_nodeStack.back();
+        if(should != hasId) {
+            cerr << "Error: Closing node " << X3DTypes::getElementByID(hasId) << ", but should be " << X3DTypes::getElementByID(should) << endl;
+            exit(1);
+        } else {
+            // cerr << "Info: Closing node " << X3DTypes::getElementByID(hasId)  << endl;
+        }
+    }
+    m_nodeStack.pop_back();
+
+    m_writers.back()->endNode();
+}
+
+std::string X3DConverter::createGeometryId() {
+        return "G" + to_string(m_id++);
+}
+
+std::pair<std::string, int> X3DConverter::getInstanceName(const std::vector<float> &params) {
+    X3DInstanceMap::iterator I = m_instanceMap.find(params);
+    if(I != m_instanceMap.end()) {
+       return (*I).second;
+    }
+    return std::make_pair("", 0);
 }
 
 #endif // XIOT_FOUND
