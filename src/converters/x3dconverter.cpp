@@ -121,10 +121,10 @@ void X3DConverter::startModel(const string& projectName, const string& name) {
     m_writers.back()->setMFString(ID::info, info);
     m_writers.back()->startNode(ID::MetadataSet);
     if (!projectName.empty()) {
-        writeMetaDataString("projectName", projectName);
+        writeMetaDataString("projectName", projectName, true);
     }
     if (!name.empty()) {
-        writeMetaDataString("name", name);
+        writeMetaDataString("name", name, true);
     }
     m_writers.back()->endNode(); // MetaDataSet
     m_writers.back()->endNode(); // WorldInfo
@@ -177,12 +177,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
     m_translations.push_back(translation);
 
     // PDMS name as metadata.
-    m_writers.back()->startNode(ID::MetadataString);
-    m_writers.back()->setSFString(ID::name, "pdmsName");
-    vector<string> v; v.push_back(escapeXMLAttribute(name));
-    m_writers.back()->setMFString(ID::value, v);
-    m_writers.back()->setSFString(ID::containerField, "metadata");
-    m_writers.back()->endNode();
+    // writeMetaDataString("pdms", name);
 }
 
 void X3DConverter::endGroup() {
@@ -200,13 +195,16 @@ void X3DConverter::endGroup() {
 }
 
 void X3DConverter::startMetaData() {
+    m_writers.back()->startNode(ID::MetadataSet);
+    m_writers.back()->setSFString(ID::containerField, "metadata");
 }
 
 void X3DConverter::endMetaData() {
+    m_writers.back()->endNode(); // MetadataSet
 }
 
 void X3DConverter::startMetaDataPair(const string &name, const string &value) {
-    writeMetaDataString(name, value);
+    writeMetaDataString(name, value, true);
 }
 
 void X3DConverter::endMetaDataPair() {
@@ -638,12 +636,13 @@ void X3DConverter::endShape() {
     m_writers.back()->endNode(); // Transform
 }
 
-void X3DConverter::writeMetaDataString(const string &name, const string &value) {
+void X3DConverter::writeMetaDataString(const string &name, const string &value, bool isValue) {
     m_writers.back()->startNode(ID::MetadataString);
     m_writers.back()->setSFString(ID::name, name);
     vector<string> v; v.push_back(escapeXMLAttribute(value));
     m_writers.back()->setMFString(ID::value, v);
-    //m_writers.back()->setSFString(ID::containerField, "metadata");
+    if(isValue)
+        m_writers.back()->setSFString(ID::containerField, "value");
     m_writers.back()->endNode();
 }
 

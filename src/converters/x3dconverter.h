@@ -134,7 +134,7 @@ class X3DConverter : public RVMReader
         int startMeshGeometry(const Mesh& mesh, const std::string &id);
         void writeMeshInstance(int meshType, const std::string &use);
 
-        void writeMetaDataString(const std::string &name, const std::string &value);
+        void writeMetaDataString(const std::string &name, const std::string &value, bool isValue = false);
         std::pair<std::string, int> getInstanceName(const std::vector<float> &params);
         std::string createGeometryId();
 
