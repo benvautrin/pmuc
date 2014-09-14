@@ -115,22 +115,22 @@ void X3DConverter::endHeader() {
 }
 
 void X3DConverter::startModel(const string& projectName, const string& name) {
-    m_writers.back()->startNode(ID::WorldInfo);
+    startNode(ID::WorldInfo);
     MFString info;
     info.push_back("info");
     m_writers.back()->setMFString(ID::info, info);
-    m_writers.back()->startNode(ID::MetadataSet);
+    startNode(ID::MetadataSet);
     if (!projectName.empty()) {
         writeMetaDataString("projectName", projectName, true);
     }
     if (!name.empty()) {
         writeMetaDataString("name", name, true);
     }
-    m_writers.back()->endNode(); // MetaDataSet
-    m_writers.back()->endNode(); // WorldInfo
-    m_writers.back()->startNode(ID::Background);
+    endNode(ID::MetadataSet); // MetaDataSet
+    endNode(ID::WorldInfo); // WorldInfo
+    startNode(ID::Background);
     m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
-    m_writers.back()->endNode();
+    endNode(ID::Background);
 }
 
 void X3DConverter::endModel() {
@@ -152,7 +152,7 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
     m_groups.push_back(name);
 
     if (m_split) {
-        m_writers.back()->startNode(ID::Inline);
+        startNode(ID::Inline);
         m_writers.back()->setSFString(ID::url, x3dName + ".x3d");
 
         X3DWriter* writer = m_binary ? (X3DWriter*)new X3DWriterFI() : (X3DWriter*)new X3DWriterXML();
@@ -163,11 +163,11 @@ void X3DConverter::startGroup(const std::string& name, const std::vector<float>&
         multimap<std::string, std::string> meta;
         meta.insert(pair<string, string>("generator", "Plant Mock-Up Converter 0.1"));
         m_writers.back()->startX3DDocument(Immersive, VERSION_3_0, &meta, false);
-        m_writers.back()->startNode(ID::Background);
+        startNode(ID::Background);
         m_writers.back()->setSFColor(ID::skyColor, .9f, .9f, .9f);
-        m_writers.back()->endNode();
+        endNode(ID::Background);
     }
-    m_writers.back()->startNode(ID::Transform);
+    startNode(ID::Transform);
 	// Problems with encoding and unicity so changed name from DEF storage to metadata. See after translation.
     //m_writers.back()->setSFString(ID::DEF, x3dName);
     m_writers.back()->setSFVec3f(ID::translation,
@@ -184,23 +184,23 @@ void X3DConverter::endGroup() {
     m_translations.pop_back();
     m_materials.pop_back();
     m_groups.pop_back();
-    m_writers.back()->endNode(); // Transform
+    endNode(ID::Transform); // Transform
     if (m_split) {
         m_writers.back()->endX3DDocument();
         m_writers.back()->flush();
         m_writers.back()->closeFile();
         m_writers.pop_back();
-        m_writers.back()->endNode();
+        endNode(ID::Inline);
     }
 }
 
 void X3DConverter::startMetaData() {
-    m_writers.back()->startNode(ID::MetadataSet);
+    startNode(ID::MetadataSet);
     m_writers.back()->setSFString(ID::containerField, "metadata");
 }
 
 void X3DConverter::endMetaData() {
-    m_writers.back()->endNode(); // MetadataSet
+    endNode(ID::MetadataSet); // MetadataSet
 }
 
 void X3DConverter::startMetaDataPair(const string &name, const string &value) {
@@ -243,7 +243,7 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
 }
 
 void X3DConverter::endPyramid() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -259,7 +259,7 @@ void X3DConverter::startBox(const vector<float>& matrix,
     params.push_back(zlength);
 
     if (m_primitives) {
-        m_writers.back()->startNode(ID::Box);
+        startNode(ID::Box);
         m_writers.back()->setSFVec3f(ID::size, xlength, ylength, zlength);
     } else {
         pair<string,int> gid = getInstanceName(params);
@@ -275,7 +275,7 @@ void X3DConverter::startBox(const vector<float>& matrix,
 }
 
 void X3DConverter::endBox() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -304,7 +304,7 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
 }
 
 void X3DConverter::endRectangularTorus() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -334,7 +334,7 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
 }
 
 void X3DConverter::endCircularTorus() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -360,7 +360,7 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
 }
 
 void X3DConverter::endEllipticalDish() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -386,7 +386,7 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
 }
 
 void X3DConverter::endSphericalDish() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -400,10 +400,13 @@ void X3DConverter::startSnout(const vector<float>& matrix,
                         const float& unknown2,
                         const float& unknown3,
                         const float& unknown4) {
+    startShape(matrix);
+
     if (height == 0 && dbottom == 0 && dtop == 0) { // Degenerated snout...
+        startNode(ID::IndexedFaceSet);
+        cerr << "Error: Found degenerated snout. Skipping data ..." << endl;
         return;
     }
-    startShape(matrix);
 
     std::vector<float> params;
     params.push_back(PrimitiveTypes::Snout);
@@ -425,7 +428,7 @@ void X3DConverter::startSnout(const vector<float>& matrix,
 }
 
 void X3DConverter::endSnout() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -435,7 +438,7 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
     startShape(matrix);
 
     if (m_primitives) {
-        m_writers.back()->startNode(ID::Cylinder);
+        startNode(ID::Cylinder);
         m_writers.back()->setSFFloat(ID::radius, radius);
         m_writers.back()->setSFFloat(ID::height, height);
     } else {
@@ -458,7 +461,8 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
 }
 
 void X3DConverter::endCylinder() {
-    m_writers.back()->endNode();
+
+    endNode(ID::IndexedFaceSet);
     endShape();
 }
 
@@ -466,7 +470,7 @@ void X3DConverter::startSphere(const vector<float>& matrix,
                          const float& diameter) {
     startShape(matrix);
     if (m_primitives) {
-        m_writers.back()->startNode(ID::Sphere);
+        startNode(ID::Sphere);
         m_writers.back()->setSFFloat(ID::radius, diameter/2);
     } else {
         std::vector<float> params;
@@ -486,7 +490,7 @@ void X3DConverter::startSphere(const vector<float>& matrix,
 }
 
 void X3DConverter::endSphere() {
-    m_writers.back()->endNode();
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -494,18 +498,18 @@ void X3DConverter::startLine(const vector<float>& matrix,
                        const float& startx,
                        const float& endx) {
     startShape(matrix);
-    m_writers.back()->startNode(ID::LineSet);
+    startNode(ID::LineSet);
     m_writers.back()->setSFInt32(ID::vertexCount, 2);
-    m_writers.back()->startNode(ID::Coordinate);
+    startNode(ID::Coordinate);
     vector<float> c;
     c.push_back(startx); c.push_back(0); c.push_back(0);
     c.push_back(endx); c.push_back(0); c.push_back(0);
     m_writers.back()->setMFFloat(ID::point, c);
-    m_writers.back()->endNode(); // Coordinate
+    endNode(ID::Coordinate); // Coordinate
 }
 
 void X3DConverter::endLine() {
-    m_writers.back()->endNode(); // LineSet
+    endNode(ID::LineSet); // LineSet
     endShape();
 }
 
@@ -525,7 +529,7 @@ int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
 
     if(hasNormalIndex) { // We have to use a IndexedFaceSet
         meshType = ID::IndexedFaceSet;
-        m_writers.back()->startNode(meshType);
+        startNode(meshType);
         if(!id.empty()) {
             m_writers.back()->setSFString(ID::DEF, id);
         }
@@ -549,7 +553,7 @@ int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
         m_writers.back()->setMFInt32(ID::normalIndex, nindex);
     } else {
         meshType = ID::IndexedTriangleSet;
-        m_writers.back()->startNode(meshType);
+        startNode(meshType);
         if(!id.empty()) {
             m_writers.back()->setSFString(ID::DEF, id);
         }
@@ -560,9 +564,9 @@ int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
         m_writers.back()->setMFInt32(ID::index, index);
     }
 
-    m_writers.back()->startNode(ID::Coordinate);
+    startNode(ID::Coordinate);
     m_writers.back()->setMFFloat(ID::point, coordinates);
-    m_writers.back()->endNode();
+    endNode(ID::Coordinate);
 
     if(hasNormals) {
         vector<float> normals;
@@ -572,9 +576,9 @@ int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
             }
         }
 
-        m_writers.back()->startNode(ID::Normal);
+        startNode(ID::Normal);
         m_writers.back()->setMFFloat(ID::vector, normals);
-        m_writers.back()->endNode();
+        endNode(ID::Normal);
     }
     return meshType;
 }
@@ -589,7 +593,7 @@ void X3DConverter::startFacetGroup(const vector<float>& matrix,
 }
 
 void X3DConverter::endFacetGroup() {
-    m_writers.back()->endNode(); // FaceSet
+    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
@@ -616,39 +620,61 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
     r[2] = (float)aa.axis()(2);
     r[3] = (float)aa.angle();
 
-    m_writers.back()->startNode(ID::Transform);
+    startNode(ID::Transform);
     m_writers.back()->setSFVec3f(ID::translation,
                                  (matrix[9] - m_translations.back()[0]),
                                  (matrix[10] - m_translations.back()[1]),
                                  (matrix[11] - m_translations.back()[2]));
     m_writers.back()->setMFRotation(ID::rotation, r);
-    m_writers.back()->startNode(ID::Shape);
-    m_writers.back()->startNode(ID::Appearance);
-    m_writers.back()->startNode(ID::Material);
+    startNode(ID::Shape);
+    startNode(ID::Appearance);
+    startNode(ID::Material);
     m_writers.back()->setSFColor<vector<float> >(ID::diffuseColor, RVMColorHelper::color(m_materials.back()));
-    m_writers.back()->endNode(); // Material
-    m_writers.back()->endNode(); // Appearance
+    endNode(ID::Material); // Material
+    endNode(ID::Appearance); // Appearance
 
 }
 
 void X3DConverter::endShape() {
-    m_writers.back()->endNode(); // Shape
-    m_writers.back()->endNode(); // Transform
+    endNode(ID::Shape); // Shape
+    endNode(ID::Transform); // Transform
 }
 
 void X3DConverter::writeMetaDataString(const string &name, const string &value, bool isValue) {
-    m_writers.back()->startNode(ID::MetadataString);
+    startNode(ID::MetadataString);
     m_writers.back()->setSFString(ID::name, name);
     vector<string> v; v.push_back(escapeXMLAttribute(value));
     m_writers.back()->setMFString(ID::value, v);
     if(isValue)
         m_writers.back()->setSFString(ID::containerField, "value");
-    m_writers.back()->endNode();
+    endNode(ID::MetadataString);
 }
 
 void X3DConverter::writeMeshInstance(int meshType, const std::string &use) {
-    m_writers.back()->startNode(meshType);
+    // cerr << "Info: Writing instance of " << X3DTypes::getElementByID(meshType) << endl;
+    startNode(meshType);
     m_writers.back()->setSFString(ID::USE, use);
+}
+
+
+void X3DConverter::startNode(int id) {
+    m_nodeStack.push_back(id);
+    // cerr << "Info: Starting node " << X3DTypes::getElementByID(id)  << endl;
+    m_writers.back()->startNode(id);
+}
+void X3DConverter::endNode(int should) {
+    if(should != -1) {
+        int hasId = m_nodeStack.back();
+        if(should != hasId) {
+            cerr << "Error: Closing node " << X3DTypes::getElementByID(hasId) << ", but should be " << X3DTypes::getElementByID(should) << endl;
+            exit(1);
+        } else {
+            // cerr << "Info: Closing node " << X3DTypes::getElementByID(hasId)  << endl;
+        }
+    }
+    m_nodeStack.pop_back();
+
+    m_writers.back()->endNode();
 }
 
 std::string X3DConverter::createGeometryId() {
