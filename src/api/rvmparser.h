@@ -184,6 +184,7 @@ class RVMParser
         std::string m_encoding;
 #ifdef ICONV_FOUND
         iconv_t     m_cd;
+        iconv_t     m_cdatt;
 #endif
         std::string m_lastError;
 

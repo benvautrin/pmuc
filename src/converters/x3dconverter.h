@@ -23,10 +23,16 @@
 #define X3DCONVERTER_H
 
 #include "../api/rvmreader.h"
+#include "../api/rvmmeshhelper.h"
+
+#include <utility>
+#include <map>
 
 namespace XIOT {
     class X3DWriter;
 }
+
+typedef std::map<std::vector<float>, std::pair<std::string,int>> X3DInstanceMap;
 
 class X3DConverter : public RVMReader
 {
@@ -125,11 +131,25 @@ class X3DConverter : public RVMReader
         void startShape(const std::vector<float>& matrix);
         void endShape();
 
+        void startNode(int id);
+        void endNode(int id);
+
+        int startMeshGeometry(const Mesh& mesh, const std::string &id);
+        void writeMeshInstance(int meshType, const std::string &use);
+
+        void writeMetaDataString(const std::string &name, const std::string &value, bool isValue = false);
+        std::pair<std::string, int> getInstanceName(const std::vector<float> &params);
+        std::string createGeometryId();
+
+        X3DInstanceMap m_instanceMap;
+        int m_id;
+
         std::vector<XIOT::X3DWriter*> m_writers;
         std::vector<std::vector<float> > m_translations;
         std::vector<int> m_materials;
         std::vector<std::string> m_groups;
         bool m_binary;
+        std::vector<int> m_nodeStack;
 };
 
 #endif // X3DCONVERTER_H

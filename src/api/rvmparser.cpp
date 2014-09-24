@@ -67,6 +67,7 @@ RVMParser::RVMParser(RVMReader* reader) :
     m_attributes(0),
 #ifdef ICONV_FOUND
     m_cd((iconv_t)-1),
+    m_cdatt((iconv_t)-1),
 #endif
     m_aggregation(false) {
 }
@@ -182,6 +183,8 @@ bool RVMParser::readStream(istream& is) {
             cout << "Unknown encoding: " << m_encoding << endl;
         }
     }
+    // Attributes seem to be always "ISO_8859-1"
+    m_cdatt = iconv_open("UTF-8", "ISO8859-1");
 #endif
 
     if (!m_aggregation) {
@@ -231,6 +234,9 @@ bool RVMParser::readStream(istream& is) {
 #ifdef ICONV_FOUND
     if (m_cd != (iconv_t)-1) {
         iconv_close(m_cd);
+    }
+    if (m_cdatt != (iconv_t)-1) {
+        iconv_close(m_cdatt);
     }
 #endif
 
@@ -292,18 +298,21 @@ bool RVMParser::readGroup(std::istream& is) {
 
                      std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
 #ifdef ICONV_FOUND
-                     if (m_cd != (iconv_t)-1) {
-                         char buffer[1056];
-                         size_t inb = m_currentAttributeLine.size();
-                         size_t outb = 1056;
-                         char* bp = buffer;
+                     if (m_cdatt != (iconv_t)-1) {
 #ifdef __APPLE__
                          char* sp = const_cast<char*>(m_currentAttributeLine.data());
 #else
                          const char* sp = m_currentAttributeLine.data();
 #endif
-                         iconv(m_cd, &sp, &inb, &bp, &outb);
-                         m_currentAttributeLine = buffer;
+                         size_t inLength = m_currentAttributeLine.size();
+                          /* Assign enough space for UTF-8. */
+                         char* utf8 = (char*) calloc(inLength*2,1);
+                         char* utf8start = utf8;
+                         size_t utf8Length = inLength*2;
+
+                         iconv(m_cdatt, &sp, &inLength, &utf8, &utf8Length);
+                         m_currentAttributeLine = string(utf8start);
+                         delete utf8start;
                      }
 #endif
                      p = trim(m_currentAttributeLine);

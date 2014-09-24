@@ -19,16 +19,43 @@
  * MA 02110-1301  USA
  */
 
-#ifndef RVMMESHHELPER_H
-#define RVMMESHHELPER_H
+#ifndef RVMMESHHELPER2_H
+#define RVMMESHHELPER2_H
 
 #include <utility>
 #include <vector>
 
-class RVMMeshHelper
+#include "vector3f.h"
+
+struct Mesh {
+ std::vector<unsigned long>  positionIndex;
+ std::vector<unsigned long>  normalIndex;
+ std::vector<Vector3F>  positions;
+ std::vector<Vector3F>  normals;
+};
+
+
+enum PrimitiveTypes {
+    Pyramid = 1,
+    Box = 2,
+    RectangularTorus = 3,
+    CircularTorus = 4,
+    EllipticalDish = 5,
+    SphericalDish = 6,
+    Snout = 7,
+    Cylinder =  8,
+    Sphere = 9,
+    Line = 10,
+    FacetGroup = 11
+};
+
+
+typedef std::pair<Vector3F, Vector3F> Vertex;
+
+class RVMMeshHelper2
 {
     public:
-        RVMMeshHelper();
+        RVMMeshHelper2();
 
     public:
         /**
@@ -44,7 +71,7 @@ class RVMMeshHelper
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up indexed coordinates for the described box
@@ -55,7 +82,7 @@ class RVMMeshHelper
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > makeBox(const float& x, const float& y, const float& z, const float& maxSideSize, const int& minSides);
+        static const Mesh makeBox(const float& x, const float& y, const float& z, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up a sphere with the given radius
@@ -64,7 +91,7 @@ class RVMMeshHelper
          * @param minSides
          * @return coordinates and normals with their indexes.
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSphere(const float& radius, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSphere(const float& radius, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCylinder
@@ -74,7 +101,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeRectangularTorus
@@ -86,7 +113,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeRectangularTorus(const float& rinside, const float& routside, const float& height, const float& angle, const float& maxSideSize, const int& minSides);
+        static const Mesh makeRectangularTorus(const float& rinside, const float& routside, const float& height, const float& angle, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCircularTorus
@@ -97,7 +124,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeCircularTorus(const float& rinside, const float& routside, const float& angle, const float& maxSideSize, const int& minSides);
+        static const Mesh makeCircularTorus(const float& rinside, const float& routside, const float& angle, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeSnout
@@ -110,7 +137,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeEllipticalDish
@@ -120,7 +147,7 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides);
+        static const Mesh makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeSphericalDish
@@ -130,7 +157,10 @@ class RVMMeshHelper
          * @param minSides
          * @return
          */
-        static const std::pair<std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > >, std::pair<std::vector<std::vector<float> >, std::vector<std::vector<int> > > > makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
+
+
+        static void tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, Mesh* meshData);
 };
 
 #endif // RVMMESHHELPER_H
