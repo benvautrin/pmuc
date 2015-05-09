@@ -1,0 +1,13 @@
+language: 
+  - cpp
+
+compiler:
+  - gcc
+
+script:
+  - bii buzz
+
+install:
+  - wget http://apt.biicode.com/install.sh && chmod +x install.sh && ./install.sh
+  - bii --version
+  - bii setup:cpp
