@@ -1,9 +1,15 @@
 project(pmuc)
 cmake_minimum_required(VERSION 2.8)
 
+IF(BIICODE)
+   INCLUDE("biicode.cmake")
+   RETURN()
+ENDIF()
+
 SET(CMAKE_MODULE_PATH "${pmuc_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
 find_package(OpenGL REQUIRED)
+
 
 # Set C++11 flags to makesome function work
 if(UNIX)
