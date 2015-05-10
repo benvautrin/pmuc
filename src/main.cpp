@@ -22,6 +22,7 @@
 #include <ctime>
 
 #include <iostream>
+#include <cstdlib>
 
 #include "optionparser.h"
 #include "api/rvmparser.h"
