@@ -380,7 +380,7 @@ void COLLADAConverter::startPyramid(const vector<float>& matrix,
                           const float& xoffset,
                           const float& yoffset) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Pyramid);
+    params.push_back(Pyramid);
     params.push_back(xbottom);
     params.push_back(ybottom);
     params.push_back(xtop);
@@ -407,7 +407,7 @@ void COLLADAConverter::startBox(const vector<float>& matrix,
                       const float& ylength,
                       const float& zlength) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Box);
+    params.push_back(Box);
     params.push_back(xlength);
     params.push_back(ylength);
     params.push_back(zlength);
@@ -432,7 +432,7 @@ void COLLADAConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& height,
                                    const float& angle) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::RectangularTorus);
+    params.push_back(RectangularTorus);
     params.push_back(rinside);
     params.push_back(routside);
     params.push_back(height);
@@ -457,7 +457,7 @@ void COLLADAConverter::startCircularTorus(const vector<float>& matrix,
                                 const float& routside,
                                 const float& angle) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::CircularTorus);
+    params.push_back(CircularTorus);
     params.push_back(rinside);
     params.push_back(routside);
     params.push_back(angle);
@@ -480,7 +480,7 @@ void COLLADAConverter::startEllipticalDish(const vector<float>& matrix,
                                  const float& radius) {
 
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::EllipticalDish);
+    params.push_back(EllipticalDish);
     params.push_back(diameter);
     params.push_back(radius);
 
@@ -501,7 +501,7 @@ void COLLADAConverter::startSphericalDish(const vector<float>& matrix,
                                 const float& diameter,
                                 const float& height) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::SphericalDish);
+    params.push_back(SphericalDish);
     params.push_back(diameter);
     params.push_back(height);
 
@@ -529,7 +529,7 @@ void COLLADAConverter::startSnout(const vector<float>& matrix,
                         const float& unknown3,
                         const float& unknown4) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Snout);
+    params.push_back(Snout);
     params.push_back(dtop);
     params.push_back(dbottom);
     params.push_back(height);
@@ -553,7 +553,7 @@ void COLLADAConverter::startCylinder(const vector<float>& matrix,
                            const float& radius,
                            const float& height) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Cylinder);
+    params.push_back(Cylinder);
     params.push_back(radius);
     params.push_back(height);
 
@@ -573,7 +573,7 @@ void COLLADAConverter::endCylinder() {
 void COLLADAConverter::startSphere(const vector<float>& matrix,
                          const float& diameter) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Sphere);
+    params.push_back(Sphere);
     params.push_back(diameter);
 
     string gid = getInstanceName(params);
@@ -592,7 +592,7 @@ void COLLADAConverter::endSphere() {
 
 void COLLADAConverter::startLine(const vector<float>& matrix, const float& thickness, const float& length) {
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Line);
+    params.push_back(Line);
     params.push_back(length); // thickness not taken into account yet
 
     string gid = getInstanceName(params);
