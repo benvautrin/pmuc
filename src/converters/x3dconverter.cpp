@@ -39,33 +39,11 @@
 #include "../api/rvmcolorhelper.h"
 #include "../api/rvmmeshhelper.h"
 #include "../api/vector3f.h"
+#include "../common/stringutils.h"
 
 using namespace std;
 using namespace XIOT;
 using namespace Eigen;
-
-// Helper function to escape XML attribute strings... Should have been done in XIOT...
-string escapeXMLAttribute(const string& value) {
-	string res = value;
-    size_t pos = 0;
-    while ((pos = res.find("&", pos + 3)) != string::npos) {
-        res.replace(pos, 1, "&amp;");
-    }
-    while ((pos = res.find("<")) != string::npos) {
-		res.replace(pos, 1, "&lt;");
-	}
-	while ((pos = res.find(">")) != string::npos) {
-		res.replace(pos, 1, "&gt;");
-    }
-	while ((pos = res.find("\"")) != string::npos) {
-		res.replace(pos, 1, "&quot;");
-	}
-	while ((pos = res.find("'")) != string::npos) {
-		res.replace(pos, 1, "&apos;");
-	}
-	return res;
-}
-
 
 X3DConverter::X3DConverter(const string& filename, bool binary) :
     RVMReader(),
@@ -222,7 +200,7 @@ void X3DConverter::startPyramid(const vector<float>& matrix,
     startShape(matrix);
 
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Pyramid);
+    params.push_back(Pyramid);
     params.push_back(xbottom);
     params.push_back(ybottom);
     params.push_back(xtop);
@@ -253,7 +231,7 @@ void X3DConverter::startBox(const vector<float>& matrix,
                       const float& zlength) {
     startShape(matrix);
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Box);
+    params.push_back(Box);
     params.push_back(xlength);
     params.push_back(ylength);
     params.push_back(zlength);
@@ -286,7 +264,7 @@ void X3DConverter::startRectangularTorus(const vector<float>& matrix,
                                    const float& angle) {
     startShape(matrix);
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::RectangularTorus);
+    params.push_back(RectangularTorus);
     params.push_back(rinside);
     params.push_back(routside);
     params.push_back(height);
@@ -316,7 +294,7 @@ void X3DConverter::startCircularTorus(const vector<float>& matrix,
     startShape(matrix);
 
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::CircularTorus);
+    params.push_back(CircularTorus);
     params.push_back(rinside);
     params.push_back(routside);
     params.push_back(angle);
@@ -344,7 +322,7 @@ void X3DConverter::startEllipticalDish(const vector<float>& matrix,
     startShape(matrix);
 
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::EllipticalDish);
+    params.push_back(EllipticalDish);
     params.push_back(diameter);
     params.push_back(radius);
 
@@ -370,7 +348,7 @@ void X3DConverter::startSphericalDish(const vector<float>& matrix,
     startShape(matrix);
 
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::SphericalDish);
+    params.push_back(SphericalDish);
     params.push_back(diameter);
     params.push_back(height);
 
@@ -409,7 +387,7 @@ void X3DConverter::startSnout(const vector<float>& matrix,
     }
 
     std::vector<float> params;
-    params.push_back(PrimitiveTypes::Snout);
+    params.push_back(Snout);
     params.push_back(dtop);
     params.push_back(dbottom);
     params.push_back(height);
@@ -443,7 +421,7 @@ void X3DConverter::startCylinder(const vector<float>& matrix,
         m_writers.back()->setSFFloat(ID::height, height);
     } else {
         std::vector<float> params;
-        params.push_back(PrimitiveTypes::Cylinder);
+        params.push_back(Cylinder);
         params.push_back(radius);
         params.push_back(height);
 
@@ -474,7 +452,7 @@ void X3DConverter::startSphere(const vector<float>& matrix,
         m_writers.back()->setSFFloat(ID::radius, diameter/2);
     } else {
         std::vector<float> params;
-        params.push_back(PrimitiveTypes::Sphere);
+        params.push_back(Sphere);
         params.push_back(diameter);
 
         pair<string,int> gid = getInstanceName(params);
@@ -678,7 +656,7 @@ void X3DConverter::endNode(int should) {
 }
 
 std::string X3DConverter::createGeometryId() {
-        return "G" + to_string(m_id++);
+        return "G" + toString(static_cast<long long>(m_id++));
 }
 
 std::pair<std::string, int> X3DConverter::getInstanceName(const std::vector<float> &params) {

@@ -34,6 +34,7 @@
 
 #include "../api/rvmcolorhelper.h"
 #include "../api/rvmmeshhelper.h"
+#include "../common/stringutils.h"
 
 using namespace std;
 using namespace COLLADASW;
@@ -198,7 +199,7 @@ class CCGroup {
                 writer->openElement(colladaKey[colladaKeys::technique_common]);
                 writer->openElement(colladaKey[colladaKeys::instance_material]);
                 writer->appendAttribute(colladaKey[colladaKeys::symbol], "geometryMaterial");
-                writer->appendAttribute(colladaKey[colladaKeys::target], "#M" + to_string((long long) m_material));
+                writer->appendAttribute(colladaKey[colladaKeys::target], "#M" + toString((long long) m_material));
                 writer->openElement(colladaKey[colladaKeys::bind_vertex_input]);
                 writer->appendAttribute(colladaKey[colladaKeys::semantic], "UVSET0");
                 writer->appendAttribute(colladaKey[colladaKeys::input_semantic], "TEXCOORD");
@@ -294,7 +295,7 @@ void COLLADAConverter::endModel() {
     m_writer->openElement(colladaKey[colladaKeys::library_effects]);
     for (set<int>::iterator it = m_model->materialIds().begin(); it != m_model->materialIds().end(); it++) {
         m_writer->openElement(colladaKey[colladaKeys::effect]);
-        m_writer->appendAttribute(colladaKey[colladaKeys::id], "E" + to_string((long long)*it));
+        m_writer->appendAttribute(colladaKey[colladaKeys::id], "E" + toString((long long)*it));
         m_writer->openElement(colladaKey[colladaKeys::profile_COMMON]);
         m_writer->openElement(colladaKey[colladaKeys::technique]);
         m_writer->appendAttribute(colladaKey[colladaKeys::sid], "COMMON");
@@ -316,9 +317,9 @@ void COLLADAConverter::endModel() {
     m_writer->openElement(colladaKey[colladaKeys::library_materials]);
     for (set<int>::iterator it = m_model->materialIds().begin(); it != m_model->materialIds().end(); it++) {
         m_writer->openElement(colladaKey[colladaKeys::material]);
-        m_writer->appendAttribute(colladaKey[colladaKeys::id], "M" + to_string((long long)*it));
+        m_writer->appendAttribute(colladaKey[colladaKeys::id], "M" + toString((long long)*it));
         m_writer->openElement(colladaKey[colladaKeys::instance_effect]);
-        m_writer->appendAttribute(colladaKey[colladaKeys::url], "#E" + to_string((long long)*it));
+        m_writer->appendAttribute(colladaKey[colladaKeys::url], "#E" + toString((long long)*it));
         m_writer->closeElement(); // instance_effect
         m_writer->closeElement(); // material
     }
@@ -659,7 +660,7 @@ void COLLADAConverter::endFacetGroup() {
 }
 
 std::string COLLADAConverter::createGeometryId() {
-        return "G" + to_string((long long)m_model->geometryId()++);
+        return "G" + toString((long long)m_model->geometryId()++);
 }
 
 std::string COLLADAConverter::getInstanceName(const std::vector<float> &params) {
