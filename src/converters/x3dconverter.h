@@ -32,7 +32,7 @@ namespace XIOT {
     class X3DWriter;
 }
 
-typedef std::map<std::vector<float>, std::pair<std::string,int>> X3DInstanceMap;
+typedef std::map<std::vector<float>, std::pair<std::string,int> > X3DInstanceMap;
 
 class X3DConverter : public RVMReader
 {
