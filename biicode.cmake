@@ -7,3 +7,8 @@ ADD_DEFINITIONS(-DXIOT_FOUND -DOPENCOLLADASW_FOUND)
 
 # Rename src/main.cpp to pmuc
 SET_TARGET_PROPERTIES(${BII_src_main_TARGET} PROPERTIES OUTPUT_NAME pmuc)
+
+add_test(NAME run_pmuc COMMAND ${BII_src_main_TARGET} --help)
+set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "usage")
+set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "--x3d")
+set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "--collada")
