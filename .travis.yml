@@ -6,6 +6,7 @@ compiler:
 
 script:
   - bii buzz
+  - bii test
 
 install:
   - wget http://apt.biicode.com/install.sh && chmod +x install.sh && ./install.sh
