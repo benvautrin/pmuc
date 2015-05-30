@@ -22,6 +22,7 @@
 
 #include "ifcconverter.h"
 
+#include <ifcpp/model/IfcPPModel.h>
 
 IFCConverter::IFCConverter(const std::string& filename) : RVMReader()
 {
