@@ -6,6 +6,7 @@ install:
   - cmd: cmake --version
 
 build_script:
-  - cmd: bii init
+  - cmd: bii init -L
+  - cmd: bii find
   - cmd: bii cpp:configure -G "Visual Studio 12"
   - cmd: bii cpp:build
