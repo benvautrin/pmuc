@@ -1,7 +1,11 @@
 install:
-  - cmd: echo "Downloading biicode ..."
-  - ps: wget http://www.biicode.com/downloads/latest/win -OutFile bii-win.exe
-  - cmd: bii-win.exe /VERYSILENT
-  - cmd: set PATH=%PATH%;C:\Program Files (x86)\BiiCode\bii
-  - cmd: bii -v
-  - cmd: del bii-win.exe
+  - cinst biicode
+  - cmd: set PATH=%PATH:CMake 2.8\bin=%;C:\ProgramData\chocolatey\lib\cmake.3.0.2\content\cmake-3.0.2-win32-x86\bin
+  - cmd: set PATH=%PATH%;C:\Program Files (x86)\BiiCode\bii;
+  - cmd: bii --version
+  - cmd: cmake --version
+
+build_script:
+  - cmd: bii init
+  - cmd: bii cpp:configure -G "Visual Studio 12"
+  - cmd: bii cpp:build
