@@ -23,6 +23,14 @@
 #define IFCCONVERTER_H
 
 #include "../api/rvmreader.h"
+#include <ifcpp/model/IfcPPModel.h>
+#include <stack>
+
+class IfcOwnerHistory;
+class IfcRelAggregates;
+class IfcLocalPlacement;
+class IfcObjectDefinition;
+class IfcGeometricRepresentationContext;
 
 class IFCConverter : public RVMReader
 {
@@ -118,7 +126,16 @@ class IFCConverter : public RVMReader
         virtual void endFacetGroup();
 
     private:
-        
+        shared_ptr<IfcPPModel>                          m_model;
+        shared_ptr<IfcOwnerHistory>                     m_owner_history;
+        shared_ptr<IfcGeometricRepresentationContext>   m_context;
+        std::string                                     m_filename;
+        std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
+        std::stack<shared_ptr<IfcLocalPlacement> >       m_placementStack;
+
+        shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name);
+        void initModel();
+        void pushParentRelation(shared_ptr<IfcObjectDefinition> parent); 
 };
 
 #endif // IFCCONVERTER_H
