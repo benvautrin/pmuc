@@ -47,6 +47,7 @@ string trim(const string& s) {
 
 RVMParser::RVMParser(RVMReader* reader) :
     m_reader(reader),
+    m_attributeStream(0),
     m_headerFound(false),
     m_objectName(""),
     m_objectFound(0),
