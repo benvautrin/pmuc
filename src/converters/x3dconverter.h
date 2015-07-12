@@ -49,7 +49,7 @@ class X3DConverter : public RVMReader
         virtual void startModel(const std::string& projectName, const std::string& name);
         virtual void endModel();
 
-        virtual void startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId);
+        virtual void startGroup(const std::string& name, const Vector3F& translation, const int& materialId);
         virtual void endGroup();
 
         virtual void startMetaData();
@@ -145,7 +145,7 @@ class X3DConverter : public RVMReader
         int m_id;
 
         std::vector<XIOT::X3DWriter*> m_writers;
-        std::vector<std::vector<float> > m_translations;
+        std::vector<Vector3F> m_translations;
         std::vector<int> m_materials;
         std::vector<std::string> m_groups;
         bool m_binary;

@@ -82,6 +82,11 @@ class Vector3F
             return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
         }
 
+         Vector3F& operator*=(float k)  {
+            m_values[0] *= k; m_values[1] *= k; m_values[2] *= k;
+            return *this;
+        }
+
         friend Vector3F operator-(const std::vector<float>& p1, const std::vector<float>& p2);
         friend Vector3F operator-(const Vector3F& p1, const Vector3F& p2);
         friend Vector3F operator+(const Vector3F& p1, const Vector3F& p2);

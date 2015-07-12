@@ -56,7 +56,7 @@ void DummyReader::endModel() {
     cout << "endModel" << endl;
 }
 
-void DummyReader::startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) {
+void DummyReader::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     cout << "startGroup\n  " << name << endl;
 }
 

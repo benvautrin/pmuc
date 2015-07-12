@@ -115,7 +115,7 @@ void X3DConverter::endModel() {
     // Forgot something ?
 }
 
-void X3DConverter::startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) {
+void X3DConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     // Ensuring the name is compatible with the DEF attribute
     string x3dName = name;
     size_t p;

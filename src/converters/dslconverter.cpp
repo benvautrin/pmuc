@@ -66,7 +66,7 @@ void DSLConverter::endModel() {
     // Export ?
 }
 
-void DSLConverter::startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) {
+void DSLConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     string dslName = name;
 
     size_t p;
@@ -80,7 +80,7 @@ void DSLConverter::startGroup(const std::string& name, const std::vector<float>&
 
     m_groups.push_back(dslName);
     m_groupsChildren.push_back(vector<string>());
-    m_groupsTranslation.push_back(vector<float>(translation));
+    m_groupsTranslation.push_back(translation);
 }
 
 void DSLConverter::endGroup() {
@@ -258,7 +258,7 @@ void DSLConverter::writeShapeTransforms(const string& shapeid, const std::vector
 
     writer->writeRotation("rshape" + shapeid, "bshape" + shapeid, rx, ry, rz);
     writer->writeTranslation("tshape" + shapeid, "rshape" + shapeid, matrix[3], matrix[7], matrix[11]);
-    vector<float> gt = m_groupsTranslation.back();
+    Vector3F gt = m_groupsTranslation.back();
     writer->writeTranslation("shape" + shapeid, "tshape" + shapeid, gt[0], gt[1], gt[2]);
     m_groupsChildren.back().push_back("shape" + shapeid);
 }
