@@ -96,6 +96,7 @@ namespace colladaKeys {
 		ph,
 		h,
 		polygons,
+        unit,
 	};
 };
 
@@ -155,6 +156,7 @@ static String colladaKey[] = {
 	"ph",
 	"h",
 	"polygons",
+    "unit"
 };
 
 
@@ -271,7 +273,10 @@ void COLLADAConverter::startHeader(const string& banner, const string& fileNote,
     m_writer->appendTextElement(colladaKey[colladaKeys::author], user);
     m_writer->appendTextElement(colladaKey[colladaKeys::authoring_tool], banner);
     m_writer->appendTextElement(colladaKey[colladaKeys::comments], fileNote);
+    m_writer->closeElement();
     m_writer->appendTextElement(colladaKey[colladaKeys::up_axis], "Z_UP");
+    m_writer->openElement(colladaKey[colladaKeys::unit]);
+    m_writer->appendAttribute("meter", "1.0");
     m_writer->closeElement();
 }
 
