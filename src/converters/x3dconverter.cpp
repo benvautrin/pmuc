@@ -604,6 +604,7 @@ void X3DConverter::startShape(const std::vector<float>& matrix) {
                                  (matrix[10] - m_translations.back()[1]),
                                  (matrix[11] - m_translations.back()[2]));
     m_writers.back()->setMFRotation(ID::rotation, r);
+    m_writers.back()->setSFVec3f(ID::scale, scale.coeff(0,0),scale.coeff(1,1),scale.coeff(2,2));
     startNode(ID::Shape);
     startNode(ID::Appearance);
     startNode(ID::Material);
