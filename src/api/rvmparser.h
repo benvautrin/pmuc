@@ -25,6 +25,7 @@
 #include <istream>
 #include <string>
 #include <vector>
+#include <array>
 
 #ifdef ICONV_FOUND
 #include <iconv.h>
@@ -172,9 +173,7 @@ class RVMParser
 
         std::string readIdentifier(std::istream& is);
         std::string readString(std::istream& is);
-        std::vector<float> readMatrix(std::istream& is);
-        std::vector<float> readBoundingBox(std::istream& is);
-        std::vector<float> readVector(std::istream& is);
+        void readMatrix(std::istream& is, std::array<float, 12>& matrix);
         std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > readFacetGroup(std::istream& is);
         unsigned int readInt(std::istream& is);
         float readFloat(std::istream &is);

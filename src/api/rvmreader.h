@@ -24,8 +24,10 @@
 
 #include <string>
 #include <vector>
+#include <array>
 
 #include "vector3f.h"
+#include "rvmprimitive.h"
 
 /**
  * @brief RVM reader base class
@@ -88,7 +90,7 @@ class RVMReader
          * @param materialId the material to use in the form of a PDMS color index.
          * @see RVMColorHelper
          */
-        virtual void startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) = 0;
+        virtual void startGroup(const std::string& name, const float translation[3], const int& materialId) = 0;
         /**
          * @brief Called at the end of a group.
          */
@@ -117,167 +119,74 @@ class RVMReader
         /**
          * @brief Describes a pyramid in a group
          * @param matrix 3x4 transformation matrix
-         * @param xbottom
-         * @param ybottom
-         * @param xtop
-         * @param ytop
-         * @param height
-         * @param xoffset
-         * @param yoffset
+         * @param pyramid
          * @see RVMMeshHelper::makePyramid
          */
-        virtual void startPyramid(const std::vector<float>& matrix,
-                                  const float& xbottom,
-                                  const float& ybottom,
-                                  const float& xtop,
-                                  const float& ytop,
-                                  const float& height,
-                                  const float& xoffset,
-                                  const float& yoffset) = 0;
-        /**
-         * @brief End of a pyramid
-         */
-        virtual void endPyramid() = 0;
+        virtual void createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& pyramid) = 0;
 
         /**
          * @brief Describes a box in a group
          * @param matrix 3x4 transformation matrix
-         * @param xlength
-         * @param ylength
-         * @param zlength
+         * @param len
          * @see RVMMeshHelper::makeBox
          */
-        virtual void startBox(const std::vector<float>& matrix,
-                              const float& xlength,
-                              const float& ylength,
-                              const float& zlength) = 0;
-        /**
-         * @brief End of a box
-         */
-        virtual void endBox() = 0;
+        virtual void createBox(const std::array<float, 12>& matrix, const Primitives::Box& box) = 0;
 
         /**
          * @brief Describes a rectangular torus
          * @param matrix 3x4 transformation matrix
-         * @param rinside
-         * @param routside
-         * @param height
-         * @param angle
+         * @param rTorus
          * @see RVMMeshHelper::makeRectangularTorus
          */
-        virtual void startRectangularTorus(const std::vector<float>& matrix,
-                                           const float& rinside,
-                                           const float& routside,
-                                           const float& height,
-                                           const float& angle) = 0;
-        /**
-         * @brief End of a rectangular torus
-         */
-        virtual void endRectangularTorus() = 0;
+        virtual void createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& rTorus) = 0;
 
         /**
          * @brief Describes a circular torus
          * @param matrix
-         * @param rinside
-         * @param routside
-         * @param angle
+         * @param cTorus
          * @see RVMMeshHelper::makeCircularTorus
          */
-        virtual void startCircularTorus(const std::vector<float>& matrix,
-                                        const float& rinside,
-                                        const float& routside,
-                                        const float& angle) = 0;
-        /**
-         * @brief End of circular torus
-         */
-        virtual void endCircularTorus() = 0;
+        virtual void createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& cTorus) = 0;
 
         /**
          * @brief Describes an elliptical dish
          * @param matrix
-         * @param diameter
-         * @param radius
+         * @param eDish
          * @see RVMMeshHelper::makeEllipticalDish
          */
-        virtual void startEllipticalDish(const std::vector<float>& matrix,
-                                         const float& dishradius,
-                                         const float& secondradius) = 0;
-        /**
-         * @brief End of elliptical dish
-         */
-        virtual void endEllipticalDish() = 0;
+        virtual void createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& eDish) = 0;
 
         /**
          * @brief Describes an spherical dish
          * @param matrix
-         * @param diameter
-         * @param height
+         * @param sDish
          * @see RVMMeshHelper::makeSphericalDish
          */
-        virtual void startSphericalDish(const std::vector<float>& matrix,
-                                        const float& dishradius,
-                                        const float& height) = 0;
-        /**
-         * @brief End of a spherical dish.
-         */
-        virtual void endSphericalDish() = 0;
+        virtual void createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& sDish) = 0;
 
         /**
          * @brief Describes a snout.
          * @param matrix
-         * @param dtop
-         * @param dbottom
-         * @param height
-         * @param xoffset
-         * @param yoffset
-         * @param unknown1
-         * @param unknown2
-         * @param unknown3
-         * @param unknown4
+         * @param snout
          * @see RVMMeshHelper::makeSnout
          */
-        virtual void startSnout(const std::vector<float>& matrix,
-                                const float& dtop,
-                                const float& dbottom,
-                                const float& height,
-                                const float& xoffset,
-                                const float& yoffset,
-                                const float& unknown1,
-                                const float& unknown2,
-                                const float& unknown3,
-                                const float& unknown4) = 0;
-        /**
-         * @brief End of a snout.
-         */
-        virtual void endSnout() = 0;
+        virtual void createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& snout) = 0;
 
         /**
          * @brief Describes a cylinder
          * @param matrix
-         * @param radius
-         * @param height
+         * @param cylinder
          * @see RVMMeshHelper::makeCylinder
          */
-        virtual void startCylinder(const std::vector<float>& matrix,
-                                   const float& radius,
-                                   const float& height) = 0;
-        /**
-         * @brief End of a cylinder
-         */
-        virtual void endCylinder() = 0;
+        virtual void createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& cylinder) = 0;
 
         /**
          * @brief Describes a sphere
          * @param matrix
-         * @param diameter
+         * @param sphere
          * @see RVMMeshHelper::makeSphere
          */
-        virtual void startSphere(const std::vector<float>& matrix,
-                                 const float& diameter) = 0;
-        /**
-         * @brief End of a sphere
-         */
-        virtual void endSphere() = 0;
+        virtual void createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& sphere) = 0;
 
         /**
          * @brief Describes a line
@@ -285,7 +194,7 @@ class RVMReader
          * @param startx
          * @param endx
          */
-        virtual void startLine(const std::vector<float>& matrix,
+        virtual void startLine(const std::array<float, 12>& matrix,
                                const float& startx,
                                const float& endx) = 0;
         /**
@@ -302,7 +211,7 @@ class RVMReader
          * @param matrix
          * @param vertexes
          */
-        virtual void startFacetGroup(const std::vector<float>& matrix,
+        virtual void startFacetGroup(const std::array<float, 12>& matrix,
                                      const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes) = 0;
         /**
          * @brief End of a facet group
