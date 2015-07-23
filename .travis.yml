@@ -5,7 +5,7 @@ compiler:
   - gcc
 
 script:
-  - bii buzz
+  - bii build -- -j4
   - bii test
 
 before_script:
@@ -14,6 +14,8 @@ before_script:
   - sudo apt-get install -qq gcc-4.8 g++-4.8
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+  - bii init -L
+  - bii find
 
 install:
   - wget http://apt.biicode.com/install.sh && chmod +x install.sh && ./install.sh
