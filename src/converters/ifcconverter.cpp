@@ -117,7 +117,7 @@ void IFCConverter::endModel() {
     m_relationStack.pop();
 }
 
-void IFCConverter::startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) {
+void IFCConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
     m_model->insertEntity(buildingElement);
     buildingElement->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
