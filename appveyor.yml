@@ -8,5 +8,5 @@ install:
 build_script:
   - cmd: bii init -L
   - cmd: bii find
-  - cmd: bii cpp:configure -G "Visual Studio 12"
+  - cmd: bii cpp:configure -G "Visual Studio 12" || bii cpp:configure -G "Visual Studio 12"
   - cmd: bii cpp:build
