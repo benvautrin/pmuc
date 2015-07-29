@@ -39,6 +39,8 @@ using namespace std;
 #define PATHSEP '/'
 #endif
 
+typedef std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F>>>>		FacetGroup;
+
 union Primitive
 {
     Primitives::Box                 box;
@@ -52,12 +54,36 @@ union Primitive
     Primitives::Sphere              sphere;
 };
 
+struct Identifier
+{
+	inline bool operator==(const char* rhs) const
+	{
+		return chrs[0] == rhs[0] && chrs[1] == rhs[1]
+			&& chrs[2] == rhs[2] && chrs[3] == rhs[3];
+	}
+
+	inline bool operator!=(const char* rhs) const
+	{
+		return chrs[0] != rhs[0] || chrs[1] != rhs[1]
+			|| chrs[2] != rhs[2] || chrs[3] != rhs[3];
+	}
+
+	inline bool empty() const
+	{
+		return *chrs == 0;
+	}
+
+	char		chrs[4];
+};
+
 template<typename T>
-inline void read_(std::istream& in, T& value)
+inline T& read_(std::istream& in, T& value)
 {
     char *charPtr = reinterpret_cast<char*>(&value);
     for (size_t i = 0; i < sizeof(T); ++i)
         charPtr[sizeof(T) - 1 - i] = in.get();
+
+	return value;
 }
 
 template<typename T>
@@ -69,11 +95,164 @@ inline T read_(std::istream& in)
     return value;
 }
 
+template<>
+static Identifier& read_<Identifier>(std::istream& in, Identifier& res)
+{
+	static char buf[12];
+	auto chrs = res.chrs;
+
+	// read the first 12 bytes and extract the first 3 characters
+	in.read(buf, 12);
+	{
+		char* ptr = buf;
+
+		for (int i = 0; i < 3; ++i, ptr += 4)
+		{
+			// the first three bytes of the current double word have to be zero
+			if (ptr[0] != 0 || ptr[1] != 0 || ptr[2] != 0)
+			{
+				*chrs = 0;
+				return res;
+			}
+
+			// extract character
+			chrs[i] = ptr[3];
+		}
+	}
+
+	// check if we have the end identifier
+	if (chrs[0] == 'E' && chrs[1] == 'N' && chrs[2] == 'D')
+		chrs[3] = 0;
+	else
+	{
+		in.read(buf, 4);
+		if (buf[0] != 0 || buf[1] != 0 || buf[2] != 0)
+		{
+			*chrs = 0;
+			return res;
+		}
+
+		chrs[3] = buf[3];
+	}
+
+	return res;
+}
+
+template<>
+string& read_<string>(istream& is, string& str)
+{
+	const unsigned int size = read_<unsigned int>(is) * 4;
+	if (size == 0)
+	{
+		str.empty();
+		return str;
+	}
+
+#ifndef ICONV_FOUND
+
+	str.resize(size);
+	for(unsigned int i=0;i<size;++i)
+		str[i] = is.get();
+
+#else
+
+	char buffer[1024];
+	buffer[0] = 0;
+	is.read(buffer, size);
+	buffer[size] = 0;
+
+	// If already in UTF-8, no change
+	if (m_cd == (iconv_t)-1)
+	{
+		str = buffer;
+		return str;
+	}
+
+	// Encoding conversion.
+	char cbuffer[1056];
+	size_t inb = strlen(buffer);
+	size_t outb = 1056;
+	char* bp = cbuffer;
+#ifdef __APPLE__
+	char* sp = buffer;
+#else
+	const char* sp = buffer;
+#endif
+	iconv(m_cd, &sp, &inb, &bp, &outb);
+	str = cbuffer;
+#endif
+
+	return str;
+}
+
+static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res, float scale)
+{
+	const unsigned int pc = read_<unsigned int>(is);
+
+	res.resize(pc);
+
+	for (auto& p : res)
+	{
+		const unsigned int gc = read_<unsigned int>(is);
+		p.resize(gc);
+
+		for (auto &g : p)
+		{
+			const unsigned int vc = read_<unsigned int>(is);
+			g.resize(vc);
+
+			for (auto &gi : g)
+			{
+				Vector3F &c = gi.first;
+				Vector3F &n = gi.second;
+
+				read_<float>(is, c.x()) *= scale;
+				read_<float>(is, c.y()) *= scale;
+				read_<float>(is, c.z()) *= scale;
+
+				read_<float>(is, n.x()) *= scale;
+				read_<float>(is, n.y()) *= scale;
+				read_<float>(is, n.z()) *= scale;
+			}
+		}
+	}
+
+	return res;
+}
+
+
 template<typename T, size_t size>
-void readArray(std::istream &in, T(&a)[size])
+void readArray_(std::istream &in, T(&a)[size])
 {
     for (size_t i = 0; i < size; ++i)
         read_<T>(in, a[i]);
+}
+
+template<size_t numInts>
+inline void skip_(std::istream& in)
+{
+    in.seekg(sizeof(int) * numInts, in.cur);
+}
+
+template<>
+inline void skip_<1>(std::istream& in)
+{
+    read_<int>(in);
+}
+
+template<>
+inline void skip_<2>(std::istream& in)
+{
+    read_<int>(in);
+    read_<int>(in);
+}
+
+template<>
+inline void skip_<3>(std::istream& in)
+{
+    read_<int>(in);
+    read_<int>(in);
+    read_<int>(in);
 }
 
 string trim(const string& s) {
@@ -189,36 +368,46 @@ bool RVMParser::readBuffer(const char* buffer) {
     return success;
 }
 
-bool RVMParser::readStream(istream& is) {
+bool RVMParser::readStream(istream& is)
+{
+	Identifier id;
+	read_(is, id);
 
-    string id;
-
-    id = readIdentifier(is);
-    if (id == "") {
+    if (id.empty())
+	{
         m_lastError = "Incorrect file format while reading identifier.";
         return false;
     }
-    if (id != "HEAD") {
+
+    if (id != "HEAD")
+	{
         m_lastError = "File header not found.";
         return false;
     }
 
-    if (!m_aggregation) {
+    if (!m_aggregation)
         m_reader->startDocument();
-    }
 
-    is.seekg(sizeof(int) * 2, is.cur); // Garbage ?
+    skip_<2>(is); // Garbage ?
 
     unsigned int version = read_<unsigned int>(is);
-    string banner = readString(is);
-    string fileNote = readString(is);
-    string date = readString(is);
-    string user = readString(is);
 
-    m_encoding = version >= 2 ? readString(is) : "UTF-8";
-    if (m_encoding == "Unicode UTF-8") {
-        m_encoding = "UTF-8";
-    }
+	string banner, fileNote, date, user;
+	read_(is, banner);
+	read_(is, fileNote);
+	read_(is, date);
+	read_(is, user);
+
+	if (version >= 2)
+	{
+		read_(is, m_encoding);
+
+		if (m_encoding == "Unicode UTF-8")
+			m_encoding = "UTF-8";
+	}
+	else
+		m_encoding = "UTF-8";
+
 #ifdef ICONV_FOUND
     m_cd = (iconv_t)-1;
     if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
@@ -236,8 +425,8 @@ bool RVMParser::readStream(istream& is) {
         m_reader->endHeader();
     }
 
-    id = readIdentifier(is);
-    if (id == "") {
+	read_(is, id);
+    if (id.empty()) {
         m_lastError = "Incorrect file format while reading identifier.";
         return false;
     }
@@ -245,16 +434,19 @@ bool RVMParser::readStream(istream& is) {
         m_lastError = "Model not found.";
         return false;
     }
-    readInt(is); // Garbage ?
-    readInt(is); // Garbage ?
-    version = read_<unsigned int>(is);
-    string projectName = readString(is);
-    string name = readString(is);
-    if (!m_aggregation) {
-        m_reader->startModel(projectName, name);
-    }
 
-    while ((id = readIdentifier(is)) != "END") {
+    skip_<2>(is); // Garbage ?
+    version = read_<unsigned int>(is);
+
+	string projectName, name;
+	read_(is, projectName);
+	read_(is, name);
+
+    if (!m_aggregation)
+        m_reader->startModel(projectName, name);
+
+	while ((read_(is, id)) != "END")
+	{
         if (id == "CNTB") {
             if (!readGroup(is)) {
                 return false;
@@ -287,19 +479,22 @@ bool RVMParser::readStream(istream& is) {
     return true;
 }
 
-const string RVMParser::lastError() {
+const string RVMParser::lastError()
+{
     return m_lastError;
 }
 
-bool RVMParser::readGroup(std::istream& is) {
-    readInt(is); // Garbage ?
-    readInt(is); // Garbage ?
-    int version = readInt(is);
-    string name = readString(is);
+bool RVMParser::readGroup(std::istream& is)
+{
+    skip_<2>(is); // Garbage ?
+    const unsigned int version = read_<unsigned int>(is);
+
+	string name;
+	read_(is, name);
 
     float translation[3];
-    readArray(is, translation);
-    int materialId = readInt(is);
+    readArray_(is, translation);
+    const unsigned int materialId = read_<unsigned int>(is);
 
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
         m_objectFound++;
@@ -369,8 +564,8 @@ bool RVMParser::readGroup(std::istream& is) {
     }
 
     // Children
-    string id;
-    while ((id = readIdentifier(is)) != "CNTE") {
+    Identifier id;
+    while ((read_(is, id)) != "CNTE") {
         if (id == "CNTB") {
             if (!readGroup(is)) {
                 return false;
@@ -385,9 +580,7 @@ bool RVMParser::readGroup(std::istream& is) {
         }
     }
 
-    readInt(is); // Garbage ?
-    readInt(is); // Garbage ?
-    readInt(is); // Garbage ?
+    skip_<3>(is); // Garbage ?
 
     if (m_objectFound) {
         m_reader->endGroup();
@@ -399,8 +592,7 @@ bool RVMParser::readGroup(std::istream& is) {
 
 bool RVMParser::readPrimitive(std::istream& is)
 {
-    readInt(is); // Garbage ?
-    readInt(is); // Garbage ?
+    skip_<2>(is); // Garbage ?
     const unsigned int version = read_<unsigned int>(is);
     const unsigned int primitiveKind = read_<unsigned int>(is);
 
@@ -408,60 +600,61 @@ bool RVMParser::readPrimitive(std::istream& is)
     readMatrix(is, matrix);
 
     // skip bounding box
-    is.seekg(sizeof(float) * 6, is.cur);
+    skip_<6>(is);
 
-    Primitive primitive;
+    Primitive	primitive;
+	FacetGroup	fc;
     if (m_objectFound)
     {
         switch (primitiveKind)
         {
             case 1:
                 m_nbPyramids++;
-                readArray(is, primitive.pyramid.data);
+                readArray_(is, primitive.pyramid.data);
                 m_reader->createPyramid(matrix, primitive.pyramid);
             break;
 
             case 2:
                 m_nbBoxes++;
-                readArray(is, primitive.box.len);
+				readArray_(is, primitive.box.len);
                 m_reader->createBox(matrix, primitive.box);
              break;
 
             case 3:
                 m_nbRectangularToruses++;
-                readArray(is, primitive.rTorus.data);
+				readArray_(is, primitive.rTorus.data);
                 m_reader->createRectangularTorus(matrix, primitive.rTorus);
             break;
 
             case 4:
                 m_nbCircularToruses++;
-                readArray(is, primitive.cTorus.data);
+				readArray_(is, primitive.cTorus.data);
                 m_reader->createCircularTorus(matrix, primitive.cTorus);
             break;
 
             case 5:
                 m_nbEllipticalDishes++;
-                readArray(is, primitive.eDish.data);
+				readArray_(is, primitive.eDish.data);
                 m_reader->createEllipticalDish(matrix, primitive.eDish);
             break;
 
             case 6:
                 m_nbSphericalDishes++;
-                readArray(is, primitive.sDish.data);
+				readArray_(is, primitive.sDish.data);
                 m_reader->createSphericalDish(matrix, primitive.sDish);
             break;
 
             case 7:
                 m_nbSnouts++;
-                readArray(is, primitive.snout.data);
-                is.seekg( sizeof(float) * 4, is.cur );
+				readArray_(is, primitive.snout.data);
+                skip_<4>(is);
 
                 m_reader->createSnout(matrix, primitive.snout);
             break;
 
             case 8:
                 m_nbCylinders++;
-                readArray(is, primitive.cylinder.data);
+				readArray_(is, primitive.cylinder.data);
                 m_reader->createCylinder(matrix, primitive.cylinder);
             break;
 
@@ -483,8 +676,8 @@ bool RVMParser::readPrimitive(std::istream& is)
 
             case 11: {
                 m_nbFacetGroups++;
-                m_reader->startFacetGroup(matrix,
-                                          readFacetGroup(is));
+				readFacetGroup_(is, fc, m_scale);
+                m_reader->startFacetGroup(matrix, fc);
                 m_reader->endFacetGroup();
             } break;
 
@@ -496,47 +689,47 @@ bool RVMParser::readPrimitive(std::istream& is)
     } else {
         switch (primitiveKind) {
             case 1:
-                is.seekg(sizeof(float) * 7, is.cur);
+                skip_<7>(is);
             break;
 
             case 2:
-                is.seekg(sizeof(float) * 3, is.cur);
+                skip_<3>(is);
             break;
 
             case 3:
-                is.seekg(sizeof(float) * 4, is.cur);
+                skip_<4>(is);
             break;
 
             case 4:
-                is.seekg(sizeof(float) * 3, is.cur);
+                skip_<3>(is);
             break;
 
             case 5:
-                is.seekg(sizeof(float) * 2, is.cur);
+                skip_<2>(is);
             break;
 
             case 6:
-                is.seekg(sizeof(float) * 2, is.cur);
+                skip_<2>(is);
             break;
 
             case 7:
-                is.seekg(sizeof(float) * 9, is.cur);
+                skip_<9>(is);
             break;
 
             case 8:
-                is.seekg(sizeof(float) * 2, is.cur);
+                skip_<2>(is);
             break;
 
             case 9:
-                is.seekg(sizeof(float), is.cur);
+                skip_<1>(is);
             break;
 
             case 10:
-                is.seekg(sizeof(float) * 2, is.cur);
+                skip_<2>(is);
             break;
 
             case 11:
-                readFacetGroup(is);
+				readFacetGroup_(is, fc, 1.0f);
             break;
 
             default:
@@ -547,74 +740,6 @@ bool RVMParser::readPrimitive(std::istream& is)
     return true;
 }
 
-string RVMParser::readIdentifier(istream& is)
-{
-    string res;
-    for (int j = 0; j < 3; j++) {
-        for (int i = 0; i < 3; i++) {
-            if (readChar(is) != 0) {
-                return "";
-            }
-        }
-        res.push_back(readChar(is));
-    }
-    if (res == "END") {
-        return res;
-    }
-    for (int i = 0; i < 3; i++) {
-        if (readChar(is) != 0) {
-            return "";
-        }
-    }
-    res.push_back(readChar(is));
-
-    return res;
-}
-
-string RVMParser::readString(istream& is)
-{
-    string res;
-    unsigned int size = readInt(is) * 4;
-    if (size == 0)
-        return "";
-    char buffer[1024];
-    buffer[0] = 0;
-    is.read(buffer, size);
-    buffer[size] = 0;
-    // Since I've never been able to find why there sometimes are strange characters at the end of some names, ignore them and truncate the string.
-    /*
-    if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
-        for (unsigned int i = 0; i < size; i++) {
-            if ((unsigned char)buffer[i] > 0x7E) {
-                buffer[i] = 0;
-                break;
-            }
-        }
-    }*/
-
-#ifndef ICONV_FOUND
-    return buffer;
-#else
-    // If already in UTF-8, no change
-    if (m_cd == (iconv_t)-1) {
-        return buffer;
-    }
-
-    // Encoding conversion.
-    char cbuffer[1056];
-    size_t inb = strlen(buffer);
-    size_t outb = 1056;
-    char* bp = cbuffer;
-#ifdef __APPLE__
-    char* sp = buffer;
-#else
-    const char* sp = buffer;
-#endif
-    iconv(m_cd, &sp, &inb, &bp, &outb);
-    return cbuffer;
-#endif
-}
-
 void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
 {
     for (auto &value : matrix)
@@ -622,58 +747,5 @@ void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
 
     for (size_t i = 9; i < 12; i++)
         matrix[i] *= m_scale;
-}
-
-std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > RVMParser::readFacetGroup(std::istream& is)
-{
-    const unsigned int pc = read_<unsigned int>(is);
-
-    std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > res( pc );
-
-    for ( auto& p : res )
-    {
-        const unsigned int gc = read_<unsigned int>(is);
-        p.resize(gc);
-
-        for ( auto &g : p )
-        {
-            const unsigned int vc = read_<unsigned int>(is);
-            g.resize(vc);
-
-            for ( auto &gi : g )
-            {
-                const Vector3F c(read_<float>(is) * m_scale, read_<float>(is) * m_scale, read_<float>(is) * m_scale);
-                const Vector3F n(read_<float>(is) * m_scale, read_<float>(is) * m_scale, read_<float>(is) * m_scale);
-                gi = std::make_pair(c, n);
-            }
-        }
-    }
-    return res;
-}
-
-unsigned int RVMParser::readInt(istream& is)
-{
-    unsigned int res;
-    char* p  = (char*)(void*)&res;
-    for (unsigned int i = 0; i < 4; i++) {
-        p[3 - i] = readChar(is);
-    }
-    return res;
-}
-
-float RVMParser::readFloat(istream &is)
-{
-    float res;
-
-    char* p  = (char*)(void*)&res;
-    for (unsigned int i = 0; i < 4; i++) {
-        p[3 - i] = readChar(is);
-    }
-    return res;
-}
-
-char RVMParser::readChar(istream& is)
-{
-    return is.get();
 }
 

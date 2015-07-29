@@ -171,13 +171,7 @@ class RVMParser
         bool readGroup(std::istream& is);
         bool readPrimitive(std::istream& is);
 
-        std::string readIdentifier(std::istream& is);
-        std::string readString(std::istream& is);
         void readMatrix(std::istream& is, std::array<float, 12>& matrix);
-        std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > > readFacetGroup(std::istream& is);
-        unsigned int readInt(std::istream& is);
-        float readFloat(std::istream &is);
-        char readChar(std::istream& is);
 
         RVMReader*  m_reader;
         std::string m_encoding;
