@@ -36,6 +36,7 @@ class IfcObjectDefinition;
 class IfcGeometricRepresentationContext;
 class IfcRepresentationItem;
 class IfcMaterial;
+class IfcPropertySet;
 
 class IFCConverter : public RVMReader
 {
@@ -137,11 +138,12 @@ class IFCConverter : public RVMReader
         std::string                                     m_filename;
         std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
         std::map<int, shared_ptr<IfcMaterial> >         m_materials;
+        shared_ptr<IfcPropertySet>                      m_propertySet;
 
         shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name);
         shared_ptr<IfcMaterial> createMaterial(int id);
         void initModel();
-        void pushParentRelation(shared_ptr<IfcObjectDefinition> parent); 
+        void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
         void addSurfaceModelToShape(shared_ptr<IfcRepresentationItem> item);
         void writeMesh(const Mesh &mesh, const Eigen::Matrix4f& matrix);
 };

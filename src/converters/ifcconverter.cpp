@@ -71,6 +71,11 @@
 #include <ifcpp/IFC4/include/IfcSurfaceStyleRendering.h>
 #include <ifcpp/IFC4/include/IfcSurfaceStyle.h>
 #include <ifcpp/IFC4/include/IfcSurfaceSide.h>
+#include <ifcpp/IFC4/include/IfcPropertySet.h>
+#include <ifcpp/IFC4/include/IfcRelDefinesByProperties.h>
+#include <ifcpp/IFC4/include/IfcPropertySingleValue.h>
+#include <ifcpp/IFC4/include/IfcText.h>
+
 
 
 #include <ifcpp/model/IfcPPGuid.h>
@@ -200,6 +205,24 @@ void IFCConverter::endGroup() {
 }
 
 void IFCConverter::startMetaData() {
+    // Create a property set that holds all upcoming properties
+    m_propertySet = shared_ptr<IfcPropertySet>( new IfcPropertySet() );
+    m_propertySet->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
+    m_propertySet->m_OwnerHistory = m_owner_history;
+    m_propertySet->m_Description = shared_ptr<IfcText>( new IfcText( L"RVM Attributes" ));
+    m_model->insertEntity(m_propertySet);
+
+    // A related object is required (typically a IfcBuildingElementProxy)
+    shared_ptr<IfcObjectDefinition> relatedObject = m_relationStack.top()->m_RelatingObject;
+    assert(relatedObject);
+
+    // Now link the created property set with the object
+    shared_ptr<IfcRelDefinesByProperties> propertyRelation( new IfcRelDefinesByProperties() );
+    propertyRelation->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
+    propertyRelation->m_RelatedObjects.push_back(relatedObject);
+    propertyRelation->m_RelatingPropertyDefinition = m_propertySet;
+    propertyRelation->m_OwnerHistory = m_owner_history;
+    m_model->insertEntity(propertyRelation);
 
 }
 
@@ -208,7 +231,13 @@ void IFCConverter::endMetaData() {
 }
 
 void IFCConverter::startMetaDataPair(const std::string &name, const std::string &value) {
+    assert(m_propertySet);
+    shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
+    m_model->insertEntity(prop);
+    prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( std::wstring(name.begin(), name.end() ) ));
+    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(value.begin(), value.end())));
 
+    m_propertySet->m_HasProperties.push_back(prop);
 }
 
 void IFCConverter::endMetaDataPair() {
@@ -509,7 +538,6 @@ void IFCConverter::writeMesh(const Mesh &mesh, const Eigen::Matrix4f& matrix) {
             point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex[1]) ) );
             point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex[2]) ) );
             polygon->m_Polygon.push_back(point);
-
         }
         bound->m_Bound = polygon;
 
