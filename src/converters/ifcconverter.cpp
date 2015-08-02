@@ -232,10 +232,12 @@ void IFCConverter::endMetaData() {
 
 void IFCConverter::startMetaDataPair(const std::string &name, const std::string &value) {
     assert(m_propertySet);
+    std::string value_escaped = boost::replace_all_copy(value, "\\", "\\\\");
+
     shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
     m_model->insertEntity(prop);
     prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( std::wstring(name.begin(), name.end() ) ));
-    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(value.begin(), value.end())));
+    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(value_escaped.begin(), value_escaped.end())));
 
     m_propertySet->m_HasProperties.push_back(prop);
 }
