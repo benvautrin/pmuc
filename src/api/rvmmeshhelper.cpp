@@ -21,8 +21,6 @@
 
 #include "rvmmeshhelper.h"
 
-#include <iostream>
-#include <algorithm>
 
 #ifdef _WIN32
   #include "windows.h"
@@ -35,11 +33,18 @@
 #  define CALLBACK
 #endif /* !WIN32 */
 
-#ifdef _MSC_VER
-#define _USE_MATH_DEFINES // For PI under VC++
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
 #endif
 
-#include <math.h>
+#ifdef WIN32
+#undef min
+#undef max
+#endif
 
 using namespace std;
 
@@ -128,6 +133,7 @@ const Mesh RVMMeshHelper2::makeSphere(const Primitives::Sphere &sphere, const fl
     int sides = max(8, minSides);
     vector<Vector3F> positions;
     vector<Vector3F> normals;
+
 
     for (int x = 0; x<= sides; x++) {
         float theta = float((x * M_PI) / (float) sides);
@@ -305,36 +311,46 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const Primitives::RectangularTor
     return result;
 }
 
-const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cTorus, const float& maxSideSize, const int& minSides) {
+std::pair<unsigned long, unsigned long> RVMMeshHelper2::infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides)
+{
+    const auto tsides = std::max(minSides, static_cast<unsigned long>(cTorus.angle() * cTorus.rinside() / maxSideSize) );
+    const auto csides = std::max(minSides, static_cast<unsigned long>(2 * M_PI * cTorus.routside() / maxSideSize) );
+
+    return std::make_pair(tsides, csides);
+}
+
+const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cTorus, unsigned long tsides, unsigned long csides)
+{
     vector<unsigned long> index;
     vector<Vector3F> points;
     vector<unsigned long> normalindex;
     vector<Vector3F> vectors;
-
-    int tsides = int(cTorus.angle() * cTorus.rinside() / maxSideSize);
-    if (tsides < minSides) {
-        tsides = minSides;
-    }
-    int csides = int(2 * M_PI * cTorus.routside() / maxSideSize);
-    if (csides < minSides) {
-        csides = minSides;
-    }
 
     // Vertexes and normals
     float rcenter = cTorus.routside();
     float center = cTorus.rinside();
     Vector3F v;
     Vector3F n;
-    for (int i = 0; i < tsides+1; i++) {
-        float c = cos(cTorus.angle() / tsides * i);
-        float s = sin(cTorus.angle() / tsides * i);
-        for (int j = 0; j < csides; j++) {
-            float C = (float)cos(2 * M_PI / csides * j);
-            float S = (float)sin(2 * M_PI / csides * j);
+    const float da = cTorus.angle() / static_cast<float>(tsides);
+    const float da2 = 2.0f * M_PI / static_cast<float>(csides);
+
+    for (unsigned long i = 0; i < tsides+1; i++)
+    {
+        const float a = da * static_cast<float>(i);
+        const float c = cos(a);
+        const float s = sin(a);
+
+        for (unsigned long j = 0; j < csides; j++)
+        {
+            const float a2 = da2 * static_cast<float>(j);
+            const float C = cos(a2);
+            const float S = sin(a2);
+
             v[0] = (rcenter * C + center) * c;
             v[1] = (rcenter * C + center) * s;
             v[2] = rcenter * S;
             points.push_back(v);
+
             n[0] = C*c;
             n[1] = C*s;
             n[2] = S;
@@ -343,9 +359,10 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cT
     }
 
     // Sides
-    for (int i = 0; i < tsides; i++) {
-        for (int j = 0; j < csides; j++) {
-            unsigned long pi = i*csides+j;
+    for (unsigned long i = 0; i < tsides; i++)
+        for (unsigned long j = 0; j < csides; j++)
+        {
+            unsigned long pi = i*csides + j;
             index.push_back(pi);
             normalindex.push_back(pi);
 
@@ -369,11 +386,10 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cT
             index.push_back(pi);
             normalindex.push_back(pi);
         }
-    }
 
     // Caps
     // - Caps normals
-    int ci = vectors.size();
+    const unsigned long ci = static_cast<unsigned long>( vectors.size() );
     vectors.push_back(Vector3F(0,-1,0));
 
     float c = cos(cTorus.angle());
@@ -470,39 +486,41 @@ const Mesh RVMMeshHelper2::makePyramid(const Primitives::Pyramid& inP, const flo
     return result;
 }
 
-const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, const float& maxSideSize, const int& minSides)
+unsigned long RVMMeshHelper2::infoCylinderNumSides(const Primitives::Cylinder &cylinder, float maxSideSize, unsigned long minSides)
 {
-    int s = int(2 * M_PI * cylinder.radius() / maxSideSize);
-    if (s < minSides) {
-        s = minSides;
-    }
-    float halfHeight = cylinder.height() / 2;
+    return std::max(minSides, static_cast<unsigned long>(2 * M_PI * cylinder.radius() / maxSideSize));
+}
+
+const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, unsigned long sides)
+{
+    const float halfHeight = cylinder.height() / 2;
 
     vector<Vector3F> positions;
     vector<Vector3F> normals;
-    float d = float(2*M_PI/(float)s);
+    const float d = float(2.0f * M_PI / static_cast<float>(sides));
 
     vector<unsigned long> positionIndex;
     vector<unsigned long> normalIndex;
 
-    int nrTrianglesSide = 2*s;
+    const unsigned long nrTrianglesSide = 2 * sides;
 
-    for (int i = 0; i < s; i++) {
+    for (unsigned long i = 0; i < sides; i++)
+    {
         // Dimensions in x and y, z is height
-        float x = sin(d*(float)i); // [0..1]
-        float y = -cos(d*(float)i); // [-1..0]
+        const float x = sin(d*static_cast<float>(i)); // [0..1]
+        const float y = -cos(d*static_cast<float>(i)); // [-1..0]
 
         positions.push_back(Vector3F(x*cylinder.radius(), y*cylinder.radius(), -halfHeight));
         positions.push_back(Vector3F(x*cylinder.radius(), y*cylinder.radius(), +halfHeight));
         normals.push_back(Vector3F(x,y,0));
 
-        unsigned long v0 = i * 2;
-        unsigned long v1 = v0 + 1;
-        unsigned long v2 = (v0 + 2) % nrTrianglesSide;
-        unsigned long v3 = (v0 + 3) % nrTrianglesSide;
+        const unsigned long v0 = i * 2;
+        const unsigned long v1 = v0 + 1;
+        const unsigned long v2 = (v0 + 2) % nrTrianglesSide;
+        const unsigned long v3 = (v0 + 3) % nrTrianglesSide;
 
-        unsigned long n0 = i;
-        unsigned long n1 = (n0+1) % s;
+        const unsigned long n0 = i;
+        const unsigned long n1 = (n0 + 1) % sides;
 
         // First triangle (CW: 0, 2, 1)
         positionIndex.push_back(v0);
@@ -529,14 +547,21 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, co
     return result;
 }
 
-const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float& maxSideSize, const int& minSides)
+{
+    const float rbottom = snout.dbottom();
+    const float rtop = snout.dtop();
+    const float height = snout.height();
+    const float xoffset = snout.xoffset();
+    const float yoffset = snout.yoffset();
+
     vector<unsigned long> index;
     vector<Vector3F> points;
     vector<unsigned long> normalindex;
     vector<Vector3F> vectors;
-    float hh = snout.height() / 2;
+    float hh = height / 2;
 
-    int sides = int(2 * M_PI * (snout.dbottom() > snout.dtop() ? snout.dbottom() : snout.dtop()) / maxSideSize);
+    int sides = int(2 * M_PI * (rbottom > rtop ? rbottom : rtop) / maxSideSize);
     if (sides < minSides) {
         sides = minSides;
     }
@@ -545,18 +570,18 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float
     Vector3F v;
     Vector3F n;
     for (int i = 0; i < sides; i++) {
-        float c = (float)cos(2*M_PI / sides * i);
-        float s = (float)sin(2*M_PI / sides * i);
-        v[0] = snout.dbottom() * c; v[1] = snout.dbottom() * s; v[2] = -hh;
+        float c = (float)cos(2 * M_PI / sides * i);
+        float s = (float)sin(2 * M_PI / sides * i);
+        v[0] = rbottom * c; v[1] = rbottom * s; v[2] = -hh;
         points.push_back(v);
-        v[0] = snout.dtop() * c + snout.xoffset(); v[1] = snout.dtop() * s + snout.yoffset(); v[2] = hh;
+        v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh;
         points.push_back(v);
-        if (snout.height() > 0)
-        {
-            float dh = sqrt(((snout.dtop() * c + snout.xoffset() - snout.dbottom() * c)*(snout.dtop() * c + snout.xoffset() - snout.dbottom() * c) + (snout.dtop() * s + snout.yoffset() - snout.dbottom() * s)*(snout.dtop() * s + snout.yoffset() - snout.dbottom() * s)) / (snout.height()*snout.height()));
-            n[0] = c; n[1] = s; n[2] = (snout.dtop() < snout.dbottom()) ? dh : -dh;
+        if (height > 0) {
+            float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
+            n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
             n.normalize();
-        } else {
+        }
+        else {
             n[0] = 0; n[1] = 0; n[2] = 1;
         }
         vectors.push_back(n);
@@ -564,20 +589,20 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float
 
     // Sides
     for (int i = 0; i < sides; i++) {
-        index.push_back(i*2);
-        index.push_back(i < sides - 1 ? i*2+2 : 0);
-        index.push_back(i*2+1);
+        index.push_back(i * 2);
+        index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
+        index.push_back(i * 2 + 1);
 
         normalindex.push_back(i);
-        normalindex.push_back(i < sides - 1 ? i+1 : 0);
+        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
         normalindex.push_back(i);
 
-        index.push_back(i < sides - 1 ? i*2+2 : 0);
-        index.push_back(i < sides - 1 ? i*2+3 : 1);
-        index.push_back(i*2+1);
+        index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
+        index.push_back(i < sides - 1 ? i * 2 + 3 : 1);
+        index.push_back(i * 2 + 1);
 
-        normalindex.push_back(i < sides - 1 ? i+1 : 0);
-        normalindex.push_back(i < sides - 1 ? i+1 : 0);
+        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
+        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
         normalindex.push_back(i);
     }
 
@@ -592,24 +617,24 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float
     int ci = points.size();
     v[0] = 0; v[1] = 0; v[2] = -hh;
     points.push_back(v);
-    v[0] = snout.xoffset(); v[1] = snout.yoffset(); v[2] = hh;
+    v[0] = xoffset; v[1] = yoffset; v[2] = hh;
     points.push_back(v);
     // - Caps indexes
     for (int j = 0; j < sides; j++) {
-        index.push_back(j*2);
+        index.push_back(j * 2);
         index.push_back(ci);
-        index.push_back(j < sides-1 ? (j+1)*2 : 0);
+        index.push_back(j < sides - 1 ? (j + 1) * 2 : 0);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
     }
     for (int j = 0; j < sides; j++) {
-        index.push_back(j*2+1);
-        index.push_back(j < sides-1 ? j*2 + 3 : 1);
-        index.push_back(ci+1);
-        normalindex.push_back(nci+1);
-        normalindex.push_back(nci+1);
-        normalindex.push_back(nci+1);
+        index.push_back(j * 2 + 1);
+        index.push_back(j < sides - 1 ? j * 2 + 3 : 1);
+        index.push_back(ci + 1);
+        normalindex.push_back(nci + 1);
+        normalindex.push_back(nci + 1);
+        normalindex.push_back(nci + 1);
     }
 
     Mesh result;
@@ -618,6 +643,17 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float
     result.normals = vectors;
     result.normalIndex = normalindex;
     return result;
+}
+
+static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides)
+{
+    const float dishradius = eDish.diameter() / 2.0f;
+    const float secondradius = eDish.radius();
+
+    const auto sides = std::max(minSides / 2, static_cast<unsigned long>(2.0f * M_PI * secondradius / maxSideSize) );
+    const auto csides = std::max(minSides, static_cast<unsigned long>(2.0f * M_PI * dishradius / maxSideSize));
+
+    return std::make_pair(sides, csides);
 }
 
 const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& eDish, const float& maxSideSize, const int& minSides) {
@@ -629,12 +665,11 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& 
     const float dishradius = eDish.diameter() / 2.0f;
     const float secondradius = eDish.radius();
 
-    float hd = dishradius;
     int sides = int(2*M_PI * secondradius / maxSideSize);
     if (sides < minSides / 2) {
         sides = minSides / 2;
     }
-    int csides = int(2*M_PI * hd / maxSideSize);
+    int csides = int(2*M_PI * dishradius / maxSideSize);
     if (csides < minSides) {
         csides = minSides;
     }
@@ -648,9 +683,9 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& 
         for (int j = 0; j < csides; j++) {
             float C = (float)cos(2*M_PI / csides * j);
             float S = (float)sin(2*M_PI / csides * j);
-            v[0] = hd * C * c; v[1] = hd * S * c; v[2] = secondradius * s;
+            v[0] = dishradius * C * c; v[1] = dishradius * S * c; v[2] = secondradius * s;
             points.push_back(v);
-            n[0] = secondradius * C * c; n[1] = secondradius * S * c; n[2] = hd * s;
+            n[0] = secondradius * C * c; n[1] = secondradius * S * c; n[2] = dishradius * s;
             n.normalize();
             vectors.push_back(n);
         }

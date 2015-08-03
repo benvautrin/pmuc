@@ -54,22 +54,22 @@ class RVMParser
          * @brief Constructs a parser ready to send data to the provided RVMReader
          * @param reader The reader object that will receive the data.
          */
-        RVMParser(RVMReader* reader);
+        RVMParser(RVMReader& reader);
 
         /**
          * @brief Reads from a file a parse its content.
          * @param filename the file name
-         * @param ignoreAttributes if set to true, allows to ignore the .att companion file
+         *
          * @return true if the parsing was a success.
          */
-        bool readFile(const std::string& filename, bool ignoreAttributes);
+        bool readFile(const std::string& filename);
         /**
          * @brief Reads from a series of files.
          * @param filenames a vector of filenames
-         * @param ignoreAttributes if set to true, allows to ignore the .att companion files
+         *
          * @return true if the parsing was a success.
          */
-        bool readFiles(const std::vector<std::string>& filenames, const std::string& name, bool ignoreAttributes);
+        bool readFiles(const std::vector<std::string>& filenames, const std::string& name);
         /**
          * @brief Reads from a character buffer.
          * @param buffer the character buffer containing RVM data.
@@ -173,18 +173,15 @@ class RVMParser
 
         void readMatrix(std::istream& is, std::array<float, 12>& matrix);
 
-        RVMReader*  m_reader;
-        std::string m_encoding;
+        RVMReader       &m_reader;
+        std::string     m_encoding;
 #ifdef ICONV_FOUND
-        iconv_t     m_cd;
-        iconv_t     m_cdatt;
+        iconv_t         m_cd;
+        iconv_t         m_cdatt;
 #endif
-        std::string m_lastError;
+        std::string     m_lastError;
 
-        std::istream*   m_attributeStream;
         std::string     m_currentAttributeLine;
-        const char*     m_buffer;
-        bool            m_headerFound;
         std::string     m_objectName;
         int             m_objectFound;
         int             m_forcedColor;

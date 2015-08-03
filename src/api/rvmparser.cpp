@@ -39,7 +39,7 @@ using namespace std;
 #define PATHSEP '/'
 #endif
 
-typedef std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F>>>>		FacetGroup;
+typedef std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F>>>>        FacetGroup;
 
 union Primitive
 {
@@ -54,27 +54,35 @@ union Primitive
     Primitives::Sphere              sphere;
 };
 
+/**
+ * Identifier class
+ */
+
 struct Identifier
 {
-	inline bool operator==(const char* rhs) const
-	{
-		return chrs[0] == rhs[0] && chrs[1] == rhs[1]
-			&& chrs[2] == rhs[2] && chrs[3] == rhs[3];
-	}
+    inline bool operator==(const char* rhs) const
+    {
+        return chrs[0] == rhs[0] && chrs[1] == rhs[1]
+            && chrs[2] == rhs[2] && chrs[3] == rhs[3];
+    }
 
-	inline bool operator!=(const char* rhs) const
-	{
-		return chrs[0] != rhs[0] || chrs[1] != rhs[1]
-			|| chrs[2] != rhs[2] || chrs[3] != rhs[3];
-	}
+    inline bool operator!=(const char* rhs) const
+    {
+        return chrs[0] != rhs[0] || chrs[1] != rhs[1]
+            || chrs[2] != rhs[2] || chrs[3] != rhs[3];
+    }
 
-	inline bool empty() const
-	{
-		return *chrs == 0;
-	}
+    inline bool empty() const
+    {
+        return *chrs == 0;
+    }
 
-	char		chrs[4];
+    char        chrs[4];
 };
+
+///////////////////////////////////
+//// Multiple read functions
+///////////////////////////////////
 
 template<typename T>
 inline T& read_(std::istream& in, T& value)
@@ -83,7 +91,7 @@ inline T& read_(std::istream& in, T& value)
     for (size_t i = 0; i < sizeof(T); ++i)
         charPtr[sizeof(T) - 1 - i] = in.get();
 
-	return value;
+    return value;
 }
 
 template<typename T>
@@ -98,126 +106,118 @@ inline T read_(std::istream& in)
 template<>
 static Identifier& read_<Identifier>(std::istream& in, Identifier& res)
 {
-	static char buf[12];
-	auto chrs = res.chrs;
+    static char buf[12];
+    auto chrs = res.chrs;
 
-	// read the first 12 bytes and extract the first 3 characters
-	in.read(buf, 12);
-	{
-		char* ptr = buf;
+    // read the first 12 bytes and extract the first 3 characters
+    in.read(buf, 12);
+    {
+        char* ptr = buf;
 
-		for (int i = 0; i < 3; ++i, ptr += 4)
-		{
-			// the first three bytes of the current double word have to be zero
-			if (ptr[0] != 0 || ptr[1] != 0 || ptr[2] != 0)
-			{
-				*chrs = 0;
-				return res;
-			}
+        for (int i = 0; i < 3; ++i, ptr += 4)
+        {
+            // the first three bytes of the current double word have to be zero
+            if (ptr[0] != 0 || ptr[1] != 0 || ptr[2] != 0)
+            {
+                *chrs = 0;
+                return res;
+            }
 
-			// extract character
-			chrs[i] = ptr[3];
-		}
-	}
+            // extract character
+            chrs[i] = ptr[3];
+        }
+    }
 
-	// check if we have the end identifier
-	if (chrs[0] == 'E' && chrs[1] == 'N' && chrs[2] == 'D')
-		chrs[3] = 0;
-	else
-	{
-		in.read(buf, 4);
-		if (buf[0] != 0 || buf[1] != 0 || buf[2] != 0)
-		{
-			*chrs = 0;
-			return res;
-		}
+    // check if we have the end identifier
+    if (chrs[0] == 'E' && chrs[1] == 'N' && chrs[2] == 'D')
+        chrs[3] = 0;
+    else
+    {
+        in.read(buf, 4);
+        if (buf[0] != 0 || buf[1] != 0 || buf[2] != 0)
+        {
+            *chrs = 0;
+            return res;
+        }
 
-		chrs[3] = buf[3];
-	}
+        chrs[3] = buf[3];
+    }
 
-	return res;
+    return res;
 }
 
 template<>
 string& read_<string>(istream& is, string& str)
 {
-	const unsigned int size = read_<unsigned int>(is) * 4;
-	if (size == 0)
-	{
-		str.empty();
-		return str;
-	}
+    const unsigned int size = read_<unsigned int>(is) * 4;
+    if (size == 0)
+    {
+        str.empty();
+        return str;
+    }
 
 #ifndef ICONV_FOUND
 
-	str.resize(size);
-	for(unsigned int i=0;i<size;++i)
-		str[i] = is.get();
+    str.resize(size);
+    for(unsigned int i=0;i<size;++i)
+        str[i] = is.get();
 
 #else
 
-	char buffer[1024];
-	buffer[0] = 0;
-	is.read(buffer, size);
-	buffer[size] = 0;
+    char buffer[1024];
+    buffer[0] = 0;
+    is.read(buffer, size);
+    buffer[size] = 0;
 
-	// If already in UTF-8, no change
-	if (m_cd == (iconv_t)-1)
-	{
-		str = buffer;
-		return str;
-	}
+    // If already in UTF-8, no change
+    if (m_cd == (iconv_t)-1)
+    {
+        str = buffer;
+        return str;
+    }
 
-	// Encoding conversion.
-	char cbuffer[1056];
-	size_t inb = strlen(buffer);
-	size_t outb = 1056;
-	char* bp = cbuffer;
+    // Encoding conversion.
+    char cbuffer[1056];
+    size_t inb = strlen(buffer);
+    size_t outb = 1056;
+    char* bp = cbuffer;
 #ifdef __APPLE__
-	char* sp = buffer;
+    char* sp = buffer;
 #else
-	const char* sp = buffer;
+    const char* sp = buffer;
 #endif
-	iconv(m_cd, &sp, &inb, &bp, &outb);
-	str = cbuffer;
+    iconv(m_cd, &sp, &inb, &bp, &outb);
+    str = cbuffer;
 #endif
 
-	return str;
+    return str;
 }
 
 static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res, float scale)
 {
-	const unsigned int pc = read_<unsigned int>(is);
+    res.clear();
+    res.resize(read_<unsigned int>(is));
 
-	res.resize(pc);
-
-	for (auto& p : res)
-	{
-		const unsigned int gc = read_<unsigned int>(is);
-		p.resize(gc);
-
-		for (auto &g : p)
-		{
-			const unsigned int vc = read_<unsigned int>(is);
-			g.resize(vc);
-
-			for (auto &gi : g)
-			{
-				Vector3F &c = gi.first;
-				Vector3F &n = gi.second;
-
-				read_<float>(is, c.x()) *= scale;
-				read_<float>(is, c.y()) *= scale;
-				read_<float>(is, c.z()) *= scale;
-
-				read_<float>(is, n.x()) *= scale;
-				read_<float>(is, n.y()) *= scale;
-				read_<float>(is, n.z()) *= scale;
-			}
-		}
-	}
-
-	return res;
+    for (auto& p : res)
+    {
+        p.resize(read_<unsigned int>(is));
+        for (auto& g : p)
+        {
+            g.resize(read_<unsigned int>(is));
+            for (auto& v : g)
+            {
+                float x = read_<float>(is) * scale;
+                float y = read_<float>(is) * scale;
+                float z = read_<float>(is) * scale;
+                v.first = Vector3F(x, y, z);
+                x = read_<float>(is) * scale;
+                y = read_<float>(is) * scale;
+                z = read_<float>(is) * scale;
+                v.second = Vector3F(x, y, z);
+            }
+        }
+    }
+    return res;
 }
 
 
@@ -228,6 +228,11 @@ void readArray_(std::istream &in, T(&a)[size])
         read_<T>(in, a[i]);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Implementation of a skip function
+/// Surprisingly, multiple calling get() multiple times seems to be faster than seekg.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 template<size_t numInts>
 inline void skip_(std::istream& in)
 {
@@ -237,25 +242,29 @@ inline void skip_(std::istream& in)
 template<>
 inline void skip_<1>(std::istream& in)
 {
-    read_<int>(in);
+    in.get();
+    in.get();
+    in.get();
+    in.get();
 }
 
 template<>
 inline void skip_<2>(std::istream& in)
 {
-    read_<int>(in);
-    read_<int>(in);
+    skip_<1>(in);
+    skip_<1>(in);
 }
 
 template<>
 inline void skip_<3>(std::istream& in)
 {
-    read_<int>(in);
-    read_<int>(in);
-    read_<int>(in);
+    skip_<1>(in);
+    skip_<1>(in);
+    skip_<1>(in);
 }
 
-string trim(const string& s) {
+static string trim(const string& s)
+{
     size_t si = s.find_first_not_of(" \n\r\t");
     if (si == string::npos) {
         return "";
@@ -264,10 +273,8 @@ string trim(const string& s) {
     return s.substr(si, ei - si + 1);
 }
 
-RVMParser::RVMParser(RVMReader* reader) :
+RVMParser::RVMParser(RVMReader& reader) :
     m_reader(reader),
-    m_attributeStream(0),
-    m_headerFound(false),
     m_objectName(""),
     m_objectFound(0),
     m_forcedColor(-1),
@@ -292,7 +299,8 @@ RVMParser::RVMParser(RVMReader* reader) :
     m_aggregation(false) {
 }
 
-bool RVMParser::readFile(const string& filename, bool ignoreAttributes) {
+bool RVMParser::readFile(const string& filename)
+{
     m_lastError = "";
 
     // Open RVM file
@@ -302,41 +310,21 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes) {
         return false;
     }
 
-    // Try to find ATT companion file
-    m_attributeStream = 0;
-    filebuf afb;
-    if (!ignoreAttributes) {
-        string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
-        if (afb.open(attfilename.data(), ios::in)) {
-            cout << "Found attribute companion file: " << attfilename << endl;
-            m_attributeStream = new istream(&afb);
-        } else {
-            attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
-            if (afb.open(attfilename.data(), ios::in)) {
-                cout << "Found attribute companion file: " << attfilename << endl;
-                m_attributeStream = new istream(&afb);
-            }
-        }
-        if (m_attributeStream && !m_attributeStream->eof()) {
-            std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-        }
-    }
-
     bool success = readStream(is);
 
     is.close();
-    afb.close();
 
     return success;
 }
 
-bool RVMParser::readFiles(const vector<string>& filenames, const string& name, bool ignoreAttributes) {
+bool RVMParser::readFiles(const vector<string>& filenames, const string& name)
+{
     bool success = true;
 
-    m_reader->startDocument();
-    m_reader->startHeader("PMUC - Plant Mock-Up Converter", "Aggregation file", "", "", "");
-    m_reader->endHeader();
-    m_reader->startModel(name, "Aggregation");
+    m_reader.startDocument();
+    m_reader.startHeader("PMUC - Plant Mock-Up Converter", "Aggregation file", "", "", "");
+    m_reader.endHeader();
+    m_reader.startModel(name, "Aggregation");
 
     m_aggregation = true;
 
@@ -344,16 +332,16 @@ bool RVMParser::readFiles(const vector<string>& filenames, const string& name, b
     for (unsigned int i = 0; i < filenames.size(); i++)
     {
         string groupname = filenames[i].substr(filenames[i].rfind(PATHSEP) + 1, filenames[i].find_last_of("."));
-        m_reader->startGroup(groupname, zeroTranslation, 0);
-        success = readFile(filenames[i], ignoreAttributes);
+        m_reader.startGroup(groupname, zeroTranslation, 0);
+        success = readFile(filenames[i]);
         if (!success) {
             break;
         }
-        m_reader->endGroup();
+        m_reader.endGroup();
     }
 
-    m_reader->endModel();
-    m_reader->endDocument();
+    m_reader.endModel();
+    m_reader.endDocument();
 
     return success;
 }
@@ -370,43 +358,43 @@ bool RVMParser::readBuffer(const char* buffer) {
 
 bool RVMParser::readStream(istream& is)
 {
-	Identifier id;
-	read_(is, id);
+    Identifier id;
+    read_(is, id);
 
     if (id.empty())
-	{
+    {
         m_lastError = "Incorrect file format while reading identifier.";
         return false;
     }
 
     if (id != "HEAD")
-	{
+    {
         m_lastError = "File header not found.";
         return false;
     }
 
     if (!m_aggregation)
-        m_reader->startDocument();
+        m_reader.startDocument();
 
     skip_<2>(is); // Garbage ?
 
     unsigned int version = read_<unsigned int>(is);
 
-	string banner, fileNote, date, user;
-	read_(is, banner);
-	read_(is, fileNote);
-	read_(is, date);
-	read_(is, user);
+    string banner, fileNote, date, user;
+    read_(is, banner);
+    read_(is, fileNote);
+    read_(is, date);
+    read_(is, user);
 
-	if (version >= 2)
-	{
-		read_(is, m_encoding);
+    if (version >= 2)
+    {
+        read_(is, m_encoding);
 
-		if (m_encoding == "Unicode UTF-8")
-			m_encoding = "UTF-8";
-	}
-	else
-		m_encoding = "UTF-8";
+        if (m_encoding == "Unicode UTF-8")
+            m_encoding = "UTF-8";
+    }
+    else
+        m_encoding = "UTF-8";
 
 #ifdef ICONV_FOUND
     m_cd = (iconv_t)-1;
@@ -421,11 +409,11 @@ bool RVMParser::readStream(istream& is)
 #endif
 
     if (!m_aggregation) {
-        m_reader->startHeader(banner, fileNote, date, user, m_encoding);
-        m_reader->endHeader();
+        m_reader.startHeader(banner, fileNote, date, user, m_encoding);
+        m_reader.endHeader();
     }
 
-	read_(is, id);
+    read_(is, id);
     if (id.empty()) {
         m_lastError = "Incorrect file format while reading identifier.";
         return false;
@@ -438,15 +426,15 @@ bool RVMParser::readStream(istream& is)
     skip_<2>(is); // Garbage ?
     version = read_<unsigned int>(is);
 
-	string projectName, name;
-	read_(is, projectName);
-	read_(is, name);
+    string projectName, name;
+    read_(is, projectName);
+    read_(is, name);
 
     if (!m_aggregation)
-        m_reader->startModel(projectName, name);
+        m_reader.startModel(projectName, name);
 
-	while ((read_(is, id)) != "END")
-	{
+    while ((read_(is, id)) != "END")
+    {
         if (id == "CNTB") {
             if (!readGroup(is)) {
                 return false;
@@ -462,9 +450,9 @@ bool RVMParser::readStream(istream& is)
     }
 
     if (!m_aggregation) {
-        m_reader->endModel();
+        m_reader.endModel();
         // Garbage data ??
-        m_reader->endDocument();
+        m_reader.endDocument();
     }
 
 #ifdef ICONV_FOUND
@@ -489,8 +477,8 @@ bool RVMParser::readGroup(std::istream& is)
     skip_<2>(is); // Garbage ?
     const unsigned int version = read_<unsigned int>(is);
 
-	string name;
-	read_(is, name);
+    string name;
+    read_(is, name);
 
     float translation[3];
     readArray_(is, translation);
@@ -499,68 +487,10 @@ bool RVMParser::readGroup(std::istream& is)
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
         m_objectFound++;
     }
-    if (m_objectFound) {
+    if (m_objectFound)
+    {
         m_nbGroups++;
-
-        m_reader->startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
-
-        // Attributes
-        if (m_attributeStream && !m_attributeStream->eof()) {
-            string p;
-            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-#ifdef ICONV_FOUND
-                if (m_cd != (iconv_t)-1) {
-                    char buffer[1056];
-                    size_t inb = m_currentAttributeLine.size();
-                    size_t outb = 1056;
-                    char* bp = buffer;
-#ifdef __APPLE__
-                    char* sp = const_cast<char*>(m_currentAttributeLine.data());
-#else
-                    const char* sp = m_currentAttributeLine.data();
-#endif
-                    iconv(m_cd, &sp, &inb, &bp, &outb);
-                    m_currentAttributeLine = buffer;
-                }
-#endif
-            }
-            if (p == "NEW " + name ) {
-                m_reader->startMetaData();
-                size_t i;
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                p = trim(m_currentAttributeLine);
-                while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
-                     string an = p.substr(0, i);
-                     string av = p.substr(i+4, string::npos);
-                     m_reader->startMetaDataPair(an, av);
-                     m_reader->endMetaDataPair();
-                     m_attributes++;
-
-                     std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-#ifdef ICONV_FOUND
-                     if (m_cdatt != (iconv_t)-1) {
-#ifdef __APPLE__
-                         char* sp = const_cast<char*>(m_currentAttributeLine.data());
-#else
-                         const char* sp = m_currentAttributeLine.data();
-#endif
-                         size_t inLength = m_currentAttributeLine.size();
-                          /* Assign enough space for UTF-8. */
-                         char* utf8 = (char*) calloc(inLength*2,1);
-                         char* utf8start = utf8;
-                         size_t utf8Length = inLength*2;
-
-                         iconv(m_cdatt, &sp, &inLength, &utf8, &utf8Length);
-                         m_currentAttributeLine = string(utf8start);
-                         delete utf8start;
-                     }
-#endif
-                     p = trim(m_currentAttributeLine);
-                }
-                m_reader->endMetaData();
-            }
-        }
+        m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
     }
 
     // Children
@@ -583,7 +513,7 @@ bool RVMParser::readGroup(std::istream& is)
     skip_<3>(is); // Garbage ?
 
     if (m_objectFound) {
-        m_reader->endGroup();
+        m_reader.endGroup();
         m_objectFound--;
     }
 
@@ -602,8 +532,8 @@ bool RVMParser::readPrimitive(std::istream& is)
     // skip bounding box
     skip_<6>(is);
 
-    Primitive	primitive;
-	FacetGroup	fc;
+    Primitive   primitive;
+    FacetGroup  fc;
     if (m_objectFound)
     {
         switch (primitiveKind)
@@ -611,74 +541,74 @@ bool RVMParser::readPrimitive(std::istream& is)
             case 1:
                 m_nbPyramids++;
                 readArray_(is, primitive.pyramid.data);
-                m_reader->createPyramid(matrix, primitive.pyramid);
+                m_reader.createPyramid(matrix, primitive.pyramid);
             break;
 
             case 2:
                 m_nbBoxes++;
-				readArray_(is, primitive.box.len);
-                m_reader->createBox(matrix, primitive.box);
+                readArray_(is, primitive.box.len);
+                m_reader.createBox(matrix, primitive.box);
              break;
 
             case 3:
                 m_nbRectangularToruses++;
-				readArray_(is, primitive.rTorus.data);
-                m_reader->createRectangularTorus(matrix, primitive.rTorus);
+                readArray_(is, primitive.rTorus.data);
+                m_reader.createRectangularTorus(matrix, primitive.rTorus);
             break;
 
             case 4:
                 m_nbCircularToruses++;
-				readArray_(is, primitive.cTorus.data);
-                m_reader->createCircularTorus(matrix, primitive.cTorus);
+                readArray_(is, primitive.cTorus.data);
+                m_reader.createCircularTorus(matrix, primitive.cTorus);
             break;
 
             case 5:
                 m_nbEllipticalDishes++;
-				readArray_(is, primitive.eDish.data);
-                m_reader->createEllipticalDish(matrix, primitive.eDish);
+                readArray_(is, primitive.eDish.data);
+                m_reader.createEllipticalDish(matrix, primitive.eDish);
             break;
 
             case 6:
                 m_nbSphericalDishes++;
-				readArray_(is, primitive.sDish.data);
-                m_reader->createSphericalDish(matrix, primitive.sDish);
+                readArray_(is, primitive.sDish.data);
+                m_reader.createSphericalDish(matrix, primitive.sDish);
             break;
 
             case 7:
                 m_nbSnouts++;
-				readArray_(is, primitive.snout.data);
+                readArray_(is, primitive.snout.data);
                 skip_<4>(is);
 
-                m_reader->createSnout(matrix, primitive.snout);
+                m_reader.createSnout(matrix, primitive.snout);
             break;
 
             case 8:
                 m_nbCylinders++;
-				readArray_(is, primitive.cylinder.data);
-                m_reader->createCylinder(matrix, primitive.cylinder);
+                readArray_(is, primitive.cylinder.data);
+                m_reader.createCylinder(matrix, primitive.cylinder);
             break;
 
             case 9:
                 m_nbSpheres++;
                 read_(is, primitive.sphere);
-                m_reader->createSphere(matrix, primitive.sphere);
+                m_reader.createSphere(matrix, primitive.sphere);
             break;
 
             case 10: {
                 m_nbLines++;
                 float startx = read_<float>(is);
                 float endx = read_<float>(is);
-                m_reader->startLine(matrix,
+                m_reader.startLine(matrix,
                                     startx,
                                     endx);
-                m_reader->endLine();
+                m_reader.endLine();
             } break;
 
             case 11: {
                 m_nbFacetGroups++;
-				readFacetGroup_(is, fc, m_scale);
-                m_reader->startFacetGroup(matrix, fc);
-                m_reader->endFacetGroup();
+                readFacetGroup_(is, fc, m_scale);
+                m_reader.startFacetGroup(matrix, fc);
+                m_reader.endFacetGroup();
             } break;
 
             default: {
@@ -729,7 +659,7 @@ bool RVMParser::readPrimitive(std::istream& is)
             break;
 
             case 11:
-				readFacetGroup_(is, fc, 1.0f);
+                readFacetGroup_(is, fc, 1.0f);
             break;
 
             default:

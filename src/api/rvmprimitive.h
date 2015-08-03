@@ -20,13 +20,13 @@ namespace Primitives
         inline float& ytop() { return data[3]; }
         inline const float& ytop() const { return data[3]; }
 
-        inline float& height() { return data[4]; }
-        inline const float& height() const { return data[4]; }
+        inline float& xoffset() { return data[4]; }
+        inline const float& xoffset() const { return data[4]; }
+        inline float& yoffset() { return data[5]; }
+        inline const float& yoffset() const { return data[5]; }
 
-        inline float& xoffset() { return data[5]; }
-        inline const float& xoffset() const { return data[5]; }
-        inline float& yoffset() { return data[6]; }
-        inline const float& yoffset() const { return data[6]; }
+        inline float& height() { return data[6]; }
+        inline const float& height() const { return data[6]; }
 
         float       data[7]; // xbottom, ybottom, xtop, ytop, height, xoffset, yoffset
     };
@@ -79,10 +79,10 @@ namespace Primitives
 
     struct Snout
     {
-        inline float& dtop() { return data[0]; }
-        inline const float& dtop() const { return data[0]; }
-        inline float& dbottom() { return data[1]; }
-        inline const float& dbottom() const { return data[1]; }
+        inline float& dbottom() { return data[0]; }
+        inline const float& dbottom() const { return data[0]; }
+        inline float& dtop() { return data[1]; }
+        inline const float& dtop() const { return data[1]; }
         inline float& height() { return data[2]; }
         inline const float& height() const { return data[2]; }
         inline float& xoffset() { return data[3]; }
