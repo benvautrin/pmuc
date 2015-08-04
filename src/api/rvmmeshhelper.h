@@ -136,11 +136,11 @@ class RVMMeshHelper2
          * @brief makeEllipticalDish
          * @param diameter
          * @param radius
-         * @param maxSideSize
-         * @param minSides
+         * @param sides
+         * @param csides
          * @return
          */
-        static const Mesh makeEllipticalDish(const Primitives::EllipticalDish& eDish, const float& maxSideSize, const int& minSides);
+        static const Mesh makeEllipticalDish(const Primitives::EllipticalDish& eDish, unsigned long sides, unsigned long csides);
 
         /**
          * @brief makeSphericalDish

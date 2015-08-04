@@ -645,9 +645,9 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, const float
     return result;
 }
 
-static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides)
+std::pair<unsigned long, unsigned long> RVMMeshHelper2::infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides)
 {
-    const float dishradius = eDish.diameter() / 2.0f;
+    const float dishradius = eDish.diameter();
     const float secondradius = eDish.radius();
 
     const auto sides = std::max(minSides / 2, static_cast<unsigned long>(2.0f * M_PI * secondradius / maxSideSize) );
@@ -656,33 +656,33 @@ static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const 
     return std::make_pair(sides, csides);
 }
 
-const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& eDish, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& eDish, unsigned long sides, unsigned long csides)
+{
     vector<unsigned long> index;
     vector<Vector3F> points;
-    vector<unsigned long> normalindex;
     vector<Vector3F> vectors;
 
-    const float dishradius = eDish.diameter() / 2.0f;
+    const float dishradius = eDish.diameter();
     const float secondradius = eDish.radius();
-
-    int sides = int(2*M_PI * secondradius / maxSideSize);
-    if (sides < minSides / 2) {
-        sides = minSides / 2;
-    }
-    int csides = int(2*M_PI * dishradius / maxSideSize);
-    if (csides < minSides) {
-        csides = minSides;
-    }
 
     // Vector3Fes and normals
     Vector3F v;
     Vector3F n;
-    for (int i = 0; i < sides; i++) {
-        float c = (float)cos(M_PI / 2 / sides * i);
-        float s = (float)sin(M_PI / 2 / sides * i);
-        for (int j = 0; j < csides; j++) {
-            float C = (float)cos(2*M_PI / csides * j);
-            float S = (float)sin(2*M_PI / csides * j);
+
+    const float da = M_PI / 2.0f / static_cast<float>( sides );
+    const float da2 = 2.0f * M_PI / static_cast<float>( csides );
+    for (unsigned long i = 0; i < sides; i++)
+    {
+        const float a = static_cast<float>(i) * da;
+        const float c = cos(a);
+        const float s = sin(a);
+
+        for (unsigned long j = 0; j < csides; j++)
+        {
+            const float a2 = static_cast<float>(j) * da2;
+            const float C = cos(a2);
+            const float S = sin(a2);
+
             v[0] = dishradius * C * c; v[1] = dishradius * S * c; v[2] = secondradius * s;
             points.push_back(v);
             n[0] = secondradius * C * c; n[1] = secondradius * S * c; n[2] = dishradius * s;
@@ -690,6 +690,7 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& 
             vectors.push_back(n);
         }
     }
+
     v[0] = 0; v[1] = 0; v[2] = secondradius;
     points.push_back(v);
     n[0] = 0; n[1] = 0; n[2] = 1;
@@ -717,8 +718,8 @@ const Mesh RVMMeshHelper2::makeEllipticalDish(const Primitives::EllipticalDish& 
     result.positions = points;
     result.positionIndex = index;
     result.normals = vectors;
-    //result.normalIndex = normalindex;
-    return result;;
+
+    return result;
 }
 
 const Mesh RVMMeshHelper2::makeSphericalDish(const Primitives::SphericalDish& sDish, const float& maxSideSize, const int& minSides)
