@@ -130,7 +130,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeSnout(const Primitives::Snout& snout, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSnout(const Primitives::Snout& snout, unsigned long sides);
 
         /**
          * @brief makeEllipticalDish
@@ -164,6 +164,7 @@ class RVMMeshHelper2
          */
 
         static unsigned long infoCylinderNumSides(const Primitives::Cylinder &cylinder, float maxSideSize, unsigned long minSides);
+        static unsigned long infoSnoutNumSides(const Primitives::Snout &snout, float maxSideSize, unsigned long minSides);
 
         static std::pair<unsigned long, unsigned long> infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides);
         static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides);
