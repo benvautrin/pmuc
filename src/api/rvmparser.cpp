@@ -104,7 +104,7 @@ inline T read_(std::istream& in)
 }
 
 template<>
-static Identifier& read_<Identifier>(std::istream& in, Identifier& res)
+inline Identifier& read_<Identifier>(std::istream& in, Identifier& res)
 {
     static char buf[12];
     auto chrs = res.chrs;
