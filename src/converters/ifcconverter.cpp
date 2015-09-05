@@ -66,7 +66,7 @@
 #include <ifcpp/IFC4/include/IfcStyledRepresentation.h>
 #include <ifcpp/IFC4/include/IfcStyledItem.h>
 #include <ifcpp/IFC4/include/IfcPresentationStyleAssignment.h>
-#include <ifcpp/IFC4/include/IfcColourRGB.h>
+#include <ifcpp/IFC4/include/IfcColourRgb.h>
 #include <ifcpp/IFC4/include/IfcNormalisedRatioMeasure.h>
 #include <ifcpp/IFC4/include/IfcSurfaceStyleRendering.h>
 #include <ifcpp/IFC4/include/IfcSurfaceStyle.h>
