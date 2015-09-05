@@ -10,7 +10,7 @@ This project contains a reading library for the RVM file format and a command li
 - [X3D](http://www.web3d.org/x3d/what-x3d) in XML and binary (FI) encoding,
 - [COLLADA](https://www.khronos.org/collada/) files,
 - DSL3D language commands, and
-- IFC 2x3.
+- [IFC 2x3](http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/).
 
 License (LGPL)
 -------
@@ -28,6 +28,7 @@ See the LICENSE.txt file for details.
 
 On Unix and Linux, a g++ compiler >= 4.8 is requires.
 On Windows, you need at leas Visual Studio 2015. Other platforms / compilers / IDEs have not been tested but are likely to work as well (pls file an issue if not).
+
 [biicode](https://www.biicode.com/) is required to download pmuc dependent libraries. Biicode also requires a [cmake](http://www.cmake.org/) version < 3.0. 
 
 On some platforms, all prequistes for biicode can be install running:
@@ -35,7 +36,7 @@ On some platforms, all prequistes for biicode can be install running:
 
 ### Dependencies
 
-Most dependencies are managed by biicode ([eigen](http://eigen.tuxfamily.org), [OpenCOLLADA](https://collada.org/mediawiki/index.php/OpenCOLLADA), (xiot)[https://github.com/Supporting/xiot], IFCPlusPlus) including their subdependencies. Soley a biicode package for libiconv is missing, thus we deliver windows versions with the pmuc repository (contrib folder). On Linux, libiconv need to be installed:
+Most dependencies are managed by biicode ([eigen](http://eigen.tuxfamily.org), [OpenCOLLADA](https://collada.org/mediawiki/index.php/OpenCOLLADA), [xiot](https://github.com/Supporting/xiot), [IFCPlusPlus](https://github.com/ifcquery/ifcplusplus)) including their subdependencies. Soley a biicode package for libiconv is missing, thus we deliver windows versions with the pmuc repository (contrib folder). On Linux, libiconv need to be installed:
 
     sudo apt-get install libiconv-dev
 
