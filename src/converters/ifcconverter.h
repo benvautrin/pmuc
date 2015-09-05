@@ -26,6 +26,7 @@
 #include "../api/rvmmeshhelper.h"
 
 #include <ifcpp/model/IfcPPModel.h>
+#include <ifcpp/model/StatusCallback.h>
 
 #include <stack>
 
@@ -131,6 +132,8 @@ class IFCConverter : public RVMReader
         virtual void startFacetGroup(const std::vector<float>& matrix,
                                      const FGroup& vertexes);
         virtual void endFacetGroup();
+
+        static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
 
     private:
         shared_ptr<IfcPPModel>                          m_model;

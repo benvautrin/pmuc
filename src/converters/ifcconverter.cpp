@@ -133,13 +133,14 @@ void IFCConverter::startDocument() {
 
 void IFCConverter::endDocument() {
     shared_ptr<IfcPPWriterSTEP> writer( new IfcPPWriterSTEP() );
+    writer->setMessageCallBack(this, &IFCConverter::messageCallBack);
     std::stringstream stream;
     std::ofstream fileStream(m_filename);
 
     writer->writeModelToStream(stream, m_model);
     fileStream << stream.rdbuf();
     fileStream.close();
-    //std::cout << stream.str() << std::endl;
+    std::cout << std::endl; // Finish progress line
 }
 
 void IFCConverter::startHeader(const std::string& banner, const std::string& fileNote, const std::string& date, const std::string& user, const std::string& encoding) {
@@ -627,4 +628,19 @@ shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
     materialDefinition->m_Representations.push_back(styledRepresentation);
 
     return material;
+}
+
+void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> message) {
+    if (message->m_message_type == StatusCallback::MESSAGE_TYPE_PROGRESS_VALUE) {
+        IFCConverter* self = (IFCConverter*)obj_ptr;
+        static bool first = true;
+        if(first) {
+            std::cout << "Writing " << self->m_filename;
+            first = false;
+        } else {
+            std::cout << ".";
+        }
+    } else {
+        std::wcerr << message->m_message_text << std::endl;
+    }
 }
