@@ -36,9 +36,9 @@ On some platforms, all prequistes for biicode can be install running:
 
 ### Dependencies
 
-Most dependencies are managed by biicode ([eigen](http://eigen.tuxfamily.org), [OpenCOLLADA](https://collada.org/mediawiki/index.php/OpenCOLLADA), [xiot](https://github.com/Supporting/xiot), [IFCPlusPlus](https://github.com/ifcquery/ifcplusplus)) including their subdependencies. Soley a biicode package for libiconv is missing, thus we deliver windows versions with the pmuc repository (contrib folder). On Linux, libiconv need to be installed:
+Most dependencies are managed by biicode ([eigen](http://eigen.tuxfamily.org), [OpenCOLLADA](https://collada.org/mediawiki/index.php/OpenCOLLADA), [xiot](https://github.com/Supporting/xiot), [IFCPlusPlus](https://github.com/ifcquery/ifcplusplus)) including their subdependencies. Soley a biicode package for libiconv is missing, thus we deliver windows versions with the pmuc repository (contrib folder). On Linux, the functionality of libiconv should be available in standrd libraries (when build-essentials have been installed). If not, try:
 
-    sudo apt-get install libiconv-dev
+    sudo apt-get install libiconv-hook-dev
 
 <!-- An optional dependency also exists on iconv for encoding translations, Windows users can find it at : http://gnuwin32.sourceforge.net/packages/libiconv.htm -->
 
