@@ -2,7 +2,7 @@ project(pmuc)
 cmake_minimum_required(VERSION 2.8)
 
 IF(BIICODE)
-   INCLUDE("biicode.cmake")
+   INCLUDE("CMakeModules/biicode.cmake")
    RETURN()
 ENDIF()
 
