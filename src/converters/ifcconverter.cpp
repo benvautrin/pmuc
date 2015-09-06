@@ -22,12 +22,11 @@
 
 #include "ifcconverter.h"
 
-#include <codecvt>
-
 #define BOOST_DATE_TIME_NO_LIB
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
+#include <boost/locale/encoding_utf.hpp>
 
 #include <ifcpp/writer/IfcPPWriterSTEP.h>
 #include <ifcpp/IFC4/include/IfcProject.h>
@@ -89,11 +88,18 @@
 #include <string>
 #include <cassert>
 
+using boost::locale::conv::utf_to_utf;
+
 namespace {
     shared_ptr<IfcNormalisedRatioMeasure> getNormalisedRatioMeasure(double value) {
         shared_ptr<IfcNormalisedRatioMeasure> measure( new IfcNormalisedRatioMeasure() );
         measure->m_value = value;
         return measure;
+    }
+
+    std::wstring utf8_to_wstring(const std::string& str)
+    {
+        return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
     }
 }
 
@@ -235,14 +241,12 @@ void IFCConverter::endMetaData() {
 
 void IFCConverter::startMetaDataPair(const std::string &name, const std::string &value) {
     assert(m_propertySet);
-
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf16conv;
     std::string value_escaped = boost::replace_all_copy(value, "\\", "\\\\");
 
     shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
     insertEntity(prop);
-    prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf16conv.from_bytes(name) ));
-    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel( utf16conv.from_bytes(value_escaped) ));
+    prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(name) ));
+    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring(value_escaped) ));
 
     m_propertySet->m_HasProperties.push_back(prop);
 }
