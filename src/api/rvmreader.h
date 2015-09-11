@@ -90,7 +90,7 @@ class RVMReader
          * @param materialId the material to use in the form of a PDMS color index.
          * @see RVMColorHelper
          */
-        virtual void startGroup(const std::string& name, const float translation[3], const int& materialId) = 0;
+        virtual void startGroup(const std::string& name, const Vector3F& translation, const int& materialId) = 0;
         /**
          * @brief Called at the end of a group.
          */
@@ -194,13 +194,7 @@ class RVMReader
          * @param startx
          * @param endx
          */
-        virtual void startLine(const std::array<float, 12>& matrix,
-                               const float& startx,
-                               const float& endx) = 0;
-        /**
-         * @brief End of a line
-         */
-        virtual void endLine() = 0;
+        virtual void createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx) = 0;
 
         /**
          * @brief Describes a facet group
@@ -211,12 +205,8 @@ class RVMReader
          * @param matrix
          * @param vertexes
          */
-        virtual void startFacetGroup(const std::array<float, 12>& matrix,
+        virtual void createFacetGroup(const std::array<float, 12>& matrix,
                                      const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes) = 0;
-        /**
-         * @brief End of a facet group
-         */
-        virtual void endFacetGroup() = 0;
 
         /**
          * @brief Sets the maximum size for a side of a primitive when tesselating.

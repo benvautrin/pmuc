@@ -188,199 +188,155 @@ void X3DConverter::startMetaDataPair(const string &name, const string &value) {
 void X3DConverter::endMetaDataPair() {
 }
 
-void X3DConverter::startPyramid(const vector<float>& matrix,
-                          const float& xbottom,
-                          const float& ybottom,
-                          const float& xtop,
-                          const float& ytop,
-                          const float& height,
-                          const float& xoffset,
-                          const float& yoffset) {
+void X3DConverter::createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& pyramid) {
 
     startShape(matrix);
 
     std::vector<float> params;
     params.push_back(Pyramid);
-    params.push_back(xbottom);
-    params.push_back(ybottom);
-    params.push_back(xtop);
-    params.push_back(ytop);
-    params.push_back(height);
-    params.push_back(xoffset);
-    params.push_back(yoffset);
+    params.push_back(pyramid.xbottom());
+    params.push_back(pyramid.ybottom());
+    params.push_back(pyramid.xtop());
+    params.push_back(pyramid.ytop());
+    params.push_back(pyramid.height());
+    params.push_back(pyramid.xoffset());
+    params.push_back(pyramid.yoffset());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makePyramid(pyramid, m_maxSideSize, m_minSides);
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
         writeMeshInstance(gid.second, gid.first);
     }
-}
-
-void X3DConverter::endPyramid() {
     endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
-void X3DConverter::startBox(const vector<float>& matrix,
-                      const float& xlength,
-                      const float& ylength,
-                      const float& zlength) {
+void X3DConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& box) {
     startShape(matrix);
     std::vector<float> params;
     params.push_back(Box);
-    params.push_back(xlength);
-    params.push_back(ylength);
-    params.push_back(zlength);
+    params.push_back(box.len[0]);
+    params.push_back(box.len[1]);
+    params.push_back(box.len[2]);
 
     if (m_primitives) {
         startNode(ID::Box);
-        m_writers.back()->setSFVec3f(ID::size, xlength, ylength, zlength);
+        m_writers.back()->setSFVec3f(ID::size, box.len[0], box.len[1], box.len[2]);
+        endNode(ID::Box);
     } else {
         pair<string,int> gid = getInstanceName(params);
         if(gid.first.empty()) {
             gid.first = createGeometryId();
-            Mesh c = RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides);
+            Mesh c = RVMMeshHelper2::makeBox(box, m_maxSideSize, m_minSides);
             gid.second = startMeshGeometry(c, gid.first);
             m_instanceMap.insert(std::make_pair(params, gid));
         } else {
             writeMeshInstance(gid.second, gid.first);
         }
+        endNode(ID::IndexedTriangleSet);
     }
-}
-
-void X3DConverter::endBox() {
-    endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
-void X3DConverter::startRectangularTorus(const vector<float>& matrix,
-                                   const float& rinside,
-                                   const float& routside,
-                                   const float& height,
-                                   const float& angle) {
+
+void X3DConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& torus) {
+
     startShape(matrix);
     std::vector<float> params;
     params.push_back(RectangularTorus);
-    params.push_back(rinside);
-    params.push_back(routside);
-    params.push_back(height);
-    params.push_back(angle);
+    params.push_back(torus.rinside());
+    params.push_back(torus.routside());
+    params.push_back(torus.height());
+    params.push_back(torus.angle());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeRectangularTorus(torus, m_maxSideSize, m_minSides);
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
         writeMeshInstance(gid.second, gid.first);
     }
-}
-
-void X3DConverter::endRectangularTorus() {
     endNode(ID::IndexedFaceSet);
     endShape();
+
 }
 
-void X3DConverter::startCircularTorus(const vector<float>& matrix,
-                                const float& rinside,
-                                const float& routside,
-                                const float& angle) {
-    Mesh c = RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
+void X3DConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& torus) {
     startShape(matrix);
 
     std::vector<float> params;
     params.push_back(CircularTorus);
-    params.push_back(rinside);
-    params.push_back(routside);
-    params.push_back(angle);
+    params.push_back(torus.rinside());
+    params.push_back(torus.routside());
+    params.push_back(torus.angle());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeCircularTorus(torus, m_maxSideSize, m_minSides);
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
         writeMeshInstance(gid.second, gid.first);
     }
-
-}
-
-void X3DConverter::endCircularTorus() {
     endNode(ID::IndexedFaceSet);
     endShape();
 }
 
-void X3DConverter::startEllipticalDish(const vector<float>& matrix,
-                                 const float& diameter,
-                                 const float& radius) {
+void X3DConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& dish) {
     startShape(matrix);
 
     std::vector<float> params;
     params.push_back(EllipticalDish);
-    params.push_back(diameter);
-    params.push_back(radius);
+    params.push_back(dish.diameter());
+    params.push_back(dish.radius());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeEllipticalDish(dish, m_maxSideSize, m_minSides);
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
         writeMeshInstance(gid.second, gid.first);
     }
-}
-
-void X3DConverter::endEllipticalDish() {
     endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
-void X3DConverter::startSphericalDish(const vector<float>& matrix,
-                                const float& diameter,
-                                const float& height) {
+
+void X3DConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& dish) {
     startShape(matrix);
 
     std::vector<float> params;
     params.push_back(SphericalDish);
-    params.push_back(diameter);
-    params.push_back(height);
+    params.push_back(dish.diameter());
+    params.push_back(dish.height());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeSphericalDish(dish, m_maxSideSize, m_minSides);
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
         writeMeshInstance(gid.second, gid.first);
     }
-}
-
-void X3DConverter::endSphericalDish() {
     endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
-void X3DConverter::startSnout(const vector<float>& matrix,
-                        const float& dbottom,
-                        const float& dtop,
-                        const float& height,
-                        const float& xoffset,
-                        const float& yoffset,
-                        const float& unknown1,
-                        const float& unknown2,
-                        const float& unknown3,
-                        const float& unknown4) {
+
+void X3DConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& snout) {
     startShape(matrix);
 
-    if (height == 0 && dbottom == 0 && dtop == 0) { // Degenerated snout...
+    if (snout.height() == 0 && snout.dbottom() == 0 && snout.dtop() == 0) { // Degenerated snout...
         startNode(ID::IndexedFaceSet);
         cerr << "Error: Found degenerated snout. Skipping data ..." << endl;
         return;
@@ -388,91 +344,83 @@ void X3DConverter::startSnout(const vector<float>& matrix,
 
     std::vector<float> params;
     params.push_back(Snout);
-    params.push_back(dtop);
-    params.push_back(dbottom);
-    params.push_back(height);
-    params.push_back(xoffset);
-    params.push_back(yoffset);
+    params.push_back(snout.dtop());
+    params.push_back(snout.dbottom());
+    params.push_back(snout.height());
+    params.push_back(snout.xoffset());
+    params.push_back(snout.yoffset());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
-        Mesh c = RVMMeshHelper2::makeSnout(dbottom, dtop, height, xoffset, yoffset, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeSnout(snout, m_minSides);
         gid.first = createGeometryId();
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
         writeMeshInstance(gid.second, gid.first);
     }
-}
-
-void X3DConverter::endSnout() {
     endNode(ID::IndexedFaceSet);
     endShape();
 }
 
-void X3DConverter::startCylinder(const vector<float>& matrix,
-                           const float& radius,
-                           const float& height) {
+void X3DConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& cylinder) {
     startShape(matrix);
 
     if (m_primitives) {
         startNode(ID::Cylinder);
-        m_writers.back()->setSFFloat(ID::radius, radius);
-        m_writers.back()->setSFFloat(ID::height, height);
+        m_writers.back()->setSFFloat(ID::radius, cylinder.radius());
+        m_writers.back()->setSFFloat(ID::height, cylinder.height());
+        endNode(ID::Cylinder);
     } else {
         std::vector<float> params;
         params.push_back(Cylinder);
-        params.push_back(radius);
-        params.push_back(height);
+        params.push_back(cylinder.radius());
+        params.push_back(cylinder.height());
 
         pair<string,int> gid = getInstanceName(params);
         if(gid.first.empty()) {
             gid.first = createGeometryId();
-            Mesh c = RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides);
+            Mesh c = RVMMeshHelper2::makeCylinder(cylinder, m_minSides);
             gid.second = startMeshGeometry(c, gid.first);
             m_instanceMap.insert(std::make_pair(params, gid));
         } else {
             writeMeshInstance(gid.second, gid.first);
         }
+        endNode(ID::IndexedFaceSet);
 
     }
-}
-
-void X3DConverter::endCylinder() {
-
-    endNode(ID::IndexedFaceSet);
     endShape();
+
 }
 
-void X3DConverter::startSphere(const vector<float>& matrix,
-                         const float& diameter) {
+void X3DConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& sphere) {
     startShape(matrix);
     if (m_primitives) {
         startNode(ID::Sphere);
-        m_writers.back()->setSFFloat(ID::radius, diameter/2);
+        m_writers.back()->setSFFloat(ID::radius, sphere.diamater);
+        endNode(ID::Sphere);
     } else {
         std::vector<float> params;
         params.push_back(Sphere);
-        params.push_back(diameter);
+        params.push_back(sphere.diamater);
 
         pair<string,int> gid = getInstanceName(params);
         if(gid.first.empty()) {
-            Mesh c = RVMMeshHelper2::makeSphere(diameter / 2, m_maxSideSize, m_minSides);
+            Mesh c = RVMMeshHelper2::makeSphere(sphere, m_maxSideSize, m_minSides);
             gid.first = createGeometryId();
             gid.second = startMeshGeometry(c, gid.first);
             m_instanceMap.insert(std::make_pair(params, gid));
         } else {
             writeMeshInstance(gid.second, gid.first);
         }
+        endNode(ID::IndexedTriangleSet);
     }
-}
 
-void X3DConverter::endSphere() {
-    endNode(ID::IndexedTriangleSet);
     endShape();
+
 }
 
-void X3DConverter::startLine(const vector<float>& matrix,
+void X3DConverter::createLine(const std::array<float, 12>& matrix,
                        const float& startx,
                        const float& endx) {
     startShape(matrix);
@@ -484,12 +432,10 @@ void X3DConverter::startLine(const vector<float>& matrix,
     c.push_back(endx); c.push_back(0); c.push_back(0);
     m_writers.back()->setMFFloat(ID::point, c);
     endNode(ID::Coordinate); // Coordinate
-}
-
-void X3DConverter::endLine() {
     endNode(ID::LineSet); // LineSet
     endShape();
 }
+
 
 int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
     bool hasNormals = mesh.normals.size() > 0;
@@ -562,20 +508,17 @@ int X3DConverter::startMeshGeometry(const Mesh &mesh, const string &id) {
 }
 
 
-void X3DConverter::startFacetGroup(const vector<float>& matrix,
+void X3DConverter::createFacetGroup(const std::array<float, 12>& matrix,
                              const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
     startShape(matrix);
     Mesh meshData;
     RVMMeshHelper2::tesselateFacetGroup(vertexes, &meshData);
     startMeshGeometry(meshData, "");
-}
-
-void X3DConverter::endFacetGroup() {
     endNode(ID::IndexedTriangleSet);
     endShape();
 }
 
-void X3DConverter::startShape(const std::vector<float>& matrix) {
+void X3DConverter::startShape(const std::array<float, 12>& matrix) {
     vector<float> r(4, 0);
 
     // Finding axis/angle from matrix using Eigen for its bullet proof implementation.

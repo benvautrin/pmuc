@@ -28,6 +28,7 @@
 #include "api/rvmparser.h"
 #include "converters/dummyreader.h"
 #include "converters/dslconverter.h"
+#include "api/rvmprimitive.h"
 
 #ifdef XIOT_FOUND
 #include "converters/x3dconverter.h"
@@ -240,54 +241,85 @@ int main(int argc, char** argv)
                     reader->setSplit(options[SPLIT].count() > 0);
                     vector<float> translation;
                     for (int j = 0; j < 3; j++) translation.push_back(0);
-                    vector<float> matrix;
-                    for (int j = 0; j < 12; j++) matrix.push_back(0);
+                    std::array<float, 12> matrix;
+                    for (int j = 0; j < 12; j++) matrix[j] = 0.0f;
                     matrix[0] = 1; matrix[4] = 1; matrix[8] = 1;
                     reader->startDocument();
                     reader->startHeader("Plant Mock-Up Converter", "Primitive example file", "", "", "");
                     reader->endHeader();
                     reader->startModel("Primitive examples", primitiveNames[i]);
                     reader->startGroup(primitiveNames[i], translation, forcedColor != -1 ? forcedColor : 2);
+
                     switch (i) { // BOX, SNOUT, CYLINDER, SPHERE, CIRCULARTORUS, RECTANGULARTORUS, PYRAMID, LINE, ELLIPTICALDISH, SPHERICALDISH
                         case BOX: {
-                            reader->startBox(matrix, 1, 1, 1);
-                            reader->endBox();
+                            Primitives::Box  box;
+                            box.len[0] = 1.0;
+                            box.len[1] = 1.0;
+                            box.len[2] = 1.0;
+                            reader->createBox(matrix, box);
                         } break;
                         case SNOUT: {
-                            reader->startSnout(matrix, 2, 4, 2, 1, 1, 0, 0, 0, 0);
-                            reader->endSnout();
+                            Primitives::Snout snout;
+                            snout.data[0] = 2.0;
+                            snout.data[1] = 4.0;
+                            snout.data[2] = 2.0;
+                            snout.data[3] = 1.0;
+                            snout.data[4] = 1.0;
+
+                            reader->createSnout(matrix, snout);
                         } break;
                         case CYLINDER: {
-                            reader->startCylinder(matrix, 1, 2);
-                            reader->endCylinder();
+                            Primitives::Cylinder  cylinder;
+                            cylinder.data[0] = 1;
+                            cylinder.data[1] = 2;
+                            reader->createCylinder(matrix, cylinder);
                         } break;
                         case SPHERE: {
-                            reader->startSphere(matrix, 2);
-                            reader->endSphere();
+                            Primitives::Sphere sphere;
+                            sphere.diamater = 2.0;
+                            reader->createSphere(matrix, sphere);
                         } break;
                         case CIRCULARTORUS: {
-                            reader->startCircularTorus(matrix, 4, 2, (float)M_PI);
-                            reader->endCircularTorus();
+                            Primitives::CircularTorus torus;
+                            torus.data[0] = 4;
+                            torus.data[1] = 2;
+                            torus.data[2] = (float)M_PI;
+                            reader->createCircularTorus(matrix, torus);
                         } break;
                         case RECTANGULARTORUS: {
-                            reader->startRectangularTorus(matrix, 2, 3, 0.5, (float)M_PI*3/4);
-                            reader->endRectangularTorus();
+                            Primitives::RectangularTorus torus;
+                            torus.data[0] = 2;
+                            torus.data[1] = 3;
+                            torus.data[2] = 0.5;
+                            torus.data[3] = (float)M_PI*3/4;
+                            reader->createRectangularTorus(matrix, torus);
                         } break;
                         case PYRAMID: {
-                            reader->startPyramid(matrix, 2, 4, 1, 2, 2, 1, 4);
-                            reader->endPyramid();
+                            Primitives::Pyramid pyramid;
+                            pyramid.data[0] = 2;
+                            pyramid.data[1] = 4;
+                            pyramid.data[2] = 1;
+                            pyramid.data[3] = 2;
+                            pyramid.data[4] = 2;
+                            pyramid.data[5] = 1;
+                            pyramid.data[6] = 4;
+
+                            reader->createPyramid(matrix, pyramid);
                         } break;
                         case LINE: {
-                            reader->startLine(matrix, 1, 2);
-                            reader->endLine();
+                            reader->createLine(matrix, 1, 2);
                         } break;
                         case ELLIPTICALDISH: {
-                            reader->startEllipticalDish(matrix, 4, 4);
-                            reader->endEllipticalDish();
+                            Primitives::EllipticalDish dish;
+                            dish.data[0] = 4;
+                            dish.data[1] = 4;
+                            reader->createEllipticalDish(matrix, dish);
                         } break;
                         case SPHERICALDISH: {
-                            reader->startSphericalDish(matrix, 4, 1);
-                            reader->endSphericalDish();
+                            Primitives::SphericalDish dish;
+                            dish.data[0] = 4;
+                            dish.data[1] = 1;
+                            reader->createSphericalDish(matrix, dish);
                         } break;
                     }
                     reader->endGroup();
@@ -341,7 +373,7 @@ int main(int argc, char** argv)
                 reader->setUsePrimitives(options[PRIMITIVES].count() > 0);
                 reader->setSplit(options[SPLIT].count() > 0);
                 cout << "\nConverting files to " << formatnames[format] << "...\n";
-                RVMParser parser(reader);
+                RVMParser parser(*reader);
                 if (options[OBJECT].count() > 0) {
                     parser.setObjectName(options[OBJECT].arg);
                 }
@@ -430,7 +462,7 @@ int main(int argc, char** argv)
                     reader->setUsePrimitives(options[PRIMITIVES].count() > 0);
                     reader->setSplit(options[SPLIT].count() > 0);
                     cout << "\nConverting file " << filename << " to " << formatnames[format] << "...\n";
-                    RVMParser parser(reader);
+                    RVMParser parser(*reader);
                     if (options[OBJECT].count() > 0) {
                         parser.setObjectName(options[OBJECT].arg);
                     }
@@ -468,4 +500,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-

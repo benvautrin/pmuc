@@ -291,6 +291,7 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
+    m_attributeStream(0),
     m_attributes(0),
 #ifdef ICONV_FOUND
     m_cd((iconv_t)-1),
@@ -299,7 +300,7 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_aggregation(false) {
 }
 
-bool RVMParser::readFile(const string& filename)
+bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
 {
     m_lastError = "";
 
@@ -310,6 +311,27 @@ bool RVMParser::readFile(const string& filename)
         return false;
     }
 
+    // Try to find ATT companion file
+    m_attributeStream = 0;
+    filebuf afb;
+    if (!ignoreAttributes) {
+        string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
+        if (afb.open(attfilename.data(), ios::in)) {
+            cout << "Found attribute companion file: " << attfilename << endl;
+            m_attributeStream = new istream(&afb);
+        } else {
+            attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
+            if (afb.open(attfilename.data(), ios::in)) {
+                cout << "Found attribute companion file: " << attfilename << endl;
+                m_attributeStream = new istream(&afb);
+            }
+        }
+        if (m_attributeStream && !m_attributeStream->eof()) {
+            std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+        }
+    }
+
+
     bool success = readStream(is);
 
     is.close();
@@ -317,7 +339,7 @@ bool RVMParser::readFile(const string& filename)
     return success;
 }
 
-bool RVMParser::readFiles(const vector<string>& filenames, const string& name)
+bool RVMParser::readFiles(const vector<string>& filenames, const string& name, bool ignoreAttributes)
 {
     bool success = true;
 
@@ -328,12 +350,12 @@ bool RVMParser::readFiles(const vector<string>& filenames, const string& name)
 
     m_aggregation = true;
 
-    const float zeroTranslation[3] = { 0.0f, 0.0f, 0.0f };
+    auto zeroTranslation = Vector3F();
     for (unsigned int i = 0; i < filenames.size(); i++)
     {
         string groupname = filenames[i].substr(filenames[i].rfind(PATHSEP) + 1, filenames[i].find_last_of("."));
         m_reader.startGroup(groupname, zeroTranslation, 0);
-        success = readFile(filenames[i]);
+        success = readFile(filenames[i], ignoreAttributes);
         if (!success) {
             break;
         }
@@ -490,7 +512,7 @@ bool RVMParser::readGroup(std::istream& is)
     if (m_objectFound)
     {
         m_nbGroups++;
-        m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
+        m_reader.startGroup(name, Vector3F(translation[0], translation[1], translation[2]), m_forcedColor != -1 ? m_forcedColor : materialId);
     }
 
     // Children
@@ -598,17 +620,13 @@ bool RVMParser::readPrimitive(std::istream& is)
                 m_nbLines++;
                 float startx = read_<float>(is);
                 float endx = read_<float>(is);
-                m_reader.startLine(matrix,
-                                    startx,
-                                    endx);
-                m_reader.endLine();
+                m_reader.createLine(matrix, startx, endx);
             } break;
 
             case 11: {
                 m_nbFacetGroups++;
                 readFacetGroup_(is, fc, m_scale);
-                m_reader.startFacetGroup(matrix, fc);
-                m_reader.endFacetGroup();
+                m_reader.createFacetGroup(matrix, fc);
             } break;
 
             default: {

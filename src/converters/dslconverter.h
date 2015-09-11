@@ -49,77 +49,30 @@ class DSLConverter : public RVMReader
         virtual void startMetaDataPair(const std::string& name, const std::string& value);
         virtual void endMetaDataPair();
 
-        virtual void startPyramid(const std::vector<float>& matrix,
-                                  const float& xbottom,
-                                  const float& ybottom,
-                                  const float& xtop,
-                                  const float& ytop,
-                                  const float& height,
-                                  const float& xoffset,
-                                  const float& yoffset);
-        virtual void endPyramid();
+        virtual void createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params);
 
-        virtual void startBox(const std::vector<float>& matrix,
-                              const float& xlength,
-                              const float& ylength,
-                              const float& zlength);
-        virtual void endBox();
+        virtual void createBox(const std::array<float, 12>& matrix, const Primitives::Box& params);
 
-        virtual void startRectangularTorus(const std::vector<float>& matrix,
-                                           const float& rinside,
-                                           const float& routside,
-                                           const float& height,
-                                           const float& angle);
-        virtual void endRectangularTorus();
+        virtual void createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params);
 
-        virtual void startCircularTorus(const std::vector<float>& matrix,
-                                        const float& rinside,
-                                        const float& routside,
-                                        const float& angle);
-        virtual void endCircularTorus();
+        virtual void createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params);
 
-        virtual void startEllipticalDish(const std::vector<float>& matrix,
-                                         const float& diameter,
-                                         const float& radius);
-        virtual void endEllipticalDish();
+        virtual void createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params);
 
-        virtual void startSphericalDish(const std::vector<float>& matrix,
-                                        const float& diameter,
-                                        const float& height);
-        virtual void endSphericalDish();
+        virtual void createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params);
 
-        virtual void startSnout(const std::vector<float>& matrix,
-                                const float& dtop,
-                                const float& dbottom,
-                                const float& xoffset,
-                                const float& yoffset,
-                                const float& height,
-                                const float& unknown1,
-                                const float& unknown2,
-                                const float& unknown3,
-                                const float& unknown4);
-        virtual void endSnout();
+        virtual void createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params);
 
-        virtual void startCylinder(const std::vector<float>& matrix,
-                                   const float& radius,
-                                   const float& height);
-        virtual void endCylinder();
+        virtual void createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params);
 
-        virtual void startSphere(const std::vector<float>& matrix,
-                                 const float& diameter);
-        virtual void endSphere();
+        virtual void createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params);
 
-        virtual void startLine(const std::vector<float>& matrix,
-                               const float& startx,
-                               const float& endx);
-        virtual void endLine();
+        virtual void createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx);
 
-        virtual void startFacetGroup(const std::vector<float>& matrix,
-                                     const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes);
-        virtual void endFacetGroup();
+        virtual void createFacetGroup(const std::array<float, 12>& matrix, const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes);
 
     private:
-        void writeShapeTransforms(const std::string& shapeId, const std::vector<float>& matrix);
+        void writeShapeTransforms(const std::string& shapeId, const std::array<float, 12>& matrix);
 
         std::vector<std::string> m_groups;
         std::vector<std::vector<std::string> > m_groupsChildren;

@@ -62,14 +62,14 @@ class RVMParser
          *
          * @return true if the parsing was a success.
          */
-        bool readFile(const std::string& filename);
+        bool readFile(const std::string& filename, bool ignoreAttributes);
         /**
          * @brief Reads from a series of files.
          * @param filenames a vector of filenames
          *
          * @return true if the parsing was a success.
          */
-        bool readFiles(const std::vector<std::string>& filenames, const std::string& name);
+        bool readFiles(const std::vector<std::string>& filenames, const std::string& name, bool ignoreAttributes);
         /**
          * @brief Reads from a character buffer.
          * @param buffer the character buffer containing RVM data.
@@ -187,6 +187,7 @@ class RVMParser
         int             m_forcedColor;
         bool            m_aggregation;
         float           m_scale;
+        std::istream*   m_attributeStream;
 
         int             m_nbGroups;
         int             m_nbPyramids;

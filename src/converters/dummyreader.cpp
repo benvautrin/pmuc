@@ -76,126 +76,56 @@ void DummyReader::startMetaDataPair(const string &name, const string &value) {
 void DummyReader::endMetaDataPair() {
 }
 
-void DummyReader::startPyramid(const vector<float>& matrix,
-                          const float& xbottom,
-                          const float& ybottom,
-                          const float& xtop,
-                          const float& ytop,
-                          const float& height,
-                          const float& xoffset,
-                          const float& yoffset) {
-    cout << "startPyramid" << endl;
+void DummyReader::createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params) {
+    cout << "createPyramid" << endl;
 }
 
-void DummyReader::endPyramid() {
-    cout << "endPyramid" << endl;
+
+void DummyReader::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
+    cout << "createBox" << endl;
 }
 
-void DummyReader::startBox(const vector<float>& matrix,
-                      const float& xlength,
-                      const float& ylength,
-                      const float& zlength) {
-    cout << "startBox" << endl;
+
+void DummyReader::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
+    cout << "createRectangularTorus" << endl;
 }
 
-void DummyReader::endBox() {
-    cout << "endBox" << endl;
+
+void DummyReader::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
+    cout << "createCircularTorus" << endl;
 }
 
-void DummyReader::startRectangularTorus(const vector<float>& matrix,
-                                   const float& rinside,
-                                   const float& routside,
-                                   const float& height,
-                                   const float& angle) {
-    cout << "startRectangularTorus" << endl;
-}
 
-void DummyReader::endRectangularTorus() {
-    cout << "endRectangularTorus" << endl;
-}
-
-void DummyReader::startCircularTorus(const vector<float>& matrix,
-                                const float& rinside,
-                                const float& routside,
-                                const float& angle) {
-    cout << "startCircularTorus" << endl;
-}
-
-void DummyReader::endCircularTorus() {
-    cout << "endCircularTorus" << endl;
-}
-
-void DummyReader::startEllipticalDish(const vector<float>& matrix,
-                                 const float& diameter,
-                                 const float& radius) {
+void DummyReader::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
     cout << "startEllipticalDish" << endl;
 }
 
-void DummyReader::endEllipticalDish() {
-    cout << "endEllipticalDish" << endl;
+
+void DummyReader::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
+    cout << "createSphericalDish" << endl;
 }
 
-void DummyReader::startSphericalDish(const vector<float>& matrix,
-                                const float& diameter,
-                                const float& height) {
-    cout << "startSphericalDish" << endl;
+
+void DummyReader::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
+    cout << "createSnout" << endl;
 }
 
-void DummyReader::endSphericalDish() {
-    cout << "endSphericalDish" << endl;
+
+void DummyReader::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
+    cout << "createCylinder" << endl;
 }
 
-void DummyReader::startSnout(const vector<float>& matrix,
-                        const float& dtop,
-                        const float& dbottom,
-                        const float& xoffset,
-                        const float& yoffset,
-                        const float& height,
-                        const float& unknown1,
-                        const float& unknown2,
-                        const float& unknown3,
-                        const float& unknown4) {
-    cout << "startSnout" << endl;
+
+void DummyReader::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
+    cout << "createSphere" << endl;
 }
 
-void DummyReader::endSnout() {
-    cout << "endSnout" << endl;
+
+void DummyReader::createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx) {
+    cout << "createLine" << endl;
 }
 
-void DummyReader::startCylinder(const vector<float>& matrix,
-                           const float& radius,
-                           const float& height) {
-    cout << "startCylinder" << endl;
-}
 
-void DummyReader::endCylinder() {
-    cout << "endCylinder" << endl;
-}
-
-void DummyReader::startSphere(const vector<float>& matrix,
-                         const float& diameter) {
-    cout << "startSphere" << endl;
-}
-
-void DummyReader::endSphere() {
-    cout << "endSphere" << endl;
-}
-
-void DummyReader::startLine(const vector<float>& matrix,
-                       const float& startx,
-                       const float& endx) {
-    cout << "startLine" << endl;
-}
-
-void DummyReader::endLine() {
-    cout << "endLine" << endl;
-}
-
-void DummyReader::startFacetGroup(const vector<float>& matrix,
-                             const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
-    cout << "startFacetGroup" << endl;
-}
-
-void DummyReader::endFacetGroup() {
-    cout << "endFacetGroup" << endl;
+void DummyReader::createFacetGroup(const std::array<float, 12>& matrix,  const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
+    cout << "createFacetGroup" << endl;
 }
