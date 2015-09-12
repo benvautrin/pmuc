@@ -27,10 +27,6 @@
 #include <vector>
 #include <array>
 
-#ifdef ICONV_FOUND
-#include <iconv.h>
-#endif
-
 #include "vector3f.h"
 
 class RVMReader;
@@ -175,10 +171,6 @@ class RVMParser
 
         RVMReader       &m_reader;
         std::string     m_encoding;
-#ifdef ICONV_FOUND
-        iconv_t         m_cd;
-        iconv_t         m_cdatt;
-#endif
         std::string     m_lastError;
 
         std::string     m_currentAttributeLine;

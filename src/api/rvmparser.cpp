@@ -300,10 +300,6 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbFacetGroups(0),
     m_attributeStream(0),
     m_attributes(0),
-#ifdef ICONV_FOUND
-    m_cd((iconv_t)-1),
-    m_cdatt((iconv_t)-1),
-#endif
     m_aggregation(false) {
 }
 
@@ -425,17 +421,6 @@ bool RVMParser::readStream(istream& is)
     else
         m_encoding = "UTF-8";
 
-#ifdef ICONV_FOUND
-    m_cd = (iconv_t)-1;
-    if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
-        m_cd = iconv_open("UTF-8", m_encoding.data());
-        if (m_cd == (iconv_t)-1) {
-            cout << "Unknown encoding: " << m_encoding << endl;
-        }
-    }
-    // Attributes seem to be always "ISO_8859-1"
-    m_cdatt = iconv_open("UTF-8", "ISO8859-1");
-#endif
 
     if (!m_aggregation) {
         m_reader.startHeader(banner, fileNote, date, user, m_encoding);
@@ -484,15 +469,6 @@ bool RVMParser::readStream(istream& is)
         m_reader.endDocument();
     }
 
-#ifdef ICONV_FOUND
-    if (m_cd != (iconv_t)-1) {
-        iconv_close(m_cd);
-    }
-    if (m_cdatt != (iconv_t)-1) {
-        iconv_close(m_cdatt);
-    }
-#endif
-
     return true;
 }
 
@@ -522,6 +498,7 @@ bool RVMParser::readGroup(std::istream& is)
     {
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
+
     }
 
     // Children
@@ -705,4 +682,3 @@ void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
     for (size_t i = 9; i < 12; i++)
         matrix[i] *= m_scale;
 }
-

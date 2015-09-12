@@ -22,6 +22,8 @@
 
 #include "ifcconverter.h"
 
+#include <codecvt>
+
 #define BOOST_DATE_TIME_NO_LIB
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -233,12 +235,14 @@ void IFCConverter::endMetaData() {
 
 void IFCConverter::startMetaDataPair(const std::string &name, const std::string &value) {
     assert(m_propertySet);
+
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf16conv;
     std::string value_escaped = boost::replace_all_copy(value, "\\", "\\\\");
 
     shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
     insertEntity(prop);
-    prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( std::wstring(name.begin(), name.end() ) ));
-    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(value_escaped.begin(), value_escaped.end())));
+    prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf16conv.from_bytes(name) ));
+    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel( utf16conv.from_bytes(value_escaped) ));
 
     m_propertySet->m_HasProperties.push_back(prop);
 }
