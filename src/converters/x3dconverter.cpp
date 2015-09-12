@@ -337,13 +337,11 @@ void X3DConverter::createSphericalDish(const std::array<float, 12>& matrix, cons
 
 
 void X3DConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& snout) {
-    startShape(matrix);
-
     if (snout.height() == 0 && snout.dbottom() == 0 && snout.dtop() == 0) { // Degenerated snout...
-        startNode(ID::IndexedFaceSet);
         cerr << "Error: Found degenerated snout. Skipping data ..." << endl;
         return;
     }
+    startShape(matrix);
 
     std::vector<float> params;
     params.push_back(Snout);
