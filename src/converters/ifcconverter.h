@@ -23,7 +23,10 @@
 #define IFCCONVERTER_H
 
 #include "../api/rvmreader.h"
+#include "../api/rvmmeshhelper.h"
+
 #include <ifcpp/model/IfcPPModel.h>
+
 #include <stack>
 
 class IfcOwnerHistory;
@@ -31,6 +34,8 @@ class IfcRelAggregates;
 class IfcLocalPlacement;
 class IfcObjectDefinition;
 class IfcGeometricRepresentationContext;
+class IfcRepresentationItem;
+class IfcMaterial;
 
 class IFCConverter : public RVMReader
 {
@@ -131,11 +136,14 @@ class IFCConverter : public RVMReader
         shared_ptr<IfcGeometricRepresentationContext>   m_context;
         std::string                                     m_filename;
         std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
-        std::stack<shared_ptr<IfcLocalPlacement> >       m_placementStack;
+        std::map<int, shared_ptr<IfcMaterial> >         m_materials;
 
         shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name);
+        shared_ptr<IfcMaterial> createMaterial(int id);
         void initModel();
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent); 
+        void addSurfaceModelToShape(shared_ptr<IfcRepresentationItem> item);
+        void writeMesh(const Mesh &mesh, const Eigen::Matrix4f& matrix);
 };
 
 #endif // IFCCONVERTER_H
