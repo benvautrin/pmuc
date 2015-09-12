@@ -17,7 +17,7 @@ NEW /*
           Position:=  E 0 N 0 U 0
        Orientation:=  Y is N and Z is U
           Rlstored:=  Unset
-	  :UTFTEST:=  Ã¶Ã¤Ã¼?
+	  :UTFTEST:=  öäü?
        :EDF.SAVING:=  false
       :EDF.EPR_REF:=  INCO
       :EDF.DOMAINE:=  MECANIQUE

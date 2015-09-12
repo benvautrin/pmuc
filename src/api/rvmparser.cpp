@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <array>
+#include <stdint.h>
 
 #include "rvmreader.h"
 
@@ -270,14 +271,31 @@ inline void skip_<3>(std::istream& in)
     skip_<1>(in);
 }
 
-static string trim(const string& s)
-{
-    size_t si = s.find_first_not_of(" \n\r\t");
-    if (si == string::npos) {
-        return "";
+namespace {
+
+    static string trim(const string& s)
+    {
+        size_t si = s.find_first_not_of(" \n\r\t");
+        if (si == string::npos) {
+            return "";
+        }
+        size_t ei = s.find_last_not_of(" \n\r\t");
+        return s.substr(si, ei - si + 1);
     }
-    size_t ei = s.find_last_not_of(" \n\r\t");
-    return s.substr(si, ei - si + 1);
+
+    static string latin_to_utf8(const string& latin) {
+        string result;
+        for(uint8_t c: latin) {
+            if(c < 0x80) {
+                result += c;
+            } else {
+                // Found non-ASCII character, assume ISO 8859-1
+                result += (0xc0 | (c & 0xc0) >> 6);
+                result += (0x80 | (c & 0x3f));
+            }
+        }
+        return result;
+    }
 }
 
 RVMParser::RVMParser(RVMReader& reader) :
@@ -508,7 +526,7 @@ bool RVMParser::readGroup(std::istream& is)
                 m_reader.startMetaData();
                 size_t i;
                 std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                p = trim(m_currentAttributeLine);
+                p = trim(latin_to_utf8(m_currentAttributeLine));
                 while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
                      string an = p.substr(0, i);
                      string av = p.substr(i+4, string::npos);
@@ -518,7 +536,7 @@ bool RVMParser::readGroup(std::istream& is)
                      m_attributes++;
 
                      std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                     p = trim(m_currentAttributeLine);
+                     p = trim(latin_to_utf8(m_currentAttributeLine));
                 }
                 m_reader.endMetaData();
             }
