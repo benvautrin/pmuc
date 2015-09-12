@@ -29,6 +29,7 @@
 #include "converters/dummyreader.h"
 #include "converters/dslconverter.h"
 #include "api/rvmprimitive.h"
+#include "converters/ifcconverter.h"
 
 #ifdef XIOT_FOUND
 #include "converters/x3dconverter.h"
@@ -62,6 +63,7 @@ enum optionIndex { UNKNOWN,
 #ifdef OPENCOLLADASW_FOUND
                    COLLADA,
 #endif // OPENCOLLADASW_FOUND
+                   IFC,
                    DSL,
                    DUMMY,
                    SKIPATT,
@@ -83,6 +85,7 @@ const option::Descriptor usage[] = {
 #ifdef OPENCOLLADASW_FOUND
     { COLLADA,      0, "",  "collada",       option::Arg::None,      "  --collada\tConvert to COLLADA format." },
 #endif // OPENCOLLADASW_FOUND
+    { IFC,          0, "",  "ifc",           option::Arg::None,      "  --ifc\tConvert to IFC." },
     { DSL,          0, "",  "dsl",           option::Arg::None,      "  --dsl  \tConvert to DSL language." },
     { DUMMY,        0, "",  "dummy",         option::Arg::None,      "  --dummy\tPrint out the file structure." },
     { SKIPATT,      0, "",  "skipattributes",option::Arg::None,      "  --skipattributes \tIgnore attribute file." },
@@ -142,7 +145,7 @@ int main(int argc, char** argv)
 #ifdef OPENCOLLADASW_FOUND
          options[COLLADA] ||
 #endif // OPENCOLLADASW_FOUND
-         options[DSL] || options[DUMMY]) == 0) {
+         options[DSL] || options[DUMMY] || options[IFC]) == 0) {
         cout << "\nNo format specified.\n";
         option::printUsage(std::cout, usage);
         return 1;
@@ -225,6 +228,11 @@ int main(int argc, char** argv)
                             reader = new COLLADAConverter(name);
                         } break;
 #endif // OPENCOLLADASW_FOUND
+
+                        case IFC: {
+                            string name = filename + ".ifc";
+                            reader = new IFCConverter(name);
+                        } break;
 
                         case DSL: {
                             string name = filename + ".dsl3d";
@@ -363,6 +371,11 @@ int main(int argc, char** argv)
                         string dslname = name + ".dsl3d";
                         reader = new DSLConverter(dslname);
                     } break;
+
+                    case IFC: {
+                        string ifcname = name + ".ifc";
+                        reader = new IFCConverter(ifcname);
+                    } break;
                 }
                 if (maxSideSize) {
                     reader->setMaxSideSize(maxSideSize);
@@ -445,6 +458,12 @@ int main(int argc, char** argv)
                             reader = new COLLADAConverter(name);
                         } break;
 #endif // OPENCOLLADASW_FOUND
+                        case IFC: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".ifc";
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new IFCConverter(name);
+                        } break;
 
                         case DSL: {
                             string name = !objectName.empty() ? objectName : filename;

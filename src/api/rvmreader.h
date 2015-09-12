@@ -29,6 +29,9 @@
 #include "vector3f.h"
 #include "rvmprimitive.h"
 
+typedef std::pair<Vector3F, Vector3F> PositionNormalTuple;
+typedef std::vector<std::vector<std::vector<PositionNormalTuple> > > FGroup;
+
 /**
  * @brief RVM reader base class
  *
@@ -206,7 +209,7 @@ class RVMReader
          * @param vertexes
          */
         virtual void createFacetGroup(const std::array<float, 12>& matrix,
-                                     const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes) = 0;
+                                     const FGroup& vertexes) = 0;
 
         /**
          * @brief Sets the maximum size for a side of a primitive when tesselating.
