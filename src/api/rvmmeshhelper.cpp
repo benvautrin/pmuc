@@ -314,8 +314,8 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const Primitives::RectangularTor
 
 std::pair<unsigned long, unsigned long> RVMMeshHelper2::infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides)
 {
-    const auto tsides = std::max(minSides, static_cast<unsigned long>(cTorus.angle() * cTorus.rinside() / maxSideSize) );
-    const auto csides = std::max(minSides, static_cast<unsigned long>(2 * M_PI * cTorus.routside() / maxSideSize) );
+    unsigned long tsides = std::max(minSides, static_cast<unsigned long>(cTorus.angle() * cTorus.rinside() / maxSideSize) );
+    unsigned long csides = std::max(minSides, static_cast<unsigned long>(2 * M_PI * cTorus.routside() / maxSideSize) );
 
     return std::make_pair(tsides, csides);
 }
@@ -665,8 +665,8 @@ std::pair<unsigned long, unsigned long> RVMMeshHelper2::infoEllipticalDishNumSid
     const float dishradius = eDish.diameter();
     const float secondradius = eDish.radius();
 
-    const auto sides = std::max(minSides / 2, static_cast<unsigned long>(2.0f * M_PI * secondradius / maxSideSize) );
-    const auto csides = std::max(minSides, static_cast<unsigned long>(2.0f * M_PI * dishradius / maxSideSize));
+    unsigned long sides = std::max(minSides / 2, static_cast<unsigned long>(2.0f * M_PI * secondradius / maxSideSize) );
+    unsigned long csides = std::max(minSides, static_cast<unsigned long>(2.0f * M_PI * dishradius / maxSideSize));
 
     return std::make_pair(sides, csides);
 }
