@@ -119,9 +119,9 @@ void IFCConverter::endModel() {
 
 void IFCConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
-    m_model->insertEntity(buildingElement);
     buildingElement->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     buildingElement->m_Name = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(name.begin(), name.end())));
+    m_model->insertEntity(buildingElement);
 
     // Translation:
     shared_ptr<IfcCartesianPoint> trans (new IfcCartesianPoint() );
@@ -288,8 +288,6 @@ void IFCConverter::endLine() {
 
 void IFCConverter::startFacetGroup(const std::vector<float>& matrix, const FGroup& vertices) {
     
-    shared_ptr<IfcProductDefinitionShape> shape( new IfcProductDefinitionShape() );
-    m_model->insertEntity(shape);
 
     shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     m_model->insertEntity(cfs);
@@ -307,13 +305,16 @@ void IFCConverter::startFacetGroup(const std::vector<float>& matrix, const FGrou
             shared_ptr<IfcPolyLoop> polygon (new IfcPolyLoop() );
             m_model->insertEntity(polygon);
 
-            shared_ptr<IfcFaceOuterBound> bound (new IfcFaceOuterBound() );
+            shared_ptr<IfcFaceBound> bound (new IfcFaceBound() );
             m_model->insertEntity(bound);
             bound->m_Bound = polygon;
-            bound->m_Orientation = true;
+            bound->m_Orientation = false;
 
             for (unsigned int k = 0; k < vertices[i][j].size(); k++) {
-                Vector3F vertex(vertices[i][j].at(k).first);
+                // Transform vertex
+                Eigen::Vector4f vertex(&(vertices[i][j].at(k).first[0]));
+                vertex = matrix * vertex;
+
                 shared_ptr<IfcCartesianPoint> point (new IfcCartesianPoint() );
                 m_model->insertEntity(point);
                 point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex.x()) ) );
@@ -327,20 +328,23 @@ void IFCConverter::startFacetGroup(const std::vector<float>& matrix, const FGrou
         cfs->m_CfsFaces.push_back(face);
     }
 
-    shared_ptr<IfcShapeRepresentation> shapeRepresentation( new IfcShapeRepresentation() );
-    m_model->insertEntity(shapeRepresentation);
-    shapeRepresentation->m_ContextOfItems = m_context;
-    shapeRepresentation->m_RepresentationIdentifier = shared_ptr<IfcLabel>( new IfcLabel( L"Building" ) );
-    shapeRepresentation->m_RepresentationType = shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) );
-    shapeRepresentation->m_Items.push_back(fbsm);
-
-    shape->m_Representations.push_back(shapeRepresentation);
-
-
     shared_ptr<IfcObjectDefinition> parent = m_relationStack.top()->m_RelatingObject;
     shared_ptr<IfcProduct> parentProduct = dynamic_pointer_cast<IfcProduct>(parent);
     if(parentProduct) {
-        parentProduct->m_Representation = shape;
+        if(!parentProduct->m_Representation) {
+            shared_ptr<IfcProductDefinitionShape> shape( new IfcProductDefinitionShape() );
+            m_model->insertEntity(shape);
+
+            shared_ptr<IfcShapeRepresentation> shapeRepresentation( new IfcShapeRepresentation() );
+            m_model->insertEntity(shapeRepresentation);
+            shapeRepresentation->m_ContextOfItems = m_context;
+            shapeRepresentation->m_RepresentationIdentifier = shared_ptr<IfcLabel>( new IfcLabel( L"Building" ) );
+            shapeRepresentation->m_RepresentationType = shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) );
+
+            shape->m_Representations.push_back(shapeRepresentation);
+            parentProduct->m_Representation = shape;
+        }
+        parentProduct->m_Representation->m_Representations[0]->m_Items.push_back(fbsm);
     }
 }
 
