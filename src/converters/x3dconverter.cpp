@@ -279,7 +279,8 @@ void X3DConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makeCircularTorus(torus, m_maxSideSize, m_minSides);
+        auto sides = RVMMeshHelper2::infoCircularTorusNumSides(torus, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeCircularTorus(torus, sides.first, sides.second);
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
@@ -300,7 +301,9 @@ void X3DConverter::createEllipticalDish(const std::array<float, 12>& matrix, con
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
         gid.first = createGeometryId();
-        Mesh c = RVMMeshHelper2::makeEllipticalDish(dish, m_maxSideSize, m_minSides);
+        auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(dish, m_maxSideSize, m_minSides);
+        Mesh c = RVMMeshHelper2::makeEllipticalDish(dish, sides.first, sides.second);
+        
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
     } else {
@@ -352,7 +355,7 @@ void X3DConverter::createSnout(const std::array<float, 12>& matrix, const Primit
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
-        Mesh c = RVMMeshHelper2::makeSnout(snout, m_minSides);
+        Mesh c = RVMMeshHelper2::makeSnout(snout, RVMMeshHelper2::infoSnoutNumSides(snout, m_maxSideSize, m_minSides));
         gid.first = createGeometryId();
         gid.second = startMeshGeometry(c, gid.first);
         m_instanceMap.insert(std::make_pair(params, gid));
@@ -380,7 +383,7 @@ void X3DConverter::createCylinder(const std::array<float, 12>& matrix, const Pri
         pair<string,int> gid = getInstanceName(params);
         if(gid.first.empty()) {
             gid.first = createGeometryId();
-            Mesh c = RVMMeshHelper2::makeCylinder(cylinder, m_minSides);
+            Mesh c = RVMMeshHelper2::makeCylinder(cylinder, RVMMeshHelper2::infoCylinderNumSides(cylinder, m_maxSideSize, m_minSides));
             gid.second = startMeshGeometry(c, gid.first);
             m_instanceMap.insert(std::make_pair(params, gid));
         } else {
@@ -547,7 +550,7 @@ void X3DConverter::startShape(const std::array<float, 12>& matrix) {
                                  (matrix[10] - m_translations.back()[1]),
                                  (matrix[11] - m_translations.back()[2]));
     m_writers.back()->setMFRotation(ID::rotation, r);
-    m_writers.back()->setSFVec3f(ID::scale, scale.coeff(0,0),scale.coeff(1,1),scale.coeff(2,2));
+    m_writers.back()->setSFVec3f(ID::scale, (float)scale.coeff(0,0), (float)scale.coeff(1,1), (float)scale.coeff(2,2));
     startNode(ID::Shape);
     startNode(ID::Appearance);
     startNode(ID::Material);

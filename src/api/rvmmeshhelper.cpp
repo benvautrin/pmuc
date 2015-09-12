@@ -355,6 +355,7 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cT
             n[0] = C*c;
             n[1] = C*s;
             n[2] = S;
+            n.normalize();
             vectors.push_back(n);
         }
     }
@@ -589,11 +590,11 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
         {
             float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
             n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
-            n.normalize();
         }
-        else
+        else {
             n[0] = 0; n[1] = 0; n[2] = 1;
-
+        }
+        n.normalize();
         vectors.push_back(n);
     }
 

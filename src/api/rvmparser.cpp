@@ -159,8 +159,16 @@ string& read_<string>(istream& is, string& str)
 #ifndef ICONV_FOUND
 
     str.resize(size);
-    for(unsigned int i=0;i<size;++i)
+    unsigned int rs = 0;
+    for(unsigned int i = 0; i < size; ++i) {
         str[i] = is.get();
+        if(str[i] == 0 && !rs) {
+            rs = i;
+        }
+    }
+    if(rs) {
+        str.resize(rs);
+    }
 
 #else
 
@@ -189,7 +197,6 @@ string& read_<string>(istream& is, string& str)
     iconv(m_cd, &sp, &inb, &bp, &outb);
     str = cbuffer;
 #endif
-
     return str;
 }
 
@@ -502,8 +509,10 @@ bool RVMParser::readGroup(std::istream& is)
     string name;
     read_(is, name);
 
-    float translation[3];
-    readArray_(is, translation);
+    Vector3F translation;
+    readArray_(is, translation.m_values);
+    translation *= 0.001;
+
     const unsigned int materialId = read_<unsigned int>(is);
 
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
@@ -512,7 +521,7 @@ bool RVMParser::readGroup(std::istream& is)
     if (m_objectFound)
     {
         m_nbGroups++;
-        m_reader.startGroup(name, Vector3F(translation[0], translation[1], translation[2]), m_forcedColor != -1 ? m_forcedColor : materialId);
+        m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
     }
 
     // Children
@@ -691,7 +700,7 @@ bool RVMParser::readPrimitive(std::istream& is)
 void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
 {
     for (auto &value : matrix)
-        value = read_<float>(is) * 1000.f;
+        value = read_<float>(is);
 
     for (size_t i = 9; i < 12; i++)
         matrix[i] *= m_scale;

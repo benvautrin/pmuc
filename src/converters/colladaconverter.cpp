@@ -440,7 +440,8 @@ void COLLADAConverter::createCircularTorus(const std::array<float, 12>& matrix, 
     string gid = getInstanceName(params);
     if(gid.empty()) {
        gid = createGeometryId();
-       writeMesh(gid, RVMMeshHelper2::makeCircularTorus(torus, m_minSides, m_minSides), "RVMCircularTorus");
+       auto sides = RVMMeshHelper2::infoCircularTorusNumSides(torus, m_maxSideSize, m_minSides);
+       writeMesh(gid, RVMMeshHelper2::makeCircularTorus(torus, sides.first, sides.second), "RVMCircularTorus");
        m_instanceMap.insert(std::make_pair(params, gid));
     }
     addGeometry(gid, matrix);
@@ -457,7 +458,8 @@ void COLLADAConverter::createEllipticalDish(const std::array<float, 12>& matrix,
     string gid = getInstanceName(params);
     if(gid.empty()) {
        gid = createGeometryId();
-       writeMesh(gid, RVMMeshHelper2::makeEllipticalDish(dish, m_maxSideSize, m_minSides), "RVMEllipticalDish");
+       auto sideInfo = RVMMeshHelper2::infoEllipticalDishNumSides(dish, m_maxSideSize, m_minSides);
+       writeMesh(gid, RVMMeshHelper2::makeEllipticalDish(dish, sideInfo.first, sideInfo.second), "RVMEllipticalDish");
        m_instanceMap.insert(std::make_pair(params, gid));
     }
     addGeometry(gid, matrix);
@@ -492,7 +494,7 @@ void COLLADAConverter::createSnout(const std::array<float, 12>& matrix, const Pr
     string gid = getInstanceName(params);
     if(gid.empty()) {
        gid = createGeometryId();
-       writeMesh(gid, RVMMeshHelper2::makeSnout(snout, m_minSides), "RVMSnout");
+       writeMesh(gid, RVMMeshHelper2::makeSnout(snout, RVMMeshHelper2::infoSnoutNumSides(snout, m_maxSideSize, m_minSides)), "RVMSnout");
        m_instanceMap.insert(std::make_pair(params, gid));
     }
     addGeometry(gid, matrix);
@@ -508,7 +510,7 @@ void COLLADAConverter::createCylinder(const std::array<float, 12>& matrix, const
     string gid = getInstanceName(params);
     if(gid.empty()) {
        gid = createGeometryId();
-       writeMesh(gid, RVMMeshHelper2::makeCylinder(cylinder, m_minSides), "RVMCylinder");
+       writeMesh(gid, RVMMeshHelper2::makeCylinder(cylinder, RVMMeshHelper2::infoCylinderNumSides(cylinder, m_maxSideSize, m_minSides)), "RVMCylinder");
        m_instanceMap.insert(std::make_pair(params, gid));
     }
     addGeometry(gid, matrix);

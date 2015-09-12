@@ -103,7 +103,6 @@ class Vector3F
            return (a-b).squaredNorm() < epsilon;
         }
 
-    private:
         float m_values[3];
 };
 
