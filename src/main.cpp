@@ -236,8 +236,8 @@ int main(int argc, char** argv)
                     reader->setSplit(options[SPLIT].count() > 0);
                     vector<float> translation;
                     for (int j = 0; j < 3; j++) translation.push_back(0);
-                    Eigen::Matrix4f matrix;
-                    matrix.setIdentity();
+                    std::array<float, 12> matrix;
+
                     reader->startDocument();
                     reader->startHeader("Plant Mock-Up Converter", "Primitive example file", "", "", "");
                     reader->endHeader();

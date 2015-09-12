@@ -77,9 +77,9 @@
 #include <ifcpp/IFC4/include/IfcPropertySingleValue.h>
 #include <ifcpp/IFC4/include/IfcText.h>
 
-
-
 #include <ifcpp/model/IfcPPGuid.h>
+
+#include <Eigen/Core>
 
 #include "../api/rvmmeshhelper.h"
 #include "../api/rvmcolorhelper.h"
@@ -100,6 +100,17 @@ namespace {
     std::wstring utf8_to_wstring(const std::string& str)
     {
         return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
+    }
+
+    Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
+        Eigen::Matrix4f result;
+        result.setIdentity();
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 3; j++) {
+                result(j, i)= matrix[i*3+j];
+            }
+        }
+        return result;
     }
 }
 
@@ -254,118 +265,53 @@ void IFCConverter::startMetaDataPair(const std::string &name, const std::string 
 void IFCConverter::endMetaDataPair() {
 }
 
-void IFCConverter::startPyramid(const Eigen::Matrix4f& matrix,
-                                const float& xbottom,
-                                const float& ybottom,
-                                const float& xtop,
-                                const float& ytop,
-                                const float& height,
-                                const float& xoffset,
-                                const float& yoffset) {
-    writeMesh(RVMMeshHelper2::makePyramid(xbottom, ybottom, xtop, ytop, height, xoffset, yoffset, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endPyramid() {
-
-}
-
-void IFCConverter::startBox(const Eigen::Matrix4f& matrix,
-                            const float& xlength,
-                            const float& ylength,
-                            const float& zlength) {
-    writeMesh(RVMMeshHelper2::makeBox(xlength, ylength, zlength, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endBox() {
-
-}
-
-void IFCConverter::startRectangularTorus(const Eigen::Matrix4f& matrix,
-                                         const float& rinside,
-                                         const float& routside,
-                                         const float& height,
-                                         const float& angle) {
-    writeMesh(RVMMeshHelper2::makeRectangularTorus(rinside, routside, height, angle, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endRectangularTorus() {
-
-}
-
-void IFCConverter::startCircularTorus(const Eigen::Matrix4f& matrix,
-                                      const float& rinside,
-                                      const float& routside,
-                                      const float& angle) {
-    writeMesh(RVMMeshHelper2::makeCircularTorus(rinside, routside, angle, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endCircularTorus() {}
-
-void IFCConverter::startEllipticalDish(const Eigen::Matrix4f& matrix,
-                                       const float& diameter,
-                                       const float& radius) {
-    writeMesh(RVMMeshHelper2::makeEllipticalDish(diameter, radius, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endEllipticalDish() {
-}
-
-void IFCConverter::startSphericalDish(const Eigen::Matrix4f& matrix,
-                                      const float& diameter,
-                                      const float& height) {
-    writeMesh(RVMMeshHelper2::makeSphericalDish(diameter, height, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endSphericalDish() {
-
-}
-
-void IFCConverter::startSnout(const Eigen::Matrix4f& matrix,
-                              const float& dbottom,
-                              const float& dtop,
-                              const float& height,
-                              const float& xoffset,
-                              const float& yoffset,
-                              const float& unknown1,
-                              const float& unknown2,
-                              const float& unknown3,
-                              const float& unknown4) {
-    writeMesh(RVMMeshHelper2::makeSnout(dtop, dbottom, height, xoffset, yoffset, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endSnout() {
-}
-
-void IFCConverter::startCylinder(const Eigen::Matrix4f& matrix,
-                                 const float& radius,
-                                 const float& height) {
-    writeMesh(RVMMeshHelper2::makeCylinder(radius, height, m_maxSideSize, m_minSides), matrix);
-
-}
-
-void IFCConverter::endCylinder() {
-}
-
-void IFCConverter::startSphere(const Eigen::Matrix4f& matrix,
-                               const float& diameter) {
-    writeMesh( RVMMeshHelper2::makeSphere(diameter, m_maxSideSize, m_minSides), matrix);
-}
-
-void IFCConverter::endSphere() {
-}
-
-void IFCConverter::startLine(const Eigen::Matrix4f& matrix,
-                             const float& startx,
-                             const float& endx) {
-}
-
-void IFCConverter::endLine() {
+void IFCConverter::createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params) {
+    writeMesh(RVMMeshHelper2::makePyramid(params, m_maxSideSize, m_minSides), matrix);
 }
 
 
+void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
+    writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
+}
 
-void IFCConverter::startFacetGroup(const Eigen::Matrix4f& matrix, const FGroup& vertices) {
+void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
+    writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
+}
 
+void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
+    auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
+}
+
+void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
+    auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
+}
+
+void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
+    writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
+}
+
+void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
+    auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+}
+
+void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
+    auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
+}
+
+void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
+    writeMesh( RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
+}
+
+void IFCConverter::createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx) {
+}
+
+void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup& vertices) {
+    Eigen::Matrix4f matrix = toEigenMatrix(m);
+    
     shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     insertEntity(cfs);
 
@@ -408,9 +354,6 @@ void IFCConverter::startFacetGroup(const Eigen::Matrix4f& matrix, const FGroup& 
     addSurfaceModelToShape(surfaceModel);
 
 
-}
-
-void IFCConverter::endFacetGroup() {
 }
 
 shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user) {
@@ -513,10 +456,12 @@ void IFCConverter::pushParentRelation(shared_ptr<IfcObjectDefinition> parent) {
 }
 
 
-void IFCConverter::writeMesh(const Mesh &mesh, const Eigen::Matrix4f& matrix) {
+void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
     shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     insertEntity(cfs);
-
+    
+    Eigen::Matrix4f matrix = toEigenMatrix(m);
+    
     shared_ptr<IfcFaceBasedSurfaceModel> surfaceModel ( new IfcFaceBasedSurfaceModel() );
     insertEntity(surfaceModel);
     surfaceModel->m_FbsmFaces.push_back(cfs);

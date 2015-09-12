@@ -487,7 +487,7 @@ bool RVMParser::readGroup(std::istream& is)
 
     Vector3F translation;
     readArray_(is, translation.m_values);
-    translation *= 0.001;
+    translation *= 0.001f;
 
     const unsigned int materialId = read_<unsigned int>(is);
 
@@ -498,7 +498,31 @@ bool RVMParser::readGroup(std::istream& is)
     {
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
+        // Attributes
+        if (m_attributeStream && !m_attributeStream->eof()) {
+            string p;
+            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
+                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+            }
+            if (p == "NEW " + name ) {
+                m_reader.startMetaData();
+                size_t i;
+                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                p = trim(m_currentAttributeLine);
+                while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
+                     string an = p.substr(0, i);
+                     string av = p.substr(i+4, string::npos);
 
+                     m_reader.startMetaDataPair(an, av);
+                     m_reader.endMetaDataPair();
+                     m_attributes++;
+
+                     std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                     p = trim(m_currentAttributeLine);
+                }
+                m_reader.endMetaData();
+            }
+        }
     }
 
     // Children
