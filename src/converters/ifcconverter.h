@@ -99,7 +99,7 @@ class IFCConverter : public RVMReader
         shared_ptr<IfcPropertySet>                      m_propertySet;
         int                                             m_currentEntityId;
 
-        shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name);
+        shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
         shared_ptr<IfcMaterial> createMaterial(int id);
         void insertEntity(shared_ptr<IfcPPEntity> e);
         void initModel();

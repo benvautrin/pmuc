@@ -35,11 +35,15 @@
 #include <ifcpp/IFC4/include/IfcOwnerHistory.h>
 #include <ifcpp/IFC4/include/IfcPersonAndOrganization.h>
 #include <ifcpp/IFC4/include/IfcLabel.h>
+#include <ifcpp/IFC4/include/IfcChangeActionEnum.h>
+#include <ifcpp/IFC4/include/IfcTimeStamp.h>
 #include <ifcpp/IFC4/include/IfcGloballyUniqueId.h>
 #include <ifcpp/IFC4/include/IfcBuilding.h>
 #include <ifcpp/IFC4/include/IfcSite.h>
 #include <ifcpp/IFC4/include/IfcCartesianPoint.h>
+#include <ifcpp/IFC4/include/IfcReflectanceMethodEnum.h>
 #include <ifcpp/IFC4/include/IfcAxis2Placement3D.h>
+#include <ifcpp/IFC4/include/IfcApplication.h>
 #include <ifcpp/IFC4/include/IfcLengthMeasure.h>
 #include <ifcpp/IFC4/include/IfcRelAggregates.h>
 #include <ifcpp/IFC4/include/IfcBuildingElementProxy.h>
@@ -53,6 +57,7 @@
 #include <ifcpp/IFC4/include/IfcPolyLoop.h>
 #include <ifcpp/IFC4/include/IfcFaceOuterBound.h>
 #include <ifcpp/IFC4/include/IfcFace.h>
+#include <ifcpp/IFC4/include/IfcOrganization.h>
 #include <ifcpp/IFC4/include/IfcUnitAssignment.h>
 #include <ifcpp/IFC4/include/IfcSIUnit.h>
 #include <ifcpp/IFC4/include/IfcSIUnitName.h>
@@ -112,6 +117,11 @@ namespace {
         }
         return result;
     }
+
+    int toTimeStamp(const std::string& schema) {
+        // TODO: Implement
+        return 0;
+    }
 }
 
 
@@ -162,8 +172,8 @@ void IFCConverter::endDocument() {
     std::cout << std::endl; // Finish progress line
 }
 
-void IFCConverter::startHeader(const std::string& banner, const std::string& fileNote, const std::string& date, const std::string& user, const std::string& encoding) {
-    m_model->getIfcProject()->m_OwnerHistory = createOwnerHistory(user);
+void IFCConverter::startHeader(const std::string& banner, const std::string& fileNote, const std::string& dateStr, const std::string& user, const std::string& encoding) {
+    m_model->getIfcProject()->m_OwnerHistory = createOwnerHistory(user, banner, toTimeStamp(dateStr));
 }
 
 void IFCConverter::endHeader() {
@@ -196,7 +206,7 @@ void IFCConverter::endModel() {
 void IFCConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
     buildingElement->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    buildingElement->m_Name = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(name.begin(), name.end())));
+    buildingElement->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name ) ) );
     insertEntity(buildingElement);
 
     shared_ptr<IfcMaterial> material = createMaterial(materialId);
@@ -311,7 +321,7 @@ void IFCConverter::createLine(const std::array<float, 12>& matrix, const float& 
 
 void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup& vertices) {
     Eigen::Matrix4f matrix = toEigenMatrix(m);
-    
+
     shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     insertEntity(cfs);
 
@@ -356,18 +366,78 @@ void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup
 
 }
 
-shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user) {
+shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user, const std::string &banner, int timeStamp) {
     if(!m_owner_history) {
+        // The creator/owner of this document
+        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcperson.htm
+        // -
         shared_ptr<IfcPerson> person( new IfcPerson() );
-        person->m_Identification = shared_ptr<IfcIdentifier>( new IfcIdentifier( std::wstring(user.begin(), user.end() ) ));
         insertEntity(person);
+        person->m_Identification = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(user) ) );
+        // WR1 : EXISTS(FamilyName) OR EXISTS(GivenName);
+        person->m_FamilyName = shared_ptr<IfcLabel>( new IfcLabel( utf8_to_wstring(user) ) );
+        // IFC always write a list, and a list may not be empty for following attributes (thus we add some)
+        person->m_MiddleNames.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
+        person->m_PrefixTitles.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
+        person->m_SuffixTitles.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
 
+        shared_ptr<IfcOrganization> organization( new IfcOrganization() );
+        insertEntity(organization);
+        organization->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"unknown" ) );
+
+
+        std::wstring developer = L"unknown";
+        auto firstSpace = banner.find(" ");
+        if(firstSpace != std::string::npos) {
+            developer = utf8_to_wstring(banner.substr(0, firstSpace));
+        }
+
+        // Find a version that starts with Mk and ends at the first string (or at the end of string if no space in string)
+        // Version is an empty string if no verison could be found by the rule above
+        std::wstring version = L"";
+        auto versionStart = banner.find("Mk");
+        if(versionStart != std::string::npos) {
+            auto versionEnd = banner.find(" ", versionStart);
+            if (versionEnd != std::string::npos) {
+                // Length of version
+                versionEnd -= versionStart;
+            }
+            version = utf8_to_wstring(banner.substr(versionStart, versionEnd));
+        }
+
+        // IfcOrganization requires at least a name
+        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcorganization.htm
+        // -
+        shared_ptr<IfcOrganization> applicationDeveloper( new IfcOrganization() );
+        insertEntity(applicationDeveloper);
+        applicationDeveloper->m_Name = shared_ptr<IfcLabel>( new IfcLabel( developer ) );
+
+        // IfcApplication requires ApplicationDeveloper, Version, ApplicationFullName, ApplicationIdentifier
+        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcutilityresource/lexical/ifcapplication.htm
+        // -
+        shared_ptr<IfcApplication> application( new IfcApplication() );
+        insertEntity(application);
+        application->m_ApplicationFullName = shared_ptr<IfcLabel>( new IfcLabel( utf8_to_wstring(banner) ) );
+        application->m_ApplicationIdentifier = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(banner) ) );
+        application->m_ApplicationDeveloper = applicationDeveloper;
+        application->m_Version = shared_ptr<IfcLabel>( new IfcLabel( version ) );
+
+        // IfcPersonAndOrganization requires ThePerson and TheOrganization
+        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcpersonandorganization.htm
+        // -
         shared_ptr<IfcPersonAndOrganization> person_org( new IfcPersonAndOrganization() );
         person_org->m_ThePerson = person;
+        person_org->m_TheOrganization = organization;
         insertEntity(person_org);
 
+        // IfcOwnerHistory requires OwningApplication, ChangeAction, and CreationDate
+        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcutilityresource/lexical/ifcownerhistory.htm
+        // -
         m_owner_history = shared_ptr<IfcOwnerHistory>( new IfcOwnerHistory() );
+        m_owner_history->m_OwningApplication = application;
+        m_owner_history->m_ChangeAction = shared_ptr<IfcChangeActionEnum>( new IfcChangeActionEnum( IfcChangeActionEnum::ENUM_NOTDEFINED ) );
         m_owner_history->m_OwningUser = person_org;
+        m_owner_history->m_CreationDate = shared_ptr<IfcTimeStamp>( new IfcTimeStamp( timeStamp ) );
         insertEntity(m_owner_history);
     }
     return m_owner_history;
@@ -392,12 +462,14 @@ void IFCConverter::initModel() {
 
     // Relation project -> site
     shared_ptr<IfcRelAggregates> rel_aggregates_project_site( new IfcRelAggregates() );
+    rel_aggregates_project_site->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     rel_aggregates_project_site->m_RelatingObject = m_model->getIfcProject();
     rel_aggregates_project_site->m_RelatedObjects.push_back(site);
     insertEntity(rel_aggregates_project_site);
 
     // Relation project -> site
     shared_ptr<IfcRelAggregates> rel_aggregates_site_building( new IfcRelAggregates() );
+    rel_aggregates_site_building->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     rel_aggregates_site_building->m_RelatingObject = site;
     rel_aggregates_site_building->m_RelatedObjects.push_back(building);
     insertEntity(rel_aggregates_site_building);
@@ -451,6 +523,7 @@ void IFCConverter::initModel() {
 
 void IFCConverter::pushParentRelation(shared_ptr<IfcObjectDefinition> parent) {
     shared_ptr<IfcRelAggregates> child_relations( new IfcRelAggregates() );
+    child_relations->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     child_relations->m_RelatingObject = parent;
     m_relationStack.push(child_relations);
 }
@@ -459,9 +532,9 @@ void IFCConverter::pushParentRelation(shared_ptr<IfcObjectDefinition> parent) {
 void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
     shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     insertEntity(cfs);
-    
+
     Eigen::Matrix4f matrix = toEigenMatrix(m);
-    
+
     shared_ptr<IfcFaceBasedSurfaceModel> surfaceModel ( new IfcFaceBasedSurfaceModel() );
     insertEntity(surfaceModel);
     surfaceModel->m_FbsmFaces.push_back(cfs);
@@ -519,6 +592,27 @@ void IFCConverter::addSurfaceModelToShape(shared_ptr<IfcRepresentationItem> item
             parentProduct->m_Representation = shape;
         }
         parentProduct->m_Representation->m_Representations[0]->m_Items.push_back(item);
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement3D> relative_placement( new IfcAxis2Placement3D() );
+        relative_placement->m_Location = location;
+        insertEntity(relative_placement);
+
+        // Define a placement based on the relative placement defined above
+        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm
+        // -
+        shared_ptr<IfcLocalPlacement> placement( new IfcLocalPlacement() );
+        insertEntity(placement);
+        placement->m_RelativePlacement = relative_placement;
+
+        // IfcProduct.WR1: A product with an representation requires a placement
+        parentProduct->m_ObjectPlacement = placement;
+
     }
 }
 
@@ -548,12 +642,16 @@ shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
     surfaceColor->m_Green = getNormalisedRatioMeasure(colors[1]);
     surfaceColor->m_Blue = getNormalisedRatioMeasure(colors[2]);
 
+    // Define the material proerties for rendering (only the surface color defined through RVM color mappings)
+    // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcpresentationappearanceresource/lexical/ifcsurfacestylerendering.htm
+    // -
     shared_ptr<IfcSurfaceStyleRendering> surfaceStyleRendering( new IfcSurfaceStyleRendering() );
     insertEntity(surfaceStyleRendering);
     surfaceStyleRendering->m_SurfaceColour = surfaceColor;
     surfaceStyleRendering->m_Transparency = getNormalisedRatioMeasure(0.0);
     surfaceStyleRendering->m_DiffuseColour = getNormalisedRatioMeasure(1);
     surfaceStyleRendering->m_SpecularColour = getNormalisedRatioMeasure(0.25);
+    surfaceStyleRendering->m_ReflectanceMethod = shared_ptr<IfcReflectanceMethodEnum>( new IfcReflectanceMethodEnum( IfcReflectanceMethodEnum::ENUM_BLINN ) );
 
     shared_ptr<IfcSurfaceStyle> surfaceStyle( new IfcSurfaceStyle() );
     insertEntity(surfaceStyle);
