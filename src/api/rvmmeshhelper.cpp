@@ -449,8 +449,8 @@ const Mesh RVMMeshHelper2::makePyramid(const Primitives::Pyramid& inP, const flo
     for (int i = 0; i < 8; i++)
     {
         Vector3F p;
-        p[0] = i < 4 ? pyramid[i * 3] * inP.xbottom() : pyramid[i * 3] * inP.xtop() + inP.xoffset();
-        p[1] = i < 4 ? pyramid[i * 3 + 1] * inP.ybottom() : pyramid[i * 3 + 1] * inP.ytop() + inP.yoffset();
+        p[0] = i < 4 ? pyramid[i * 3] * inP.xbottom() - inP.xoffset() * 0.5f: pyramid[i * 3] * inP.xtop() + inP.xoffset() * 0.5f;
+        p[1] = i < 4 ? pyramid[i * 3 + 1] * inP.ybottom() - inP.yoffset() * 0.5f  : pyramid[i * 3 + 1] * inP.ytop() + inP.yoffset() * 0.5f;
         p[2] = pyramid[i * 3 + 2] * inP.height();
         points.push_back(p);
     }
