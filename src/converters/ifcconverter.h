@@ -38,6 +38,7 @@ class IfcGeometricRepresentationContext;
 class IfcRepresentationItem;
 class IfcMaterial;
 class IfcPropertySet;
+class IfcLabel;
 class IfcPPEntity;
 
 
@@ -104,7 +105,7 @@ class IFCConverter : public RVMReader
         void insertEntity(shared_ptr<IfcPPEntity> e);
         void initModel();
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
-        void addSurfaceModelToShape(shared_ptr<IfcRepresentationItem> item);
+        void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
         void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
 };
 

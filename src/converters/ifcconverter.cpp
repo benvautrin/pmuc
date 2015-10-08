@@ -40,6 +40,7 @@
 #include <ifcpp/IFC4/include/IfcGloballyUniqueId.h>
 #include <ifcpp/IFC4/include/IfcBuilding.h>
 #include <ifcpp/IFC4/include/IfcSite.h>
+#include <ifcpp/IFC4/include/IfcPolyline.h>
 #include <ifcpp/IFC4/include/IfcCartesianPoint.h>
 #include <ifcpp/IFC4/include/IfcReflectanceMethodEnum.h>
 #include <ifcpp/IFC4/include/IfcAxis2Placement3D.h>
@@ -85,6 +86,7 @@
 #include <ifcpp/model/IfcPPGuid.h>
 
 #include <Eigen/Core>
+
 
 #include "../api/rvmmeshhelper.h"
 #include "../api/rvmcolorhelper.h"
@@ -182,8 +184,8 @@ void IFCConverter::endHeader() {
 
 void IFCConverter::startModel(const std::string& projectName, const std::string& name) {
     // TODO(ksons): Which is long name and which is name
-    m_model->getIfcProject()->m_Name = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(projectName.begin(), projectName.end())));
-    m_model->getIfcProject()->m_LongName = shared_ptr<IfcLabel>(new IfcLabel(std::wstring(name.begin(), name.end())));
+    m_model->getIfcProject()->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( projectName )));
+    m_model->getIfcProject()->m_LongName = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name )));
     m_model->getIfcProject()->m_Phase = shared_ptr<IfcLabel>(new IfcLabel(L"$"));
 
     // Initialize model with site, building etc
@@ -316,7 +318,36 @@ void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primi
     writeMesh( RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
 }
 
-void IFCConverter::createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx) {
+void IFCConverter::createLine(const std::array<float, 12>& m, const float& length, const float& thickness) {
+    Eigen::Matrix4f matrix = toEigenMatrix(m);
+    Eigen::Vector4f origin = matrix.col(3);
+
+    Eigen::Vector4f dir(0.0f, 0.0f, length * thickness * 0.5f, 0.0f);
+    dir = matrix * dir;
+
+    Eigen::Vector4f start = origin - dir;
+    Eigen::Vector4f end = origin + dir;
+
+    shared_ptr<IfcPolyline> line (new IfcPolyline() );
+    insertEntity(line);
+
+    shared_ptr<IfcCartesianPoint> startPoint (new IfcCartesianPoint() );
+    insertEntity(startPoint);
+    startPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( start.x() ) ) );
+    startPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( start.y() ) ) );
+    startPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( start.z() ) ) );
+
+    line->m_Points.push_back(startPoint);
+
+    shared_ptr<IfcCartesianPoint> endPoint (new IfcCartesianPoint() );
+    insertEntity(endPoint);
+    endPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( end.x() ) ) );
+    endPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( end.y() ) ) );
+    endPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( end.z() ) ) );
+
+    line->m_Points.push_back(endPoint);
+
+    addRepresentationToShape(line, shared_ptr<IfcLabel>( new IfcLabel( L"GeometricCurveSet" ) ));
 }
 
 void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup& vertices) {
@@ -361,7 +392,7 @@ void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup
         cfs->m_CfsFaces.push_back(face);
     }
 
-    addSurfaceModelToShape(surfaceModel);
+    addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
 
 
 }
@@ -571,10 +602,10 @@ void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
         bound->m_Bound = polygon;
 
     }
-    addSurfaceModelToShape(surfaceModel);
+    addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
 }
 
-void IFCConverter::addSurfaceModelToShape(shared_ptr<IfcRepresentationItem> item) {
+void IFCConverter::addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type) {
     shared_ptr<IfcObjectDefinition> parent = m_relationStack.top()->m_RelatingObject;
     shared_ptr<IfcProduct> parentProduct = dynamic_pointer_cast<IfcProduct>(parent);
     if(parentProduct) {
@@ -586,7 +617,7 @@ void IFCConverter::addSurfaceModelToShape(shared_ptr<IfcRepresentationItem> item
             insertEntity(shapeRepresentation);
             shapeRepresentation->m_ContextOfItems = m_context;
             shapeRepresentation->m_RepresentationIdentifier = shared_ptr<IfcLabel>( new IfcLabel( L"Building" ) );
-            shapeRepresentation->m_RepresentationType = shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) );
+            shapeRepresentation->m_RepresentationType = type;
 
             shape->m_Representations.push_back(shapeRepresentation);
             parentProduct->m_Representation = shape;
