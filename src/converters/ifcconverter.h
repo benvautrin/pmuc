@@ -105,7 +105,7 @@ class IFCConverter : public RVMReader
 
         shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
         shared_ptr<IfcMaterial> createMaterial(int id);
-        shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id);
+        shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
         void insertEntity(shared_ptr<IfcPPEntity> e);
         void initModel();
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
