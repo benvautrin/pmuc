@@ -39,6 +39,7 @@ class IfcRepresentationItem;
 class IfcMaterial;
 class IfcPropertySet;
 class IfcLabel;
+class IfcSurfaceStyle;
 class IfcPPEntity;
 
 
@@ -97,11 +98,14 @@ class IFCConverter : public RVMReader
         std::string                                     m_filename;
         std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
         std::map<int, shared_ptr<IfcMaterial> >         m_materials;
+        std::map<int, shared_ptr<IfcSurfaceStyle> >     m_styles;
         shared_ptr<IfcPropertySet>                      m_propertySet;
         int                                             m_currentEntityId;
+        std::stack<int>                                 m_currentMaterial;
 
         shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
         shared_ptr<IfcMaterial> createMaterial(int id);
+        shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id);
         void insertEntity(shared_ptr<IfcPPEntity> e);
         void initModel();
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);

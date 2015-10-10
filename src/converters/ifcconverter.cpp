@@ -209,6 +209,7 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
     shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
     buildingElement->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     buildingElement->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name ) ) );
+    buildingElement->m_OwnerHistory = m_owner_history;
     insertEntity(buildingElement);
 
     shared_ptr<IfcMaterial> material = createMaterial(materialId);
@@ -218,6 +219,8 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
     materialAssociates->m_RelatedObjects.push_back(buildingElement);
     materialAssociates->m_RelatingMaterial = material;
     insertEntity(materialAssociates);
+
+    m_currentMaterial.push(materialId);
 
     // Build relation with parent group
     m_relationStack.top()->m_RelatedObjects.push_back(buildingElement);
@@ -234,6 +237,7 @@ void IFCConverter::endGroup() {
         insertEntity(aggregates);
     }
     m_relationStack.pop();
+    m_currentMaterial.pop();
 }
 
 void IFCConverter::startMetaData() {
@@ -624,6 +628,17 @@ void IFCConverter::addRepresentationToShape(shared_ptr<IfcRepresentationItem> it
         }
         parentProduct->m_Representation->m_Representations[0]->m_Items.push_back(item);
 
+        // Add style to the item
+        shared_ptr<IfcPresentationStyleAssignment> presentationStyleAssignment( new IfcPresentationStyleAssignment() );
+        insertEntity(presentationStyleAssignment);
+        presentationStyleAssignment->m_Styles.push_back(createSurfaceStyle(m_currentMaterial.top()));
+
+        shared_ptr<IfcStyledItem> styledItem( new IfcStyledItem() );
+        insertEntity(styledItem);
+        styledItem->m_Styles.push_back(presentationStyleAssignment);
+        styledItem->m_Item = item;
+
+
         shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
         insertEntity(location);
         location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
@@ -655,15 +670,11 @@ void IFCConverter::insertEntity(shared_ptr<IfcPPEntity> e) {
     m_model->insertEntity(e);
 }
 
-shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
-    std::map<int, shared_ptr<IfcMaterial>>::iterator I = m_materials.find(id);
-    if(I != m_materials.end()) {
+shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id) {
+    std::map<int, shared_ptr<IfcSurfaceStyle>>::iterator I = m_styles.find(id);
+    if(I != m_styles.end()) {
         return (*I).second;
     }
-    shared_ptr<IfcMaterial> material( new IfcMaterial() );
-    insertEntity(material);
-    material->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"Material" + std::to_wstring(id) ));
-    m_materials.insert(std::make_pair(id, material));
 
     std::vector<float> colors = RVMColorHelper::color(id);
 
@@ -690,13 +701,27 @@ shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
     surfaceStyle->m_Side = shared_ptr<IfcSurfaceSide>( new IfcSurfaceSide( IfcSurfaceSide::ENUM_BOTH ));
     surfaceStyle->m_Styles.push_back(surfaceStyleRendering);
 
+    return surfaceStyle;
+}
+
+shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
+    std::map<int, shared_ptr<IfcMaterial>>::iterator I = m_materials.find(id);
+    if(I != m_materials.end()) {
+        return (*I).second;
+    }
+    shared_ptr<IfcMaterial> material( new IfcMaterial() );
+    insertEntity(material);
+    material->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"Material" + std::to_wstring(id) ));
+    m_materials.insert(std::make_pair(id, material));
+
     shared_ptr<IfcPresentationStyleAssignment> presentationStyleAssignment( new IfcPresentationStyleAssignment() );
     insertEntity(presentationStyleAssignment);
-    presentationStyleAssignment->m_Styles.push_back(surfaceStyle);
+    presentationStyleAssignment->m_Styles.push_back(createSurfaceStyle(id));
 
     shared_ptr<IfcStyledItem> styledItem( new IfcStyledItem() );
     insertEntity(styledItem);
     styledItem->m_Styles.push_back(presentationStyleAssignment);
+
 
     shared_ptr<IfcStyledRepresentation> styledRepresentation( new IfcStyledRepresentation() );
     insertEntity(styledRepresentation);
