@@ -245,7 +245,8 @@ void IFCConverter::startMetaData() {
     m_propertySet = shared_ptr<IfcPropertySet>( new IfcPropertySet() );
     m_propertySet->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     m_propertySet->m_OwnerHistory = m_owner_history;
-    m_propertySet->m_Description = shared_ptr<IfcText>( new IfcText( L"RVM Attributes" ));
+    m_propertySet->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"RVM Attributes" ));
+    m_propertySet->m_Description = shared_ptr<IfcText>( new IfcText( L"Attributes from RVM Attribute file" ));
     insertEntity(m_propertySet);
 
     // A related object is required (typically a IfcBuildingElementProxy)
