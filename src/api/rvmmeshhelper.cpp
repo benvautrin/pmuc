@@ -509,6 +509,7 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, un
 
     const unsigned long nrTrianglesSide = 2 * sides;
 
+    unsigned long v0, v1, v2, v3, n0, n1;
     for (unsigned long i = 0; i < sides; i++)
     {
         // Dimensions in x and y, z is height
@@ -519,13 +520,13 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, un
         positions.push_back(Vector3F(x*cylinder.radius(), y*cylinder.radius(), +halfHeight));
         normals.push_back(Vector3F(x,y,0));
 
-        const unsigned long v0 = i * 2;
-        const unsigned long v1 = v0 + 1;
-        const unsigned long v2 = (v0 + 2) % nrTrianglesSide;
-        const unsigned long v3 = (v0 + 3) % nrTrianglesSide;
+        v0 = i * 2;
+        v1 = v0 + 1;
+        v2 = (v0 + 2) % nrTrianglesSide;
+        v3 = (v0 + 3) % nrTrianglesSide;
 
-        const unsigned long n0 = i;
-        const unsigned long n1 = (n0 + 1) % sides;
+        n0 = i;
+        n1 = (n0 + 1) % sides;
 
         // First triangle (CW: 0, 2, 1)
         positionIndex.push_back(v0);
@@ -542,6 +543,32 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, un
         normalIndex.push_back(n1);
         positionIndex.push_back(v3);
         normalIndex.push_back(n1);
+    }
+    // bottom (index: sides*2)
+    positions.push_back(Vector3F(0, 0, -halfHeight));
+    // top (index: sides*2 + 1)
+    positions.push_back(Vector3F(0, 0, +halfHeight));
+    // down (index: sides)
+    normals.push_back(Vector3F(0, 0, -1));
+    // up (index: sides + 1)
+    normals.push_back(Vector3F(0, 0, -1));
+
+    for (unsigned long i = 0; i < sides; i++) {
+        positionIndex.push_back(sides*2); // bottom
+        positionIndex.push_back(i*2);
+        positionIndex.push_back((i*2 + 2) % nrTrianglesSide);
+        normalIndex.push_back(sides);
+        normalIndex.push_back(sides);
+        normalIndex.push_back(sides);
+    }
+
+    for (unsigned long i = 0; i < sides; i++) {
+        positionIndex.push_back(sides*2 + 1); // top
+        positionIndex.push_back(i*2 + 1);
+        positionIndex.push_back((i*2 + 3) % nrTrianglesSide);
+        normalIndex.push_back(sides + 1);
+        normalIndex.push_back(sides + 1);
+        normalIndex.push_back(sides + 1);
     }
 
     Mesh result;
