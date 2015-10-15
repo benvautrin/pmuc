@@ -66,7 +66,7 @@ void DSLConverter::endModel() {
     // Export ?
 }
 
-void DSLConverter::startGroup(const std::string& name, const std::vector<float>& translation, const int& materialId) {
+void DSLConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
     string dslName = name;
 
     size_t p;
@@ -80,7 +80,7 @@ void DSLConverter::startGroup(const std::string& name, const std::vector<float>&
 
     m_groups.push_back(dslName);
     m_groupsChildren.push_back(vector<string>());
-    m_groupsTranslation.push_back(vector<float>(translation));
+    m_groupsTranslation.push_back(translation);
 }
 
 void DSLConverter::endGroup() {
@@ -107,140 +107,82 @@ void DSLConverter::startMetaDataPair(const string &name, const string &value) {
 void DSLConverter::endMetaDataPair() {
 }
 
-void DSLConverter::startPyramid(const vector<float>& matrix,
-                          const float& xbottom,
-                          const float& ybottom,
-                          const float& xtop,
-                          const float& ytop,
-                          const float& height,
-                          const float& xoffset,
-                          const float& yoffset) {
+void DSLConverter::createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writePyramid("bshape" + shapeid, xbottom, ybottom, xtop, ytop, height, xoffset, yoffset);
+    writer->writePyramid("bshape" + shapeid, params.xbottom(), params.ybottom(), params.xtop(), params.ytop(), params.height(), params.xoffset(), params.yoffset());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endPyramid() {
-}
 
-void DSLConverter::startBox(const vector<float>& matrix,
-                      const float& xlength,
-                      const float& ylength,
-                      const float& zlength) {
+void DSLConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeBox("bshape" + shapeid, xlength, ylength, zlength);
+    writer->writeBox("bshape" + shapeid, params.len[0], params.len[1], params.len[2]);
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endBox() {
-}
 
-void DSLConverter::startRectangularTorus(const vector<float>& matrix,
-                                   const float& rinside,
-                                   const float& routside,
-                                   const float& height,
-                                   const float& angle) {
+void DSLConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeRectangularTorus("bshape" + shapeid, routside, rinside, height, angle);
+    writer->writeRectangularTorus("bshape" + shapeid, params.routside(), params.rinside(), params.height(), params.angle());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endRectangularTorus() {
-}
 
-void DSLConverter::startCircularTorus(const vector<float>& matrix,
-                                const float& rinside,
-                                const float& routside,
-                                const float& angle) {
+void DSLConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeCircularTorus("bshape" + shapeid, routside, rinside, angle);
+    writer->writeCircularTorus("bshape" + shapeid, params.routside(), params.rinside(), params.angle());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endCircularTorus() {
-}
 
-void DSLConverter::startEllipticalDish(const vector<float>& matrix,
-                                 const float& diameter,
-                                 const float& radius) {
+void DSLConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeDish("bshape" + shapeid, radius, diameter, radius);
+    writer->writeDish("bshape" + shapeid, params.radius(), params.diameter(), params.radius());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endEllipticalDish() {
-}
 
-void DSLConverter::startSphericalDish(const vector<float>& matrix,
-                                const float& diameter,
-                                const float& height) {
+void DSLConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeDish("bshape" + shapeid, height, diameter, diameter);
+    writer->writeDish("bshape" + shapeid, params.height(), params.diameter(), params.diameter());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endSphericalDish() {
-}
 
-void DSLConverter::startSnout(const vector<float>& matrix,
-                        const float& dtop,
-                        const float& dbottom,
-                        const float& xoffset,
-                        const float& yoffset,
-                        const float& height,
-                        const float& unknown1,
-                        const float& unknown2,
-                        const float& unknown3,
-                        const float& unknown4) {
+void DSLConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeSnout("bshape" + shapeid, dbottom/2, dtop/2, xoffset, yoffset, height);
+    writer->writeSnout("bshape" + shapeid, params.dbottom()/2, params.dtop()/2, params.xoffset(), params.yoffset(), params.height());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endSnout() {
-}
 
-void DSLConverter::startCylinder(const vector<float>& matrix,
-                           const float& radius,
-                           const float& height) {
+void DSLConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeCylinder("bshape" + shapeid, radius, height);
+    writer->writeCylinder("bshape" + shapeid, params.radius(), params.height());
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endCylinder() {
-}
 
-void DSLConverter::startSphere(const vector<float>& matrix,
-                         const float& diameter) {
+void DSLConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeSphere("bshape" + shapeid, diameter/2);
+    writer->writeSphere("bshape" + shapeid, params.diamater/2);
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endSphere() {
-}
 
-void DSLConverter::startLine(const vector<float>& matrix,
-                       const float& startx,
-                       const float& endx) {
+void DSLConverter::createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
     writer->writeLine("bshape" + shapeid, startx, 0, 0, endx, 0, 0);
     writeShapeTransforms(shapeid, matrix);
 }
 
-void DSLConverter::endLine() {
-}
 
-void DSLConverter::startFacetGroup(const vector<float>& matrix,
-                             const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
+void DSLConverter::createFacetGroup(const std::array<float, 12>& matrix, const vector<vector<vector<pair<Vector3F, Vector3F> > > >& vertexes) {
     // Not supported.
 }
 
-void DSLConverter::endFacetGroup() {
-}
 
-void DSLConverter::writeShapeTransforms(const string& shapeid, const std::vector<float>& matrix) {
+void DSLConverter::writeShapeTransforms(const string& shapeid, const std::array<float, 12>& matrix) {
     float rx, ry, rz;
     if (matrix[4] > 0.998) {
         ry = atan2(matrix[2], matrix[10]);
@@ -258,8 +200,7 @@ void DSLConverter::writeShapeTransforms(const string& shapeid, const std::vector
 
     writer->writeRotation("rshape" + shapeid, "bshape" + shapeid, rx, ry, rz);
     writer->writeTranslation("tshape" + shapeid, "rshape" + shapeid, matrix[3], matrix[7], matrix[11]);
-    vector<float> gt = m_groupsTranslation.back();
+    Vector3F gt = m_groupsTranslation.back();
     writer->writeTranslation("shape" + shapeid, "tshape" + shapeid, gt[0], gt[1], gt[2]);
     m_groupsChildren.back().push_back("shape" + shapeid);
 }
-

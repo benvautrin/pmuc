@@ -1,9 +1,15 @@
 project(pmuc)
 cmake_minimum_required(VERSION 2.8)
 
+IF(BIICODE)
+   INCLUDE("biicode.cmake")
+   RETURN()
+ENDIF()
+
 SET(CMAKE_MODULE_PATH "${pmuc_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
 find_package(OpenGL REQUIRED)
+
 
 # Set C++11 flags to makesome function work
 if(UNIX)
@@ -31,6 +37,7 @@ endif (ICONV_FOUND)
 
 aux_source_directory(src SRC_LIST)
 aux_source_directory(src/api APISRC_LIST)
+aux_source_directory(src/common COMMONSRC_LIST)
 aux_source_directory(src/converters CONVERTERSSRC_LIST)
 
 add_library(rvm ${APISRC_LIST})
@@ -38,7 +45,7 @@ if (ICONV_FOUND)
     target_link_libraries(rvm STATIC ${ICONV_LIBRARY})
 endif (ICONV_FOUND)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${APISRC_LIST} ${CONVERTERSSRC_LIST})
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${APISRC_LIST} ${COMMONSRC_LIST} ${CONVERTERSSRC_LIST})
 if (XIOT_FOUND)
     target_link_libraries(${PROJECT_NAME} ${OPENCOLLADASW_LIBRARIES} ${OPENGL_LIBRARIES})
 endif (XIOT_FOUND)

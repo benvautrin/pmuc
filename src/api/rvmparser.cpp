@@ -159,8 +159,16 @@ string& read_<string>(istream& is, string& str)
 #ifndef ICONV_FOUND
 
     str.resize(size);
-    for(unsigned int i=0;i<size;++i)
+    unsigned int rs = 0;
+    for(unsigned int i = 0; i < size; ++i) {
         str[i] = is.get();
+        if(str[i] == 0 && !rs) {
+            rs = i;
+        }
+    }
+    if(rs) {
+        str.resize(rs);
+    }
 
 #else
 
@@ -189,7 +197,6 @@ string& read_<string>(istream& is, string& str)
     iconv(m_cd, &sp, &inb, &bp, &outb);
     str = cbuffer;
 #endif
-
     return str;
 }
 
@@ -291,6 +298,7 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
+    m_attributeStream(0),
     m_attributes(0),
 #ifdef ICONV_FOUND
     m_cd((iconv_t)-1),
@@ -299,7 +307,7 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_aggregation(false) {
 }
 
-bool RVMParser::readFile(const string& filename)
+bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
 {
     m_lastError = "";
 
@@ -310,6 +318,27 @@ bool RVMParser::readFile(const string& filename)
         return false;
     }
 
+    // Try to find ATT companion file
+    m_attributeStream = 0;
+    filebuf afb;
+    if (!ignoreAttributes) {
+        string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
+        if (afb.open(attfilename.data(), ios::in)) {
+            cout << "Found attribute companion file: " << attfilename << endl;
+            m_attributeStream = new istream(&afb);
+        } else {
+            attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
+            if (afb.open(attfilename.data(), ios::in)) {
+                cout << "Found attribute companion file: " << attfilename << endl;
+                m_attributeStream = new istream(&afb);
+            }
+        }
+        if (m_attributeStream && !m_attributeStream->eof()) {
+            std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+        }
+    }
+
+
     bool success = readStream(is);
 
     is.close();
@@ -317,7 +346,7 @@ bool RVMParser::readFile(const string& filename)
     return success;
 }
 
-bool RVMParser::readFiles(const vector<string>& filenames, const string& name)
+bool RVMParser::readFiles(const vector<string>& filenames, const string& name, bool ignoreAttributes)
 {
     bool success = true;
 
@@ -328,12 +357,12 @@ bool RVMParser::readFiles(const vector<string>& filenames, const string& name)
 
     m_aggregation = true;
 
-    const float zeroTranslation[3] = { 0.0f, 0.0f, 0.0f };
+    auto zeroTranslation = Vector3F();
     for (unsigned int i = 0; i < filenames.size(); i++)
     {
         string groupname = filenames[i].substr(filenames[i].rfind(PATHSEP) + 1, filenames[i].find_last_of("."));
         m_reader.startGroup(groupname, zeroTranslation, 0);
-        success = readFile(filenames[i]);
+        success = readFile(filenames[i], ignoreAttributes);
         if (!success) {
             break;
         }
@@ -480,8 +509,10 @@ bool RVMParser::readGroup(std::istream& is)
     string name;
     read_(is, name);
 
-    float translation[3];
-    readArray_(is, translation);
+    Vector3F translation;
+    readArray_(is, translation.m_values);
+    translation *= 0.001;
+
     const unsigned int materialId = read_<unsigned int>(is);
 
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
@@ -598,17 +629,13 @@ bool RVMParser::readPrimitive(std::istream& is)
                 m_nbLines++;
                 float startx = read_<float>(is);
                 float endx = read_<float>(is);
-                m_reader.startLine(matrix,
-                                    startx,
-                                    endx);
-                m_reader.endLine();
+                m_reader.createLine(matrix, startx, endx);
             } break;
 
             case 11: {
                 m_nbFacetGroups++;
                 readFacetGroup_(is, fc, m_scale);
-                m_reader.startFacetGroup(matrix, fc);
-                m_reader.endFacetGroup();
+                m_reader.createFacetGroup(matrix, fc);
             } break;
 
             default: {
@@ -673,7 +700,7 @@ bool RVMParser::readPrimitive(std::istream& is)
 void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
 {
     for (auto &value : matrix)
-        value = read_<float>(is) * 1000.f;
+        value = read_<float>(is);
 
     for (size_t i = 9; i < 12; i++)
         matrix[i] *= m_scale;

@@ -17,3 +17,7 @@ CMakeList.txt.user*
 
 # Mac hidden files 
 .DS_Store
+
+# Build specific temp files
+/bin
+/bii

@@ -1,0 +1,19 @@
+install:
+  - cinst biicode
+  - cmd: set PATH=%PATH:CMake 2.8\bin=%;C:\ProgramData\chocolatey\lib\cmake.3.0.2\content\cmake-3.0.2-win32-x86\bin
+  - cmd: set PATH=%PATH%;C:\Program Files (x86)\BiiCode\bii;
+  - cmd: bii --version
+  - cmd: cmake --version
+
+build_script:
+  - cmd: bii init -L
+  - cmd: bii find
+  - cmd: bii cpp:configure -G "Visual Studio 12 Win64" || bii cpp:configure -G "Visual Studio 12 Win64"
+  - cmd: bii cpp:build --config RELEASE
+
+test_script:
+  - cmd: bii test -VV
+
+artifacts:
+  path: /bin/pmuc.exe
+  name: pmuc
