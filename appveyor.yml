@@ -10,3 +10,10 @@ build_script:
   - cmd: bii find
   - cmd: bii cpp:configure -G "Visual Studio 12 Win64" || bii cpp:configure -G "Visual Studio 12 Win64"
   - cmd: bii cpp:build
+
+test_script:
+  - cmd: bii test -VV
+
+artifacts:
+  path: /bin/pmuc.exe
+  name: pmuc
