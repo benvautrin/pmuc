@@ -9,7 +9,7 @@ build_script:
   - cmd: bii init -L
   - cmd: bii find
   - cmd: bii cpp:configure -G "Visual Studio 12 Win64" || bii cpp:configure -G "Visual Studio 12 Win64"
-  - cmd: bii cpp:build
+  - cmd: bii cpp:build --config RELEASE
 
 test_script:
   - cmd: bii test -VV
