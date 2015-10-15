@@ -24,8 +24,10 @@
 
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "vector3f.h"
+#include "rvmprimitive.h"
 
 struct Mesh {
  std::vector<unsigned long>  positionIndex;
@@ -60,18 +62,12 @@ class RVMMeshHelper2
     public:
         /**
          * @brief Builds up indexed coordinates for the described pyramid
-         * @param xbottom
-         * @param ybottom
-         * @param xtop
-         * @param ytop
-         * @param xoffset
-         * @param yoffset
-         * @param height
+         * @param inP
          * @param maxSideSize not used here. For consistency with the other methods.
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const Mesh makePyramid(const float& xbottom, const float& ybottom, const float& xtop, const float& ytop, const float& xoffset, const float& yoffset, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makePyramid(const Primitives::Pyramid& inP, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up indexed coordinates for the described box
@@ -82,7 +78,7 @@ class RVMMeshHelper2
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const Mesh makeBox(const float& x, const float& y, const float& z, const float& maxSideSize, const int& minSides);
+        static const Mesh makeBox(const Primitives::Box& box, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up a sphere with the given radius
@@ -91,29 +87,26 @@ class RVMMeshHelper2
          * @param minSides
          * @return coordinates and normals with their indexes.
          */
-        static const Mesh makeSphere(const float& radius, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSphere(const Primitives::Sphere &sphere, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCylinder
-         * @param radius
-         * @param height
-         * @param maxSideSize
-         * @param minSides
-         * @return
+         *
+         * @param cylinder The description for the cylinder primitive.
+         * @param sides    The number of cylinder sides, can be computed with infoCylinderNumSides.
+         *
+         * @return Returns a mesh object.
          */
-        static const Mesh makeCylinder(const float& radius, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makeCylinder(const Primitives::Cylinder &cylinder, unsigned long sides);
 
         /**
          * @brief makeRectangularTorus
-         * @param rinside
-         * @param routside
-         * @param height
-         * @param angle
+         * @param rt
          * @param maxSideSize
          * @param minSides
          * @return
          */
-        static const Mesh makeRectangularTorus(const float& rinside, const float& routside, const float& height, const float& angle, const float& maxSideSize, const int& minSides);
+        static const Mesh makeRectangularTorus(const Primitives::RectangularTorus& rt, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCircularTorus
@@ -124,7 +117,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeCircularTorus(const float& rinside, const float& routside, const float& angle, const float& maxSideSize, const int& minSides);
+        static const Mesh makeCircularTorus(const Primitives::CircularTorus& cTorus, unsigned long tsides, unsigned long csides);
 
         /**
          * @brief makeSnout
@@ -137,17 +130,17 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeSnout(const float& rbottom, const float& rtop, const float& height, const float& xoffset, const float& yoffset, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSnout(const Primitives::Snout& snout, unsigned long sides);
 
         /**
          * @brief makeEllipticalDish
          * @param diameter
          * @param radius
-         * @param maxSideSize
-         * @param minSides
+         * @param sides
+         * @param csides
          * @return
          */
-        static const Mesh makeEllipticalDish(const float& dishradius, const float& secondradius, const float& maxSideSize, const int& minSides);
+        static const Mesh makeEllipticalDish(const Primitives::EllipticalDish& eDish, unsigned long sides, unsigned long csides);
 
         /**
          * @brief makeSphericalDish
@@ -157,10 +150,24 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeSphericalDish(const float& dishradius, const float& height, const float& maxSideSize, const int& minSides);
+        static const Mesh makeSphericalDish(const Primitives::SphericalDish& sDish , const float& maxSideSize, const int& minSides);
 
 
         static void tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, Mesh* meshData);
+
+        /**
+         * @param cylinder The cylinder primitive data.
+         * @param maxSideSize
+         * @param minSides
+         *
+         * @return Returns the number of sides of the cylinder.
+         */
+
+        static unsigned long infoCylinderNumSides(const Primitives::Cylinder &cylinder, float maxSideSize, unsigned long minSides);
+        static unsigned long infoSnoutNumSides(const Primitives::Snout &snout, float maxSideSize, unsigned long minSides);
+
+        static std::pair<unsigned long, unsigned long> infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides);
+        static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides);
 };
 
 #endif // RVMMESHHELPER_H
