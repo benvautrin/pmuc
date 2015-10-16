@@ -471,7 +471,8 @@ shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &
         // -
         m_owner_history = shared_ptr<IfcOwnerHistory>( new IfcOwnerHistory() );
         m_owner_history->m_OwningApplication = application;
-        m_owner_history->m_ChangeAction = shared_ptr<IfcChangeActionEnum>( new IfcChangeActionEnum( IfcChangeActionEnum::ENUM_NOTDEFINED ) );
+        // We use NOCHANGE, because the better fitting UNDEFINED is only availble since IFC4
+        m_owner_history->m_ChangeAction = shared_ptr<IfcChangeActionEnum>( new IfcChangeActionEnum( IfcChangeActionEnum::ENUM_NOCHANGE ) );
         m_owner_history->m_OwningUser = person_org;
         m_owner_history->m_CreationDate = shared_ptr<IfcTimeStamp>( new IfcTimeStamp( timeStamp ) );
         insertEntity(m_owner_history);
