@@ -29,14 +29,9 @@
 #include "converters/dummyreader.h"
 #include "converters/dslconverter.h"
 #include "api/rvmprimitive.h"
-
-#ifdef XIOT_FOUND
+#include "converters/ifcconverter.h"
 #include "converters/x3dconverter.h"
-#endif // XIOT_FOUND
-
-#ifdef OPENCOLLADASW_FOUND
 #include "converters/colladaconverter.h"
-#endif // OPENCOLLADASW_FOUND
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES // For PI under VC++
@@ -52,37 +47,19 @@
 
 using namespace std;
 
-enum optionIndex { UNKNOWN,
-                   HELP,
-                   TEST,
-#ifdef XIOT_FOUND
-                   X3D,
-                   X3DB,
-#endif // XIOT_FOUND
-#ifdef OPENCOLLADASW_FOUND
-                   COLLADA,
-#endif // OPENCOLLADASW_FOUND
-                   DSL,
-                   DUMMY,
-                   SKIPATT,
-                   SPLIT,
-                   AGGREGATE,
-                   PRIMITIVES,
-                   SIDESIZE,
-                   MINSIDES,
-                   OBJECT,
-                   COLOR,
-                   SCALE };
+enum optionIndex { UNKNOWN, HELP, TEST,  X3D,
+    X3DB, COLLADA, IFC4, IFC2x3, DSL, DUMMY,
+    SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE,
+    MINSIDES, OBJECT, COLOR, SCALE };
+
 const option::Descriptor usage[] = {
     { UNKNOWN,      0, "",  "",              option::Arg::None,      "\nusage: pmuc [options] <rvm file 1> ...\n\nChoose at least one format and one file to convert.\nOptions:" },
     { HELP,         0, "h", "help",          option::Arg::None,      "  --help, -h \tPrint usage and exit." },
-#ifdef XIOT_FOUND
     { X3D,          0, "",  "x3d",           option::Arg::None,      "  --x3d  \tConvert to X3D XML format." },
     { X3DB,         0, "",  "x3db",          option::Arg::None,      "  --x3db  \tConvert to X3D binary format." },
-#endif // XIOT_FOUND
-#ifdef OPENCOLLADASW_FOUND
     { COLLADA,      0, "",  "collada",       option::Arg::None,      "  --collada\tConvert to COLLADA format." },
-#endif // OPENCOLLADASW_FOUND
+    { IFC4,         0, "",  "ifc",           option::Arg::None,      "  --ifc\tConvert to IFC4." },
+    { IFC2x3,       0, "",  "ifc2x3",        option::Arg::None,      "  --ifc2x3\tConvert to IFC2x3." },
     { DSL,          0, "",  "dsl",           option::Arg::None,      "  --dsl  \tConvert to DSL language." },
     { DUMMY,        0, "",  "dummy",         option::Arg::None,      "  --dummy\tPrint out the file structure." },
     { SKIPATT,      0, "",  "skipattributes",option::Arg::None,      "  --skipattributes \tIgnore attribute file." },
@@ -97,27 +74,41 @@ const option::Descriptor usage[] = {
     { SCALE,        0, "",  "scale",         option::Arg::Optional,  "  --scale=<multiplier> \tScale the model." },
     {0,0,0,0,0,0}
 };
+
+
 const string formatnames[] = {
-    "",
-    "",
-    "",
-#ifdef XIOT_FOUND
-    "X3D",
-    "X3DB",
-#endif // XIOT_FOUND
-#ifdef OPENCOLLADASW_FOUND
+    "", "", "",
+    "X3D", "X3DB",
     "COLLADA",
-#endif // OPENCOLLADASW_FOUND
-    "DSL",
-    "DUMMY",
+    "IFC4", "IFC2x3",
+    "DSL", "DUMMY",
 };
 
 enum primitives { BOX, SNOUT, CYLINDER, SPHERE, CIRCULARTORUS, RECTANGULARTORUS, PYRAMID, LINE, ELLIPTICALDISH, SPHERICALDISH };
 const string primitiveNames[] = { "box", "snout", "cylinder", "sphere", "circulartorus", "rectangulartorus", "pyramid", "line", "ellipticaldish", "sphericaldish" };
 
+void printStats(time_t duration, RVMParser &parser) {
+    cout << "Statistics:" << endl;
+    cout << "  " << parser.nbGroups() << " group(s)" << endl;
+    cout << "  " << parser.nbPyramids() << " pyramid(s)" << endl;
+    cout << "  " << parser.nbBoxes() << " box(es)" << endl;
+    cout << "  " << parser.nbRectangularToruses() << " rectangular torus(es)" << endl;
+    cout << "  " << parser.nbCircularToruses() << " circular torus(es)" << endl;
+    cout << "  " << parser.nbEllipticalDishes() << " elliptical dish(es)" << endl;
+    cout << "  " << parser.nbSphericalDishes() << " spherical dish(es)" << endl;
+    cout << "  " << parser.nbSnouts() << " snout(s)" << endl;
+    cout << "  " << parser.nbCylinders() << " cylinder(s)" << endl;
+    cout << "  " << parser.nbSpheres() << " sphere(s)" << endl;
+    cout << "  " << parser.nbLines() << " line(s)" << endl;
+    cout << "  " << parser.nbFacetGroups() << " facet group(s)" << endl;
+    cout << "  " << parser.nbAttributes() << " attribute(s)" << endl;
+
+    cout << "Conversion done in " << (duration) << " second" << (duration > 1 ? "s" : "") << "." << endl;
+}
+
 int main(int argc, char** argv)
 {
-    cout << "Plant Mock-Up Converter 0.1\nCopyright (C) EDF 2013" << endl;
+    cout << "Plant Mock-Up Converter 0.1\nCopyright (C) EDF 2015" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
@@ -135,22 +126,15 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if ((
-#ifdef XIOT_FOUND
-         options[X3D] || options[X3DB] ||
-#endif // XIOT_FOUND
-#ifdef OPENCOLLADASW_FOUND
-         options[COLLADA] ||
-#endif // OPENCOLLADASW_FOUND
-         options[DSL] || options[DUMMY]) == 0) {
-        cout << "\nNo format specified.\n";
-        option::printUsage(std::cout, usage);
+    if ((options[X3D] || options[X3DB] || options[COLLADA] || options[DSL] || options[DUMMY] || options[IFC4]|| options[IFC2x3]) == 0) {
+        cerr << "\nNo format specified.\n";
+        option::printUsage(std::cerr, usage);
         return 1;
     }
 
     if (parse.nonOptionsCount() == 0 && options[TEST].count() == 0) {
-        cout << "\nNo file specified.\n";
-        option::printUsage(std::cout, usage);
+        cerr << "\nNo file specified.\n";
+        option::printUsage(std::cerr, usage);
         return 1;
     }
 
@@ -158,8 +142,8 @@ int main(int argc, char** argv)
     if (options[MINSIDES].count() > 0) {
         minSides = atoi(options[MINSIDES].arg);
         if (minSides < 5) {
-            cout << "\n--minsides option should be > 4.\n";
-            option::printUsage(std::cout, usage);
+            cerr << "\n--minsides option should be > 4.\n";
+            option::printUsage(std::cerr, usage);
             return 1;
         }
     }
@@ -226,6 +210,17 @@ int main(int argc, char** argv)
                         } break;
 #endif // OPENCOLLADASW_FOUND
 
+                        case IFC4: {
+                            string name = filename + ".ifc";
+                            reader = new IFCConverter(name, "IFC4");
+                        } break;
+
+                        case IFC2x3: {
+                            string name = filename + ".ifc";
+                            reader = new IFCConverter(name, "IFC2x3");
+                        } break;
+
+
                         case DSL: {
                             string name = filename + ".dsl3d";
                             reader = new DSLConverter(name);
@@ -242,14 +237,12 @@ int main(int argc, char** argv)
                     vector<float> translation;
                     for (int j = 0; j < 3; j++) translation.push_back(0);
                     std::array<float, 12> matrix;
-                    for (int j = 0; j < 12; j++) matrix[j] = 0.0f;
-                    matrix[0] = 1; matrix[4] = 1; matrix[8] = 1;
+
                     reader->startDocument();
                     reader->startHeader("Plant Mock-Up Converter", "Primitive example file", "", "", "");
                     reader->endHeader();
                     reader->startModel("Primitive examples", primitiveNames[i]);
                     reader->startGroup(primitiveNames[i], translation, forcedColor != -1 ? forcedColor : 2);
-
                     switch (i) { // BOX, SNOUT, CYLINDER, SPHERE, CIRCULARTORUS, RECTANGULARTORUS, PYRAMID, LINE, ELLIPTICALDISH, SPHERICALDISH
                         case BOX: {
                             Primitives::Box  box;
@@ -344,24 +337,29 @@ int main(int argc, char** argv)
                         reader = new DummyReader;
                     } break;
 
-#ifdef XIOT_FOUND
                     case X3D:
                     case X3DB: {
                         string x3dname = name + ".x3d" + (format == X3D ? "" : "b");
                         reader = new X3DConverter(x3dname, format == X3DB);
                     } break;
-#endif // XIOT_FOUND
 
-#ifdef OPENCOLLADASW_FOUND
                     case COLLADA: {
                         string colladaname = name + ".dae";
                         reader = new COLLADAConverter(colladaname);
                     } break;
-#endif // OPENCOLLADASW_FOUND
 
                     case DSL: {
                         string dslname = name + ".dsl3d";
                         reader = new DSLConverter(dslname);
+                    } break;
+
+                    case IFC2x3: {
+                        string ifcname = name + ".ifc";
+                        reader = new IFCConverter(ifcname, "IFC4");
+                    } break;
+                    case IFC4: {
+                        string ifcname = name + ".ifc";
+                        reader = new IFCConverter(ifcname, "IFC2x3");
                     } break;
                 }
                 if (maxSideSize) {
@@ -395,22 +393,7 @@ int main(int argc, char** argv)
                     cout << "  " << parser.lastError() << endl;
                     return 1;
                 } else {
-                    cout << "Statistics:" << endl;
-                    cout << "  " << parser.nbGroups() << " group(s)" << endl;
-                    cout << "  " << parser.nbPyramids() << " pyramid(s)" << endl;
-                    cout << "  " << parser.nbBoxes() << " box(es)" << endl;
-                    cout << "  " << parser.nbRectangularToruses() << " rectangular torus(es)" << endl;
-                    cout << "  " << parser.nbCircularToruses() << " circular torus(es)" << endl;
-                    cout << "  " << parser.nbEllipticalDishes() << " elliptical dish(es)" << endl;
-                    cout << "  " << parser.nbSphericalDishes() << " spherical dish(es)" << endl;
-                    cout << "  " << parser.nbSnouts() << " snout(s)" << endl;
-                    cout << "  " << parser.nbCylinders() << " cylinder(s)" << endl;
-                    cout << "  " << parser.nbSpheres() << " sphere(s)" << endl;
-                    cout << "  " << parser.nbLines() << " line(s)" << endl;
-                    cout << "  " << parser.nbFacetGroups() << " facet group(s)" << endl;
-                    cout << "  " << parser.nbAttributes() << " attribute(s)" << endl;
-                    time_t duration = time(0) - start;
-                    cout << "Conversion done in " << (duration) << " second" << (duration > 1 ? "s" : "") << "." << endl;
+                    printStats(time(0) - start, parser);
                 }
             }
         }
@@ -426,7 +409,6 @@ int main(int argc, char** argv)
                             reader = new DummyReader;
                         } break;
 
-#ifdef XIOT_FOUND
                         case X3D:
                         case X3DB: {
                             string name = !objectName.empty() ? objectName : filename;
@@ -435,16 +417,26 @@ int main(int argc, char** argv)
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new X3DConverter(name, format == X3DB);
                         } break;
-#endif // XIOT_FOUND
 
-#ifdef OPENCOLLADASW_FOUND
                         case COLLADA: {
                             string name = !objectName.empty() ? objectName : filename;
                             name = name.substr(0, name.rfind(".")) + ".dae";
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new COLLADAConverter(name);
                         } break;
-#endif // OPENCOLLADASW_FOUND
+
+                        case IFC4: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".ifc";
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new IFCConverter(name, "IFC4");
+                        } break;
+                        case IFC2x3: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".ifc";
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new IFCConverter(name, "IFC2x3");
+                        } break;
 
                         case DSL: {
                             string name = !objectName.empty() ? objectName : filename;
@@ -476,22 +468,7 @@ int main(int argc, char** argv)
                         cout << "  " << parser.lastError() << endl;
                         return 1;
                     } else {
-                        cout << "Statistics:" << endl;
-                        cout << "  " << parser.nbGroups() << " group(s)" << endl;
-                        cout << "  " << parser.nbPyramids() << " pyramid(s)" << endl;
-                        cout << "  " << parser.nbBoxes() << " box(es)" << endl;
-                        cout << "  " << parser.nbRectangularToruses() << " rectangular torus(es)" << endl;
-                        cout << "  " << parser.nbCircularToruses() << " circular torus(es)" << endl;
-                        cout << "  " << parser.nbEllipticalDishes() << " elliptical dish(es)" << endl;
-                        cout << "  " << parser.nbSphericalDishes() << " spherical dish(es)" << endl;
-                        cout << "  " << parser.nbSnouts() << " snout(s)" << endl;
-                        cout << "  " << parser.nbCylinders() << " cylinder(s)" << endl;
-                        cout << "  " << parser.nbSpheres() << " sphere(s)" << endl;
-                        cout << "  " << parser.nbLines() << " line(s)" << endl;
-                        cout << "  " << parser.nbFacetGroups() << " facet group(s)" << endl;
-                        cout << "  " << parser.nbAttributes() << " attribute(s)" << endl;
-                        time_t duration = time(0) - start;
-                        cout << "Conversion done in " << (duration) << " second" << (duration > 1 ? "s" : "") << "." << endl;
+                        printStats(time(0) - start, parser);
                     }
                 }
             }

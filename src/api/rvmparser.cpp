@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <array>
+#include <stdint.h>
 
 #include "rvmreader.h"
 
@@ -270,14 +271,31 @@ inline void skip_<3>(std::istream& in)
     skip_<1>(in);
 }
 
-static string trim(const string& s)
-{
-    size_t si = s.find_first_not_of(" \n\r\t");
-    if (si == string::npos) {
-        return "";
+namespace {
+
+    static string trim(const string& s)
+    {
+        size_t si = s.find_first_not_of(" \n\r\t");
+        if (si == string::npos) {
+            return "";
+        }
+        size_t ei = s.find_last_not_of(" \n\r\t");
+        return s.substr(si, ei - si + 1);
     }
-    size_t ei = s.find_last_not_of(" \n\r\t");
-    return s.substr(si, ei - si + 1);
+
+    static string latin_to_utf8(const string& latin) {
+        string result;
+        for(uint8_t c: latin) {
+            if(c < 0x80) {
+                result += c;
+            } else {
+                // Found non-ASCII character, assume ISO 8859-1
+                result += (0xc0 | (c & 0xc0) >> 6);
+                result += (0x80 | (c & 0x3f));
+            }
+        }
+        return result;
+    }
 }
 
 RVMParser::RVMParser(RVMReader& reader) :
@@ -300,10 +318,6 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbFacetGroups(0),
     m_attributeStream(0),
     m_attributes(0),
-#ifdef ICONV_FOUND
-    m_cd((iconv_t)-1),
-    m_cdatt((iconv_t)-1),
-#endif
     m_aggregation(false) {
 }
 
@@ -425,17 +439,6 @@ bool RVMParser::readStream(istream& is)
     else
         m_encoding = "UTF-8";
 
-#ifdef ICONV_FOUND
-    m_cd = (iconv_t)-1;
-    if (m_encoding != "UTF-8" && m_encoding != "Unicode UTF-8") {
-        m_cd = iconv_open("UTF-8", m_encoding.data());
-        if (m_cd == (iconv_t)-1) {
-            cout << "Unknown encoding: " << m_encoding << endl;
-        }
-    }
-    // Attributes seem to be always "ISO_8859-1"
-    m_cdatt = iconv_open("UTF-8", "ISO8859-1");
-#endif
 
     if (!m_aggregation) {
         m_reader.startHeader(banner, fileNote, date, user, m_encoding);
@@ -484,15 +487,6 @@ bool RVMParser::readStream(istream& is)
         m_reader.endDocument();
     }
 
-#ifdef ICONV_FOUND
-    if (m_cd != (iconv_t)-1) {
-        iconv_close(m_cd);
-    }
-    if (m_cdatt != (iconv_t)-1) {
-        iconv_close(m_cdatt);
-    }
-#endif
-
     return true;
 }
 
@@ -511,7 +505,7 @@ bool RVMParser::readGroup(std::istream& is)
 
     Vector3F translation;
     readArray_(is, translation.m_values);
-    translation *= 0.001;
+    translation *= 0.001f;
 
     const unsigned int materialId = read_<unsigned int>(is);
 
@@ -522,6 +516,31 @@ bool RVMParser::readGroup(std::istream& is)
     {
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
+        // Attributes
+        if (m_attributeStream && !m_attributeStream->eof()) {
+            string p;
+            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
+                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+            }
+            if (p == "NEW " + name ) {
+                m_reader.startMetaData();
+                size_t i;
+                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                p = trim(latin_to_utf8(m_currentAttributeLine));
+                while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
+                     string an = p.substr(0, i);
+                     string av = p.substr(i+4, string::npos);
+
+                     m_reader.startMetaDataPair(an, av);
+                     m_reader.endMetaDataPair();
+                     m_attributes++;
+
+                     std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                     p = trim(latin_to_utf8(m_currentAttributeLine));
+                }
+                m_reader.endMetaData();
+            }
+        }
     }
 
     // Children
@@ -705,4 +724,3 @@ void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
     for (size_t i = 9; i < 12; i++)
         matrix[i] *= m_scale;
 }
-
