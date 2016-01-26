@@ -79,10 +79,10 @@ namespace Primitives
 
     struct Snout
     {
-        inline float& dtop() { return data[0]; }
-        inline const float& dtop() const { return data[0]; }
-        inline float& dbottom() { return data[1]; }
-        inline const float& dbottom() const { return data[1]; }
+        inline float& dbottom() { return data[0]; }
+        inline const float& dbottom() const { return data[0]; }
+        inline float& dtop() { return data[1]; }
+        inline const float& dtop() const { return data[1]; }
         inline float& height() { return data[2]; }
         inline const float& height() const { return data[2]; }
         inline float& xoffset() { return data[3]; }
@@ -90,14 +90,14 @@ namespace Primitives
         inline float& yoffset() { return data[4]; }
         inline const float& yoffset() const { return data[4]; }
 
-        inline float& normxtop() { return data[5]; }
-        inline const float& normxtop() const { return data[5]; }
-        inline float& normytop() { return data[6]; }
-        inline const float& normytop() const { return data[6]; }
-        inline float& normxbottom() { return data[7]; }
-        inline const float& normxbottom() const { return data[7]; }
-        inline float& normybottom() { return data[8]; }
-        inline const float& normybottom() const { return data[8]; }
+        inline float& normxbottom() { return data[5]; }
+        inline const float& normxbottom() const { return data[5]; }
+        inline float& normybottom() { return data[6]; }
+        inline const float& normybottom() const { return data[6]; }
+        inline float& normxtop() { return data[7]; }
+        inline const float& normxtop() const { return data[7]; }
+        inline float& normytop() { return data[8]; }
+        inline const float& normytop() const { return data[8]; }
 
         float       data[9];
     };

@@ -255,11 +255,15 @@ int main(int argc, char** argv)
                         } break;
                         case SNOUT: {
                             Primitives::Snout snout;
-                            snout.data[0] = 2.0;
-                            snout.data[1] = 4.0;
-                            snout.data[2] = 2.0;
-                            snout.data[3] = 1.0;
-                            snout.data[4] = 1.0;
+                            snout.data[0] = 2.0f; // bottom radius
+                            snout.data[1] = 2.0f; // top radius
+                            snout.data[2] = 5.0f;  // height
+                            snout.data[3] = 0.0f;  // xoffset
+                            snout.data[4] = 0.0f;  // yoffset
+                            snout.data[5] = 0.0f; // xbottomNormalOffset
+                            snout.data[6] = 0.4f;  // ybottomNormalOffset
+                            snout.data[7] = 0.0f;  // xtopNormalOffset
+                            snout.data[8] = -0.4f; // ytopNormalOffset
 
                             reader->createSnout(matrix, snout);
                         } break;
