@@ -37,6 +37,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <Eigen/Geometry>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif
@@ -586,8 +588,8 @@ unsigned long RVMMeshHelper2::infoSnoutNumSides(const Primitives::Snout &snout, 
 
 const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned long sides)
 {
-    const float rbottom = snout.dbottom();
     const float rtop = snout.dtop();
+    const float rbottom = snout.dbottom();
     const float height = snout.height();
     const float xoffset = snout.xoffset();
     const float yoffset = snout.yoffset();
@@ -598,10 +600,16 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     vector<Vector3F> vectors;
 
     const float hh = height / 2;
+    float heightXOffsetTop = rtop * tan(snout.normxtop());
+    float heightYOffsetTop = rtop * tan(snout.normytop());
+    float heightXOffsetBottom = rbottom * tan(snout.normxbottom());
+    float heightYOffsetBottom = rbottom * tan(snout.normybottom());
+
 
     // Vector3Fes and normals
     Vector3F v;
     Vector3F n;
+
     const float da = 2.0f * M_PI / static_cast<float>(sides);
     for (unsigned long i = 0; i < sides; i++)
     {
@@ -609,9 +617,9 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
         const float c = cos(a);
         const float s = sin(a);
 
-        v[0] = rbottom * c; v[1] = rbottom * s; v[2] = -hh;
+        v[0] = rbottom * c; v[1] = rbottom * s; v[2] = -hh + heightXOffsetBottom * c + heightYOffsetBottom * s;
         points.push_back(v);
-        v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh;
+        v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh + heightXOffsetTop * c + heightYOffsetTop * s;
         points.push_back(v);
         if (height > 0.0f)
         {
@@ -650,6 +658,7 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     const unsigned long nci = static_cast<unsigned long>(vectors.size());
     n[0] = 0; n[1] = 0; n[2] = -1;
     vectors.push_back(n);
+
     n[0] = 0; n[1] = 0; n[2] = 1;
     vectors.push_back(n);
     // - Caps centers
@@ -658,7 +667,8 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     points.push_back(v);
     v[0] = xoffset; v[1] = yoffset; v[2] = hh;
     points.push_back(v);
-    // - Caps indexes
+
+    // - Bottom caps indexes
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2);
@@ -669,6 +679,7 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
         normalindex.push_back(nci);
     }
 
+    // - Top caps indexes
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2 + 1);
