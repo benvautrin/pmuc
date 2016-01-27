@@ -165,7 +165,7 @@ void DSLConverter::createCylinder(const std::array<float, 12>& matrix, const Pri
 
 void DSLConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeSphere("bshape" + shapeid, params.diamater/2);
+    writer->writeSphere("bshape" + shapeid, params.diameter/2);
     writeShapeTransforms(shapeid, matrix);
 }
 

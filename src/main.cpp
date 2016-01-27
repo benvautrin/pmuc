@@ -275,7 +275,7 @@ int main(int argc, char** argv)
                         } break;
                         case SPHERE: {
                             Primitives::Sphere sphere;
-                            sphere.diamater = 2.0;
+                            sphere.diameter = 2.0;
                             reader->createSphere(matrix, sphere);
                         } break;
                         case CIRCULARTORUS: {

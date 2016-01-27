@@ -130,7 +130,7 @@ const Mesh RVMMeshHelper2::makeBox(const Primitives::Box& box, const float &maxS
 
 const Mesh RVMMeshHelper2::makeSphere(const Primitives::Sphere &sphere, const float& maxSideSize, const int& minSides)
 {
-    const float radius = sphere.diamater / 2.0f;
+    const float radius = sphere.diameter / 2.0f;
 
     // Init sphere
     int sides = max(8, minSides);
@@ -785,7 +785,7 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const Primitives::SphericalDish& sD
     if (sDish.height() >= dishradius * 2)
     {
         Primitives::Sphere s;
-        s.diamater = dishradius * 2;
+        s.diameter = dishradius * 2;
 
         return makeSphere(s, maxSideSize, minSides);
     }

@@ -398,12 +398,12 @@ void X3DConverter::createSphere(const std::array<float, 12>& matrix, const Primi
     startShape(matrix);
     if (m_primitives) {
         startNode(ID::Sphere);
-        m_writers.back()->setSFFloat(ID::radius, sphere.diamater);
+        m_writers.back()->setSFFloat(ID::radius, sphere.diameter);
         endNode(ID::Sphere);
     } else {
         std::vector<float> params;
         params.push_back(Sphere);
-        params.push_back(sphere.diamater);
+        params.push_back(sphere.diameter);
 
         pair<string,int> gid = getInstanceName(params);
         if(gid.first.empty()) {

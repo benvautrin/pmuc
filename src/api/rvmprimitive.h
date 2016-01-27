@@ -114,7 +114,7 @@ namespace Primitives
 
     struct Sphere
     {
-        float           diamater;
+        float           diameter;
     };
 }
 
