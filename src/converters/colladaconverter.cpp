@@ -490,10 +490,10 @@ void COLLADAConverter::createSnout(const std::array<float, 12>& matrix, const Pr
     params.push_back(snout.height());
     params.push_back(snout.xoffset());
     params.push_back(snout.yoffset());
-    params.push_back(snout.normxtop());
-    params.push_back(snout.normytop());
-    params.push_back(snout.normxbottom());
-    params.push_back(snout.normybottom());
+    params.push_back(snout.xbshear());
+    params.push_back(snout.ybshear());
+    params.push_back(snout.xtshear());
+    params.push_back(snout.ytshear());
 
     string gid = getInstanceName(params);
     if(gid.empty()) {

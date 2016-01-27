@@ -90,14 +90,14 @@ namespace Primitives
         inline float& yoffset() { return data[4]; }
         inline const float& yoffset() const { return data[4]; }
 
-        inline float& normxbottom() { return data[5]; }
-        inline const float& normxbottom() const { return data[5]; }
-        inline float& normybottom() { return data[6]; }
-        inline const float& normybottom() const { return data[6]; }
-        inline float& normxtop() { return data[7]; }
-        inline const float& normxtop() const { return data[7]; }
-        inline float& normytop() { return data[8]; }
-        inline const float& normytop() const { return data[8]; }
+        inline float& xbshear() { return data[5]; }
+        inline const float& xbshear() const { return data[5]; }
+        inline float& ybshear() { return data[6]; }
+        inline const float& ybshear() const { return data[6]; }
+        inline float& xtshear() { return data[7]; }
+        inline const float& xtshear() const { return data[7]; }
+        inline float& ytshear() { return data[8]; }
+        inline const float& ytshear() const { return data[8]; }
 
         float       data[9];
     };

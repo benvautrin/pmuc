@@ -600,10 +600,10 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     vector<Vector3F> vectors;
 
     const float hh = height / 2;
-    float heightXOffsetTop = rtop * tan(snout.normxtop());
-    float heightYOffsetTop = rtop * tan(snout.normytop());
-    float heightXOffsetBottom = rbottom * tan(snout.normxbottom());
-    float heightYOffsetBottom = rbottom * tan(snout.normybottom());
+    float heightXOffsetTop = rtop * tan(snout.xtshear());
+    float heightYOffsetTop = rtop * tan(snout.ytshear());
+    float heightXOffsetBottom = rbottom * tan(snout.xbshear());
+    float heightYOffsetBottom = rbottom * tan(snout.ybshear());
 
 
     // Vector3Fes and normals

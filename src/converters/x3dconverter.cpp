@@ -350,6 +350,10 @@ void X3DConverter::createSnout(const std::array<float, 12>& matrix, const Primit
     params.push_back(snout.height());
     params.push_back(snout.xoffset());
     params.push_back(snout.yoffset());
+    params.push_back(snout.xbshear());
+    params.push_back(snout.ybshear());
+    params.push_back(snout.xtshear());
+    params.push_back(snout.ytshear());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
