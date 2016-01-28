@@ -138,7 +138,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    int minSides = 8;
+    int minSides = 16;
     if (options[MINSIDES].count() > 0) {
         minSides = atoi(options[MINSIDES].arg);
         if (minSides < 5) {
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
         }
     }
 
-    float maxSideSize = 1000.;
+    float maxSideSize = 25.;
     if (options[SIDESIZE].count() > 0) {
         maxSideSize = (float)atof(options[SIDESIZE].arg);
         if (maxSideSize <= 0) {
@@ -237,6 +237,8 @@ int main(int argc, char** argv)
                     vector<float> translation;
                     for (int j = 0; j < 3; j++) translation.push_back(0);
                     std::array<float, 12> matrix;
+                    for (int j = 0; j < 12; j++) matrix[j] = 0.0f;
+                    matrix[0] = matrix[4] = matrix[8] = 1.0f;
 
                     reader->startDocument();
                     reader->startHeader("Plant Mock-Up Converter", "Primitive example file", "", "", "");
@@ -263,8 +265,8 @@ int main(int argc, char** argv)
                         } break;
                         case CYLINDER: {
                             Primitives::Cylinder  cylinder;
-                            cylinder.data[0] = 1;
-                            cylinder.data[1] = 2;
+                            cylinder.data[0] = 1.0f;
+                            cylinder.data[1] = 2.0f;
                             reader->createCylinder(matrix, cylinder);
                         } break;
                         case SPHERE: {
