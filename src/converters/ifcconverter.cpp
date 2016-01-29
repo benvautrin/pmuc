@@ -82,10 +82,20 @@
 #include <ifcpp/IFC4/include/IfcRelDefinesByProperties.h>
 #include <ifcpp/IFC4/include/IfcPropertySingleValue.h>
 #include <ifcpp/IFC4/include/IfcText.h>
+#include <ifcpp/IFC4/include/IfcExtrudedAreaSolid.h>
+#include <ifcpp/IFC4/include/IfcCircleProfileDef.h>
+#include <ifcpp/IFC4/include/IfcProfileTypeEnum.h>
+#include <ifcpp/IFC4/include/IfcAxis2Placement2D.h>
+#include <ifcpp/IFC4/include/IfcDirection.h>
+
+
+#include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
 
 #include <ifcpp/model/IfcPPGuid.h>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <Eigen/SVD>
 
 
 #include "../api/rvmmeshhelper.h"
@@ -315,8 +325,59 @@ void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primit
 }
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
-    auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
+    if (m_primitives) {
+        Transform3f transform;
+        transform.setIdentity();
+        for (unsigned int i = 0; i < 3; i++) {
+            for (unsigned int j = 0; j < 4; j++) {
+                transform(i, j) = matrix[i+j*3];
+            }
+        }
+        Eigen::Matrix3f rotation;
+        Eigen::Matrix3f scale;
+        transform.computeRotationScaling(&rotation, &scale);
+
+        shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
+        height->m_value = params.height()*  scale.coeff(0,0);
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = params.radius()*  scale.coeff(0,0);
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_Radius = radius;
+
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        Eigen::Vector3f offset(0, 0, -params.height() * 0.5f *  scale.coeff(0,0));
+
+        shared_ptr<IfcExtrudedAreaSolid> cylinder (new IfcExtrudedAreaSolid() );
+        insertEntity(cylinder);
+        cylinder->m_Depth = height;
+        cylinder->m_Position = getCoordinateSystem(transform, offset);
+        cylinder->m_SweptArea = profile;
+        cylinder->m_ExtrudedDirection = direction;
+
+        addRepresentationToShape(cylinder, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
+    }
 }
 
 void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
@@ -753,3 +814,38 @@ void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Mes
         std::wcerr << message->m_message_text << std::endl;
     }
 }
+
+shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
+
+    Eigen::Vector3f translation = matrix.translation() + matrix.rotation() * offset;
+
+    shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+    insertEntity(location);
+    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.x()) ) );
+    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.y()) ) );
+    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.z()) ) );
+
+    Eigen::Matrix3f rotation = matrix.rotation();
+    Eigen::Vector3f z_axis = rotation * Eigen::Vector3f(0,0,1);
+    Eigen::Vector3f x_axis = rotation * Eigen::Vector3f(1,0,0);
+
+    shared_ptr<IfcDirection> axis (new IfcDirection() );
+    insertEntity(axis);
+    axis->m_DirectionRatios.push_back(z_axis.x());
+    axis->m_DirectionRatios.push_back(z_axis.y());
+    axis->m_DirectionRatios.push_back(z_axis.z());
+
+    shared_ptr<IfcDirection> refDirection (new IfcDirection() );
+    insertEntity(refDirection);
+    refDirection->m_DirectionRatios.push_back(x_axis.x());
+    refDirection->m_DirectionRatios.push_back(x_axis.y());
+    refDirection->m_DirectionRatios.push_back(x_axis.z());
+
+
+    shared_ptr<IfcAxis2Placement3D> coordinate_system( new IfcAxis2Placement3D() );
+    insertEntity(coordinate_system);
+    coordinate_system->m_Location = location;
+    coordinate_system->m_Axis = axis;
+    coordinate_system->m_RefDirection = refDirection;
+    return coordinate_system;
+};

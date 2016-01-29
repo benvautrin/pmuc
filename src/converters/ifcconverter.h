@@ -28,6 +28,8 @@
 #include <ifcpp/model/IfcPPModel.h>
 #include <ifcpp/model/StatusCallback.h>
 
+#include <Eigen/Core>
+
 #include <stack>
 
 class IfcOwnerHistory;
@@ -41,7 +43,9 @@ class IfcPropertySet;
 class IfcLabel;
 class IfcSurfaceStyle;
 class IfcPPEntity;
+class IfcAxis2Placement3D;
 
+typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
 
 class IFCConverter : public RVMReader
 {
@@ -111,6 +115,7 @@ class IFCConverter : public RVMReader
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
         void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
         void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
+        shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset);
 };
 
 #endif // IFCCONVERTER_H
