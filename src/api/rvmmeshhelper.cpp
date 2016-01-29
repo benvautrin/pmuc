@@ -593,44 +593,44 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     const float height = snout.height();
     const float xoffset = snout.xoffset();
     const float yoffset = snout.yoffset();
+    const float heightXOffsetTop = rtop * tan(snout.xtshear());
+    const float heightYOffsetTop = rtop * tan(snout.ytshear());
+    const float heightXOffsetBottom = rbottom * tan(snout.xbshear());
+    const float heightYOffsetBottom = rbottom * tan(snout.ybshear());
 
-    vector<unsigned long> index;
     vector<Vector3F> points;
+    vector<Vector3F> normals;
+    vector<unsigned long> index;
     vector<unsigned long> normalindex;
-    vector<Vector3F> vectors;
 
-    const float hh = height / 2;
-    float heightXOffsetTop = rtop * tan(snout.xtshear());
-    float heightYOffsetTop = rtop * tan(snout.ytshear());
-    float heightXOffsetBottom = rbottom * tan(snout.xbshear());
-    float heightYOffsetBottom = rbottom * tan(snout.ybshear());
-
+    const float halfHeight = height / 2;
 
     // Vector3Fes and normals
     Vector3F v;
     Vector3F n;
 
-    const float da = 2.0f * M_PI / static_cast<float>(sides);
+    const float da = float(2.0f * M_PI / static_cast<float>(sides));
     for (unsigned long i = 0; i < sides; i++)
     {
         const float a = static_cast<float>(i)* da;
-        const float c = cos(a);
-        const float s = sin(a);
+        const float x = sin(a);
+        const float y = cos(a);
 
-        v[0] = rbottom * c; v[1] = rbottom * s; v[2] = -hh + heightXOffsetBottom * c + heightYOffsetBottom * s;
+        v[0] = rbottom * x;
+        v[1] = rbottom * y;
+        v[2] = -halfHeight + heightXOffsetBottom * x + heightYOffsetBottom * y;
         points.push_back(v);
-        v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh + heightXOffsetTop * c + heightYOffsetTop * s;
+
+        v[0] = rtop * x + xoffset;
+        v[1] = rtop * y + yoffset;
+        v[2] = halfHeight + heightXOffsetTop * x + heightYOffsetTop * y;
         points.push_back(v);
-        if (height > 0.0f)
-        {
-            float dh = sqrt(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height));
-            n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
+        if (height > 0.0f) {
+            normals.push_back(Vector3F(x,y,0));
         }
         else {
-            n[0] = 0; n[1] = 0; n[2] = 1;
+            normals.push_back(Vector3F(0,0,1));
         }
-        n.normalize();
-        vectors.push_back(n);
     }
 
     // Sides
@@ -654,19 +654,15 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     }
 
     // Caps
-    // - Caps normals
-    const unsigned long nci = static_cast<unsigned long>(vectors.size());
-    n[0] = 0; n[1] = 0; n[2] = -1;
-    vectors.push_back(n);
+    // - Cap normals
+    const unsigned long nci = static_cast<unsigned long>(normals.size());
+    normals.push_back(Vector3F(sin(snout.xbshear())*cos(snout.ybshear()),sin(snout.ybshear()),-cos(snout.xbshear())*cos(snout.ybshear())));
+    normals.push_back(Vector3F(-sin(snout.xtshear())*cos(snout.ytshear()),-sin(snout.ytshear()),cos(snout.xtshear())*cos(snout.ytshear())));
 
-    n[0] = 0; n[1] = 0; n[2] = 1;
-    vectors.push_back(n);
-    // - Caps centers
+    // - Cap centers
     const unsigned long ci = static_cast<unsigned long>(points.size());
-    v[0] = 0; v[1] = 0; v[2] = -hh;
-    points.push_back(v);
-    v[0] = xoffset; v[1] = yoffset; v[2] = hh;
-    points.push_back(v);
+    points.push_back(Vector3F(0 ,0, -halfHeight));
+    points.push_back(Vector3F(0, 0,  halfHeight));
 
     // - Bottom caps indexes
     for (unsigned long j = 0; j < sides; j++)
@@ -693,7 +689,7 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     Mesh result;
     result.positions = points;
     result.positionIndex = index;
-    result.normals = vectors;
+    result.normals = normals;
     result.normalIndex = normalindex;
     return result;
 }
