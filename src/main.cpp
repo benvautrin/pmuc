@@ -1,7 +1,7 @@
 /*
  * Plant Mock-Up Converter
  *
- * Copyright (c) 2013, EDF. All rights reserved.
+ * Copyright (c) 2016, EDF. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -108,7 +108,7 @@ void printStats(time_t duration, RVMParser &parser) {
 
 int main(int argc, char** argv)
 {
-    cout << "Plant Mock-Up Converter 0.1\nCopyright (C) EDF 2015" << endl;
+    cout << "Plant Mock-Up Converter 1.0.0\nCopyright (C) EDF 2016" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
