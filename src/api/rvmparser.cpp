@@ -627,7 +627,6 @@ bool RVMParser::readPrimitive(std::istream& is)
             case 7:
                 m_nbSnouts++;
                 readArray_(is, primitive.snout.data);
-                skip_<4>(is);
 
                 m_reader.createSnout(matrix, primitive.snout);
             break;

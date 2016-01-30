@@ -350,6 +350,10 @@ void X3DConverter::createSnout(const std::array<float, 12>& matrix, const Primit
     params.push_back(snout.height());
     params.push_back(snout.xoffset());
     params.push_back(snout.yoffset());
+    params.push_back(snout.xbshear());
+    params.push_back(snout.ybshear());
+    params.push_back(snout.xtshear());
+    params.push_back(snout.ytshear());
 
     pair<string,int> gid = getInstanceName(params);
     if(gid.first.empty()) {
@@ -398,12 +402,12 @@ void X3DConverter::createSphere(const std::array<float, 12>& matrix, const Primi
     startShape(matrix);
     if (m_primitives) {
         startNode(ID::Sphere);
-        m_writers.back()->setSFFloat(ID::radius, sphere.diamater);
+        m_writers.back()->setSFFloat(ID::radius, sphere.diameter);
         endNode(ID::Sphere);
     } else {
         std::vector<float> params;
         params.push_back(Sphere);
-        params.push_back(sphere.diamater);
+        params.push_back(sphere.diameter);
 
         pair<string,int> gid = getInstanceName(params);
         if(gid.first.empty()) {

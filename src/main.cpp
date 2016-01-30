@@ -108,7 +108,7 @@ void printStats(time_t duration, RVMParser &parser) {
 
 int main(int argc, char** argv)
 {
-    cout << "Plant Mock-Up Converter 1.0.0\nCopyright (C) EDF 2016" << endl;
+    cout << "Plant Mock-Up Converter 1.0.1\nCopyright (C) EDF 2016" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
@@ -255,11 +255,15 @@ int main(int argc, char** argv)
                         } break;
                         case SNOUT: {
                             Primitives::Snout snout;
-                            snout.data[0] = 2.0;
-                            snout.data[1] = 4.0;
-                            snout.data[2] = 2.0;
-                            snout.data[3] = 1.0;
-                            snout.data[4] = 1.0;
+                            snout.data[0] = 2.0f; // bottom radius
+                            snout.data[1] = 2.0f; // top radius
+                            snout.data[2] = 5.0f;  // height
+                            snout.data[3] = 0.0f;  // xoffset
+                            snout.data[4] = 0.0f;  // yoffset
+                            snout.data[5] = 0.0f; // xbottomNormalOffset
+                            snout.data[6] = 0.4f;  // ybottomNormalOffset
+                            snout.data[7] = 0.0f;  // xtopNormalOffset
+                            snout.data[8] = -0.4f; // ytopNormalOffset
 
                             reader->createSnout(matrix, snout);
                         } break;
@@ -271,7 +275,7 @@ int main(int argc, char** argv)
                         } break;
                         case SPHERE: {
                             Primitives::Sphere sphere;
-                            sphere.diamater = 2.0;
+                            sphere.diameter = 2.0;
                             reader->createSphere(matrix, sphere);
                         } break;
                         case CIRCULARTORUS: {

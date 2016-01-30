@@ -90,7 +90,16 @@ namespace Primitives
         inline float& yoffset() { return data[4]; }
         inline const float& yoffset() const { return data[4]; }
 
-        float       data[5];
+        inline float& xbshear() { return data[5]; }
+        inline const float& xbshear() const { return data[5]; }
+        inline float& ybshear() { return data[6]; }
+        inline const float& ybshear() const { return data[6]; }
+        inline float& xtshear() { return data[7]; }
+        inline const float& xtshear() const { return data[7]; }
+        inline float& ytshear() { return data[8]; }
+        inline const float& ytshear() const { return data[8]; }
+
+        float       data[9];
     };
 
     struct Cylinder
@@ -105,7 +114,7 @@ namespace Primitives
 
     struct Sphere
     {
-        float           diamater;
+        float           diameter;
     };
 }
 

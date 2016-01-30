@@ -490,6 +490,10 @@ void COLLADAConverter::createSnout(const std::array<float, 12>& matrix, const Pr
     params.push_back(snout.height());
     params.push_back(snout.xoffset());
     params.push_back(snout.yoffset());
+    params.push_back(snout.xbshear());
+    params.push_back(snout.ybshear());
+    params.push_back(snout.xtshear());
+    params.push_back(snout.ytshear());
 
     string gid = getInstanceName(params);
     if(gid.empty()) {
@@ -520,7 +524,7 @@ void COLLADAConverter::createCylinder(const std::array<float, 12>& matrix, const
 void COLLADAConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& sphere) {
     std::vector<float> params;
     params.push_back(Sphere);
-    params.push_back(sphere.diamater);
+    params.push_back(sphere.diameter);
 
     string gid = getInstanceName(params);
     if(gid.empty()) {
