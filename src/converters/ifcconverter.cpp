@@ -119,15 +119,19 @@ namespace {
         return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
     }
 
-    Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
-        Eigen::Matrix4f result;
+    Transform3f toEigenTransform(const std::array<float, 12>& matrix) {
+        Transform3f result;
         result.setIdentity();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 3; j++) {
-                result(j, i)= matrix[i*3+j];
+        for (unsigned int i = 0; i < 3; i++) {
+            for (unsigned int j = 0; j < 4; j++) {
+                result(i, j) = matrix[i+j*3];
             }
         }
         return result;
+    }
+
+    Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
+        return toEigenTransform(matrix).matrix();
     }
 
     int toTimeStamp(const std::string& schema) {
@@ -326,13 +330,7 @@ void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primit
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
     if (m_primitives) {
-        Transform3f transform;
-        transform.setIdentity();
-        for (unsigned int i = 0; i < 3; i++) {
-            for (unsigned int j = 0; j < 4; j++) {
-                transform(i, j) = matrix[i+j*3];
-            }
-        }
+        Transform3f transform = toEigenTransform(matrix);
         Eigen::Matrix3f rotation;
         Eigen::Matrix3f scale;
         transform.computeRotationScaling(&rotation, &scale);
