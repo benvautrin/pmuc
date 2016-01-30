@@ -108,7 +108,7 @@ void printStats(time_t duration, RVMParser &parser) {
 
 int main(int argc, char** argv)
 {
-    cout << "Plant Mock-Up Converter 1.0.0\nCopyright (C) EDF 2016" << endl;
+    cout << "Plant Mock-Up Converter 1.0.1\nCopyright (C) EDF 2016" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
