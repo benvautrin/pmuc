@@ -272,8 +272,8 @@ void X3DConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
 
     std::vector<float> params;
     params.push_back(CircularTorus);
-    params.push_back(torus.rinside());
-    params.push_back(torus.routside());
+    params.push_back(torus.offset());
+    params.push_back(torus.radius());
     params.push_back(torus.angle());
 
     pair<string,int> gid = getInstanceName(params);
