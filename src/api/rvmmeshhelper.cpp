@@ -627,8 +627,7 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
         points.push_back(v);
         if (height > 0.0f) {
             normals.push_back(Vector3F(x,y,0));
-        }
-        else {
+        } else {
             normals.push_back(Vector3F(0,0,1));
         }
     }
@@ -637,20 +636,21 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     for (unsigned long i = 0; i < sides; i++)
     {
         index.push_back(i * 2);
-        index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
         index.push_back(i * 2 + 1);
+        index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
 
+        normalindex.push_back(i);
         normalindex.push_back(i);
         normalindex.push_back(i < sides - 1 ? i + 1 : 0);
-        normalindex.push_back(i);
 
         index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
+        index.push_back(i * 2 + 1);
         index.push_back(i < sides - 1 ? i * 2 + 3 : 1);
-        index.push_back(i * 2 + 1);
 
         normalindex.push_back(i < sides - 1 ? i + 1 : 0);
-        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
         normalindex.push_back(i);
+        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
+
     }
 
     // Caps
@@ -668,8 +668,8 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2);
-        index.push_back(ci);
         index.push_back(j < sides - 1 ? (j + 1) * 2 : 0);
+        index.push_back(ci);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
@@ -679,8 +679,8 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2 + 1);
-        index.push_back(j < sides - 1 ? j * 2 + 3 : 1);
         index.push_back(ci + 1);
+        index.push_back(j < sides - 1 ? j * 2 + 3 : 1);
         normalindex.push_back(nci + 1);
         normalindex.push_back(nci + 1);
         normalindex.push_back(nci + 1);
