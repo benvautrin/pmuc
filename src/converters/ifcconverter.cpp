@@ -88,6 +88,9 @@
 #include <ifcpp/IFC4/include/IfcAxis2Placement2D.h>
 #include <ifcpp/IFC4/include/IfcDirection.h>
 #include <ifcpp/IFC4/include/IfcRectangleProfileDef.h>
+#include <ifcpp/IFC4/include/IfcRevolvedAreaSolid.h>
+#include <ifcpp/IFC4/include/IfcPlaneAngleMeasure.h>
+#include <ifcpp/IFC4/include/IfcAxis1Placement.h>
 
 
 #include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
@@ -357,8 +360,67 @@ void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, c
 }
 
 void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
-    auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        Eigen::Matrix3f rotation;
+        Eigen::Matrix3f scale;
+        transform.computeRotationScaling(&rotation, &scale);
+        const float s = scale.coeff(0,0);
+
+        // Define the parametric profile first
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = params.radius() * s;
+
+        shared_ptr<IfcCartesianPoint> profile_location( new IfcCartesianPoint() );
+        insertEntity(profile_location);
+        profile_location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>( new IfcLengthMeasure(0.0) ) );
+        profile_location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>( new IfcLengthMeasure(params.offset() * s) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = profile_location;
+
+        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_Radius = radius;
+
+        // Now define the axis for revolving
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        // The axis is required to lie in the xy plane, we want revolve around the z axis however
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(1);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+
+        shared_ptr<IfcAxis1Placement> axis (new IfcAxis1Placement() );
+        axis->m_Location = location;
+        axis->m_Axis = direction;
+        insertEntity(axis);
+
+        shared_ptr<IfcPlaneAngleMeasure> angle (new IfcPlaneAngleMeasure() );
+        angle->m_value = params.angle();
+
+        shared_ptr<IfcRevolvedAreaSolid> ctor (new IfcRevolvedAreaSolid() );
+        insertEntity(ctor);
+        ctor->m_Axis = axis;
+        ctor->m_Angle = angle;
+        // Rotate the whole geometry (90° y-axis) because we defined it with y-up instead of z-up
+        ctor->m_Position = getCoordinateSystem(transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())), Eigen::Vector3f(0,0,0));
+        ctor->m_SweptArea = profile;
+
+        addRepresentationToShape(ctor, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
+    }
 }
 
 void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
