@@ -87,6 +87,7 @@
 #include <ifcpp/IFC4/include/IfcProfileTypeEnum.h>
 #include <ifcpp/IFC4/include/IfcAxis2Placement2D.h>
 #include <ifcpp/IFC4/include/IfcDirection.h>
+#include <ifcpp/IFC4/include/IfcRectangleProfileDef.h>
 
 
 #include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
@@ -302,7 +303,53 @@ void IFCConverter::createPyramid(const std::array<float, 12>& matrix, const Prim
 
 
 void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
-    writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
+    if (m_primitives) {
+
+        shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
+        xDim->m_value = params.len[0] *  0.001;
+
+        shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
+        yDim->m_value = params.len[1] *  0.001;
+
+        shared_ptr<IfcPositiveLengthMeasure> zDim (new IfcPositiveLengthMeasure() );
+        zDim->m_value = params.len[2] *  0.001;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcRectangleProfileDef> profile (new IfcRectangleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_XDim = xDim;
+        profile->m_YDim = yDim;
+
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f *  0.001f);
+
+        shared_ptr<IfcExtrudedAreaSolid> box (new IfcExtrudedAreaSolid() );
+        insertEntity(box);
+        box->m_Depth = zDim;
+        box->m_Position = getCoordinateSystem(toEigenTransform(matrix), offset);
+        box->m_SweptArea = profile;
+        box->m_ExtrudedDirection = direction;
+
+        addRepresentationToShape(box, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
+    }
+
 }
 
 void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
