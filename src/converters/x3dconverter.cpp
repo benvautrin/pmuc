@@ -131,7 +131,10 @@ void X3DConverter::startGroup(const std::string& name, const Vector3F& translati
 
     if (m_split) {
         startNode(ID::Inline);
-        m_writers.back()->setSFString(ID::url, x3dName + ".x3d");
+
+        MFString name;
+        name.push_back(x3dName + ".x3d");
+        m_writers.back()->setMFString(ID::url, name);
 
         X3DWriter* writer = m_binary ? (X3DWriter*)new X3DWriterFI() : (X3DWriter*)new X3DWriterXML();
         writer->setProperty(Property::IntEncodingAlgorithm, (void*)Encoder::DeltazlibIntArrayEncoder);
@@ -609,9 +612,11 @@ std::string X3DConverter::createGeometryId() {
 }
 
 std::pair<std::string, int> X3DConverter::getInstanceName(const std::vector<float> &params) {
-    X3DInstanceMap::iterator I = m_instanceMap.find(params);
-    if(I != m_instanceMap.end()) {
-       return (*I).second;
+    if(!m_split) {
+        X3DInstanceMap::iterator I = m_instanceMap.find(params);
+        if(I != m_instanceMap.end()) {
+           return (*I).second;
+        }
     }
     return std::make_pair("", 0);
 }
