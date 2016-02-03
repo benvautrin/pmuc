@@ -384,9 +384,8 @@ int main(int argc, char** argv)
                 if (forcedColor != -1) {
                     parser.setForcedColor(forcedColor);
                 }
-                if (scale != 1) {
-                    parser.setScale(scale);
-                }
+                parser.setScale(scale);
+
                 vector<string> files;
                 for (int file = 0; file < parse.nonOptionsCount(); file++) {
                     string filename = parse.nonOption(file);
@@ -467,6 +466,8 @@ int main(int argc, char** argv)
                     if (forcedColor != -1) {
                         parser.setForcedColor(forcedColor);
                     }
+                    parser.setScale(scale);
+
                     bool res = parser.readFile(filename, options[SKIPATT].count() > 0);
                     delete reader;
                     if (!res) {
