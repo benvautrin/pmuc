@@ -356,7 +356,41 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
 }
 
 void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
-    writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        Eigen::Matrix3f rotation;
+        Eigen::Matrix3f scale;
+        transform.computeRotationScaling(&rotation, &scale);
+        const float s = scale.coeff(0,0);
+
+        // Define the parametric profile first
+        shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
+        xDim->m_value = params.height() * s;
+
+        float yExtend = (params.routside() - params.rinside()) * s;
+        shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
+        yDim->m_value = yExtend;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(params.rinside() * s + 0.5 * yExtend) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcRectangleProfileDef> profile (new IfcRectangleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_XDim = xDim;
+        profile->m_YDim = yDim;
+
+        addRevolvedAreaSolidToShape(profile, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
+    } else {
+        writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
+    }
 }
 
 void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
@@ -386,37 +420,7 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
         profile->m_Position = position;
         profile->m_Radius = radius;
 
-        // Now define the axis for revolving
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-
-        // The axis is required to lie in the xy plane, we want revolve around the z axis however
-        shared_ptr<IfcDirection> direction (new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(1);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(0);
-
-        shared_ptr<IfcAxis1Placement> axis (new IfcAxis1Placement() );
-        axis->m_Location = location;
-        axis->m_Axis = direction;
-        insertEntity(axis);
-
-        shared_ptr<IfcPlaneAngleMeasure> angle (new IfcPlaneAngleMeasure() );
-        angle->m_value = params.angle();
-
-        shared_ptr<IfcRevolvedAreaSolid> ctor (new IfcRevolvedAreaSolid() );
-        insertEntity(ctor);
-        ctor->m_Axis = axis;
-        ctor->m_Angle = angle;
-        // Rotate the whole geometry (90° y-axis) because we defined it with y-up instead of z-up
-        ctor->m_Position = getCoordinateSystem(transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())), Eigen::Vector3f(0,0,0));
-        ctor->m_SweptArea = profile;
-
-        addRepresentationToShape(ctor, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+        addRevolvedAreaSolidToShape(profile, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
     } else {
         auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
         writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
@@ -920,6 +924,40 @@ void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Mes
     } else {
         std::wcerr << message->m_message_text << std::endl;
     }
+}
+
+void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, float angle, const Transform3f& transform) {
+            // Now define the axis for revolving
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        // The axis is required to lie in the xy plane, we want revolve around the z axis however
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(1);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+
+        shared_ptr<IfcAxis1Placement> axis (new IfcAxis1Placement() );
+        axis->m_Location = location;
+        axis->m_Axis = direction;
+        insertEntity(axis);
+
+        shared_ptr<IfcPlaneAngleMeasure> angleP (new IfcPlaneAngleMeasure() );
+        angleP->m_value = angle;
+
+        shared_ptr<IfcRevolvedAreaSolid> solid (new IfcRevolvedAreaSolid() );
+        insertEntity(solid);
+        solid->m_Axis = axis;
+        solid->m_Angle = angleP;
+        // Rotate the whole geometry (90° y-axis) because we defined it with y-up instead of z-up
+        solid->m_Position = getCoordinateSystem(transform, Eigen::Vector3f(0,0,0));
+        solid->m_SweptArea = profile;
+
+        addRepresentationToShape(solid, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
 }
 
 shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {

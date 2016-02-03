@@ -287,10 +287,10 @@ int main(int argc, char** argv)
                         } break;
                         case RECTANGULARTORUS: {
                             Primitives::RectangularTorus torus;
-                            torus.data[0] = 2;
-                            torus.data[1] = 3;
-                            torus.data[2] = 0.5;
-                            torus.data[3] = (float)M_PI*3/4;
+                            torus.data[0] = 7.5;  // inside
+                            torus.data[1] = 8.0;  // outside
+                            torus.data[2] = 2.0;  // height
+                            torus.data[3] = (float)M_PI*1.5f;
                             reader->createRectangularTorus(matrix, torus);
                         } break;
                         case PYRAMID: {
