@@ -316,8 +316,8 @@ const Mesh RVMMeshHelper2::makeRectangularTorus(const Primitives::RectangularTor
 
 std::pair<unsigned long, unsigned long> RVMMeshHelper2::infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides)
 {
-    unsigned long tsides = std::max(minSides, static_cast<unsigned long>(cTorus.angle() * cTorus.rinside() / maxSideSize) );
-    unsigned long csides = std::max(minSides, static_cast<unsigned long>(2 * M_PI * cTorus.routside() / maxSideSize) );
+    unsigned long tsides = std::max(minSides, static_cast<unsigned long>(cTorus.angle() * cTorus.offset() / maxSideSize) );
+    unsigned long csides = std::max(minSides, static_cast<unsigned long>(2 * M_PI * cTorus.radius() / maxSideSize) );
 
     return std::make_pair(tsides, csides);
 }
@@ -330,8 +330,8 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cT
     vector<Vector3F> vectors;
 
     // Vertexes and normals
-    float rcenter = cTorus.routside();
-    float center = cTorus.rinside();
+    float radius = cTorus.radius();
+    float offset = cTorus.offset();
     Vector3F v;
     Vector3F n;
     const float da = cTorus.angle() / static_cast<float>(tsides);
@@ -349,9 +349,9 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cT
             const float C = cos(a2);
             const float S = sin(a2);
 
-            v[0] = (rcenter * C + center) * c;
-            v[1] = (rcenter * C + center) * s;
-            v[2] = rcenter * S;
+            v[0] = (radius * C + offset) * c;
+            v[1] = (radius * C + offset) * s;
+            v[2] = radius * S;
             points.push_back(v);
 
             n[0] = C*c;
@@ -401,8 +401,8 @@ const Mesh RVMMeshHelper2::makeCircularTorus(const Primitives::CircularTorus& cT
     vectors.push_back(Vector3F(-s,c,0));
 
     // - Caps centers
-    points.push_back(Vector3F(center, 0, 0));
-    points.push_back(Vector3F(c*center, s*center, 0));
+    points.push_back(Vector3F(offset, 0, 0));
+    points.push_back(Vector3F(c*offset, s*offset, 0));
 
     // - Caps indexes
     for (unsigned long j = 0; j < csides; j++)
@@ -627,8 +627,7 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
         points.push_back(v);
         if (height > 0.0f) {
             normals.push_back(Vector3F(x,y,0));
-        }
-        else {
+        } else {
             normals.push_back(Vector3F(0,0,1));
         }
     }
@@ -637,20 +636,21 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     for (unsigned long i = 0; i < sides; i++)
     {
         index.push_back(i * 2);
-        index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
         index.push_back(i * 2 + 1);
+        index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
 
+        normalindex.push_back(i);
         normalindex.push_back(i);
         normalindex.push_back(i < sides - 1 ? i + 1 : 0);
-        normalindex.push_back(i);
 
         index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
+        index.push_back(i * 2 + 1);
         index.push_back(i < sides - 1 ? i * 2 + 3 : 1);
-        index.push_back(i * 2 + 1);
 
         normalindex.push_back(i < sides - 1 ? i + 1 : 0);
-        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
         normalindex.push_back(i);
+        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
+
     }
 
     // Caps
@@ -668,8 +668,8 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2);
-        index.push_back(ci);
         index.push_back(j < sides - 1 ? (j + 1) * 2 : 0);
+        index.push_back(ci);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
@@ -679,8 +679,8 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2 + 1);
-        index.push_back(j < sides - 1 ? j * 2 + 3 : 1);
         index.push_back(ci + 1);
+        index.push_back(j < sides - 1 ? j * 2 + 3 : 1);
         normalindex.push_back(nci + 1);
         normalindex.push_back(nci + 1);
         normalindex.push_back(nci + 1);

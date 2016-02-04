@@ -433,8 +433,8 @@ void COLLADAConverter::createRectangularTorus(const std::array<float, 12>& matri
 void COLLADAConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& torus) {
     std::vector<float> params;
     params.push_back(CircularTorus);
-    params.push_back(torus.rinside());
-    params.push_back(torus.routside());
+    params.push_back(torus.offset());
+    params.push_back(torus.radius());
     params.push_back(torus.angle());
 
     string gid = getInstanceName(params);

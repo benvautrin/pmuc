@@ -130,7 +130,7 @@ void DSLConverter::createRectangularTorus(const std::array<float, 12>& matrix, c
 
 void DSLConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
     string shapeid = static_cast<ostringstream*>( &(ostringstream() << m_lastShapeId++) )->str();
-    writer->writeCircularTorus("bshape" + shapeid, params.routside(), params.rinside(), params.angle());
+    writer->writeCircularTorus("bshape" + shapeid, params.radius(), params.offset(), params.angle());
     writeShapeTransforms(shapeid, matrix);
 }
 

@@ -47,10 +47,10 @@ namespace Primitives
 
     struct CircularTorus
     {
-        inline float& rinside() { return data[0]; }
-        inline const float& rinside() const { return data[0]; }
-        inline float& routside() { return data[1]; }
-        inline const float& routside() const { return data[1]; }
+        inline float& offset() { return data[0]; }
+        inline const float& offset() const { return data[0]; }
+        inline float& radius() { return data[1]; }
+        inline const float& radius() const { return data[1]; }
         inline float& angle() { return data[2]; }
         inline const float& angle() const { return data[2]; }
 

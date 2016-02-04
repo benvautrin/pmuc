@@ -108,7 +108,7 @@ void printStats(time_t duration, RVMParser &parser) {
 
 int main(int argc, char** argv)
 {
-    cout << "Plant Mock-Up Converter 1.0.1\nCopyright (C) EDF 2016" << endl;
+    cout << "Plant Mock-Up Converter 1.0.2\nCopyright (C) EDF 2016" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
@@ -384,9 +384,8 @@ int main(int argc, char** argv)
                 if (forcedColor != -1) {
                     parser.setForcedColor(forcedColor);
                 }
-                if (scale != 1) {
-                    parser.setScale(scale);
-                }
+                parser.setScale(scale);
+
                 vector<string> files;
                 for (int file = 0; file < parse.nonOptionsCount(); file++) {
                     string filename = parse.nonOption(file);
@@ -467,6 +466,8 @@ int main(int argc, char** argv)
                     if (forcedColor != -1) {
                         parser.setForcedColor(forcedColor);
                     }
+                    parser.setScale(scale);
+
                     bool res = parser.readFile(filename, options[SKIPATT].count() > 0);
                     delete reader;
                     if (!res) {
