@@ -151,10 +151,10 @@ void X3DConverter::startGroup(const std::string& name, const Vector3F& translati
     startNode(ID::Transform);
 	// Problems with encoding and unicity so changed name from DEF storage to metadata. See after translation.
     //m_writers.back()->setSFString(ID::DEF, x3dName);
-    m_writers.back()->setSFVec3f(ID::translation,
+    /*m_writers.back()->setSFVec3f(ID::translation,
                                  (translation[0] - m_translations.back()[0]),
                                  (translation[1] - m_translations.back()[1]),
-                                 (translation[2] - m_translations.back()[2]));
+                                 (translation[2] - m_translations.back()[2]));*/
     m_translations.push_back(translation);
 
     // PDMS name as metadata.
@@ -527,35 +527,31 @@ void X3DConverter::createFacetGroup(const std::array<float, 12>& matrix,
 }
 
 void X3DConverter::startShape(const std::array<float, 12>& matrix) {
-    vector<float> r(4, 0);
 
     // Finding axis/angle from matrix using Eigen for its bullet proof implementation.
-    Transform<double, 3, Affine> t;
+    Transform<float, 3, Affine> t;
     t.setIdentity();
     for (unsigned int i = 0; i < 3; i++) {
         for (unsigned int j = 0; j < 4; j++) {
             t(i, j) = matrix[i+j*3];
         }
     }
-    Matrix3d rotation;
-    Matrix3d scale;
-    t.computeRotationScaling(&rotation, &scale);
-	Quaterniond q;
-    AngleAxisd aa;
-	q = rotation;
+
+    Matrix3f rotationMatrix;
+    Matrix3f scaleMatrix;
+    t.computeRotationScaling(&rotationMatrix, &scaleMatrix);
+	Quaternionf q;
+    AngleAxisf aa;
+	q = rotationMatrix;
     aa = q;
-    r[0] = (float)aa.axis()(0);
-    r[1] = (float)aa.axis()(1);
-    r[2] = (float)aa.axis()(2);
-    r[3] = (float)aa.angle();
+
+    Vector3f scale = scaleMatrix.diagonal();
+    Vector3f translation = t.translation();
 
     startNode(ID::Transform);
-    m_writers.back()->setSFVec3f(ID::translation,
-                                 (matrix[9] - m_translations.back()[0]),
-                                 (matrix[10] - m_translations.back()[1]),
-                                 (matrix[11] - m_translations.back()[2]));
-    m_writers.back()->setMFRotation(ID::rotation, r);
-    m_writers.back()->setSFVec3f(ID::scale, (float)scale.coeff(0,0), (float)scale.coeff(1,1), (float)scale.coeff(2,2));
+    m_writers.back()->setSFVec3f(ID::translation, translation.x(), translation.y() , translation.z());
+    m_writers.back()->setSFRotation(ID::rotation, aa.axis().x(), aa.axis().y(), aa.axis().z(), aa.angle());
+    m_writers.back()->setSFVec3f(ID::scale, scale.x(), scale.y(), scale.z());
     startNode(ID::Shape);
     startNode(ID::Appearance);
     startNode(ID::Material);

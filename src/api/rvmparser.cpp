@@ -201,7 +201,7 @@ string& read_<string>(istream& is, string& str)
     return str;
 }
 
-static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res, float scale)
+static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res)
 {
     res.clear();
     res.resize(read_<unsigned int>(is));
@@ -214,13 +214,13 @@ static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res, float scal
             g.resize(read_<unsigned int>(is));
             for (auto& v : g)
             {
-                float x = read_<float>(is) * scale;
-                float y = read_<float>(is) * scale;
-                float z = read_<float>(is) * scale;
+                float x = read_<float>(is);
+                float y = read_<float>(is);
+                float z = read_<float>(is);
                 v.first = Vector3F(x, y, z);
-                x = read_<float>(is) * scale;
-                y = read_<float>(is) * scale;
-                z = read_<float>(is) * scale;
+                x = read_<float>(is);
+                y = read_<float>(is);
+                z = read_<float>(is);
                 v.second = Vector3F(x, y, z);
             }
         }
@@ -296,6 +296,15 @@ namespace {
         }
         return result;
     }
+
+    static void scaleMatrix(std::array<float, 12>& matrix, float factor) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 3; j++) {
+                matrix[i*3+j] *= factor;
+            }
+        }
+    }
+
 }
 
 RVMParser::RVMParser(RVMReader& reader) :
@@ -578,6 +587,7 @@ bool RVMParser::readPrimitive(std::istream& is)
 
     std::array<float, 12> matrix;
     readMatrix(is, matrix);
+    scaleMatrix(matrix, m_scale);
 
     // skip bounding box
     skip_<6>(is);
@@ -652,7 +662,7 @@ bool RVMParser::readPrimitive(std::istream& is)
 
             case 11: {
                 m_nbFacetGroups++;
-                readFacetGroup_(is, fc, m_scale);
+                readFacetGroup_(is, fc);
                 m_reader.createFacetGroup(matrix, fc);
             } break;
 
@@ -704,7 +714,7 @@ bool RVMParser::readPrimitive(std::istream& is)
             break;
 
             case 11:
-                readFacetGroup_(is, fc, 1.0f);
+                readFacetGroup_(is, fc);
             break;
 
             default:
@@ -719,7 +729,4 @@ void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
 {
     for (auto &value : matrix)
         value = read_<float>(is);
-
-    for (size_t i = 9; i < 12; i++)
-        matrix[i] *= m_scale;
 }
