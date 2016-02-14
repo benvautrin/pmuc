@@ -142,6 +142,13 @@ namespace {
         // TODO: Implement
         return 0;
     }
+
+    float getScaleFromTransformation(const Transform3f& transform) {
+        Eigen::Matrix3f rotation;
+        Eigen::Matrix3f scale;
+        transform.computeRotationScaling(&rotation, &scale);
+        return scale(0,0);
+    }
 }
 
 
@@ -307,15 +314,17 @@ void IFCConverter::createPyramid(const std::array<float, 12>& matrix, const Prim
 
 void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
     if (m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        float s = getScaleFromTransformation(transform);
 
         shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
-        xDim->m_value = params.len[0] *  0.001;
+        xDim->m_value = params.len[0] *  s;
 
         shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
-        yDim->m_value = params.len[1] *  0.001;
+        yDim->m_value = params.len[1] *  s;
 
         shared_ptr<IfcPositiveLengthMeasure> zDim (new IfcPositiveLengthMeasure() );
-        zDim->m_value = params.len[2] *  0.001;
+        zDim->m_value = params.len[2] * s;
 
         shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
         insertEntity(location);
@@ -339,7 +348,7 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
         direction->m_DirectionRatios.push_back(0);
         direction->m_DirectionRatios.push_back(1);
 
-        Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f *  0.001f);
+        Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f *  s);
 
         shared_ptr<IfcExtrudedAreaSolid> box (new IfcExtrudedAreaSolid() );
         insertEntity(box);
@@ -358,10 +367,7 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
 void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
     if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
-        Eigen::Matrix3f rotation;
-        Eigen::Matrix3f scale;
-        transform.computeRotationScaling(&rotation, &scale);
-        const float s = scale.coeff(0,0);
+        const float s = getScaleFromTransformation(transform);
 
         // Define the parametric profile first
         shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
@@ -396,10 +402,7 @@ void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, c
 void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
     if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
-        Eigen::Matrix3f rotation;
-        Eigen::Matrix3f scale;
-        transform.computeRotationScaling(&rotation, &scale);
-        const float s = scale.coeff(0,0);
+        const float s = getScaleFromTransformation(transform);
 
         // Define the parametric profile first
         shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
@@ -443,16 +446,14 @@ void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primit
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
     if (m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        Eigen::Matrix3f rotation;
-        Eigen::Matrix3f scale;
-        transform.computeRotationScaling(&rotation, &scale);
+        const auto transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
 
         shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
-        height->m_value = params.height()*  scale.coeff(0,0);
+        height->m_value = params.height() * s;
 
         shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = params.radius()*  scale.coeff(0,0);
+        radius->m_value = params.radius() * s;
 
         shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
         insertEntity(location);
@@ -475,7 +476,7 @@ void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Pri
         direction->m_DirectionRatios.push_back(0);
         direction->m_DirectionRatios.push_back(1);
 
-        Eigen::Vector3f offset(0, 0, -params.height() * 0.5f *  scale.coeff(0,0));
+        Eigen::Vector3f offset(0, 0, -params.height() * 0.5f *  s);
 
         shared_ptr<IfcExtrudedAreaSolid> cylinder (new IfcExtrudedAreaSolid() );
         insertEntity(cylinder);
