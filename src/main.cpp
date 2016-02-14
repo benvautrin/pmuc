@@ -48,7 +48,7 @@
 using namespace std;
 
 enum optionIndex { UNKNOWN, HELP, TEST,  X3D,
-    X3DB, COLLADA, IFC4, IFC2x3, DSL, DUMMY,
+    X3DB, COLLADA, IFC4, IFC2X3, DSL, DUMMY,
     SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE,
     MINSIDES, OBJECT, COLOR, SCALE };
 
@@ -58,7 +58,7 @@ const option::Descriptor usage[] = {
     { X3D,          0, "",  "x3d",           option::Arg::None,      "  --x3d  \tConvert to X3D XML format." },
     { X3DB,         0, "",  "x3db",          option::Arg::None,      "  --x3db  \tConvert to X3D binary format." },
     { COLLADA,      0, "",  "collada",       option::Arg::None,      "  --collada\tConvert to COLLADA format." },
-    { IFC2x3,       0, "",  "ifc",           option::Arg::None,      "  --ifc\tConvert to IFC2x3." },
+    { IFC2X3,       0, "",  "ifc",           option::Arg::None,      "  --ifc\tConvert to IFC2x3." },
     { IFC4,         0, "",  "ifc4",          option::Arg::None,      "  --ifc4\tConvert to IFC4." },
     { DSL,          0, "",  "dsl",           option::Arg::None,      "  --dsl  \tConvert to DSL language." },
     { DUMMY,        0, "",  "dummy",         option::Arg::None,      "  --dummy\tPrint out the file structure." },
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if ((options[X3D] || options[X3DB] || options[COLLADA] || options[DSL] || options[DUMMY] || options[IFC4]|| options[IFC2x3]) == 0) {
+    if ((options[X3D] || options[X3DB] || options[COLLADA] || options[DSL] || options[DUMMY] || options[IFC4]|| options[IFC2X3]) == 0) {
         cerr << "\nNo format specified.\n";
         option::printUsage(std::cerr, usage);
         return 1;
@@ -215,9 +215,9 @@ int main(int argc, char** argv)
                             reader = new IFCConverter(name, "IFC4");
                         } break;
 
-                        case IFC2x3: {
+                        case IFC2X3: {
                             string name = filename + ".ifc";
-                            reader = new IFCConverter(name, "IFC2x3");
+                            reader = new IFCConverter(name, "IFC2X3");
                         } break;
 
 
@@ -295,13 +295,13 @@ int main(int argc, char** argv)
                         } break;
                         case PYRAMID: {
                             Primitives::Pyramid pyramid;
-                            pyramid.data[0] = 2;
-                            pyramid.data[1] = 4;
-                            pyramid.data[2] = 1;
-                            pyramid.data[3] = 2;
-                            pyramid.data[4] = 2;
-                            pyramid.data[5] = 1;
-                            pyramid.data[6] = 4;
+                            pyramid.data[0] = 2; // xbottom
+                            pyramid.data[1] = 4; // ybottom
+                            pyramid.data[2] = 4; // xtop
+                            pyramid.data[3] = 4; // ytop
+                            pyramid.data[4] = 0; // xoffset
+                            pyramid.data[5] = 0; // yoffset
+                            pyramid.data[6] = 4; // height
 
                             reader->createPyramid(matrix, pyramid);
                         } break;
@@ -359,13 +359,13 @@ int main(int argc, char** argv)
                         reader = new DSLConverter(dslname);
                     } break;
 
-                    case IFC2x3: {
+                    case IFC2X3: {
                         string ifcname = name + ".ifc";
                         reader = new IFCConverter(ifcname, "IFC4");
                     } break;
                     case IFC4: {
                         string ifcname = name + ".ifc";
-                        reader = new IFCConverter(ifcname, "IFC2x3");
+                        reader = new IFCConverter(ifcname, "IFC2X3");
                     } break;
                 }
                 if (maxSideSize) {
@@ -436,11 +436,11 @@ int main(int argc, char** argv)
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new IFCConverter(name, "IFC4");
                         } break;
-                        case IFC2x3: {
+                        case IFC2X3: {
                             string name = !objectName.empty() ? objectName : filename;
                             name = name.substr(0, name.rfind(".")) + ".ifc";
                             name = name.substr(name.rfind(PATHSEP) + 1);
-                            reader = new IFCConverter(name, "IFC2x3");
+                            reader = new IFCConverter(name, "IFC2X3");
                         } break;
 
                         case DSL: {
