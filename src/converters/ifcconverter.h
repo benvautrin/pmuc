@@ -45,6 +45,7 @@ class IfcSurfaceStyle;
 class IfcPPEntity;
 class IfcAxis2Placement3D;
 class IfcProfileDef;
+class IfcDirection;
 
 typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
 
@@ -115,7 +116,7 @@ class IFCConverter : public RVMReader
         void initModel();
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
         void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
-        void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, float angle, const Transform3f& transform);
+        void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform);
         void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
         shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset);
 };
