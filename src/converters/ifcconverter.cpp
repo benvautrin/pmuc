@@ -98,6 +98,7 @@
 #include <ifcpp/IFC4/include/IfcCompositeCurve.h>
 #include <ifcpp/IFC4/include/IfcCompositeCurveSegment.h>
 #include <ifcpp/IFC4/include/IfcTransitionCode.h>
+#include <ifcpp/IFC4/include/IfcEllipse.h>
 
 #include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
 
@@ -449,8 +450,103 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
 }
 
 void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
-    auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        double r = params.diameter() * s;
+        double r2 = params.radius() * s;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = r;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius2 (new IfcPositiveLengthMeasure() );
+        radius2->m_value = r2;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcDirection> direction( new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+        position->m_RefDirection = direction;
+
+        shared_ptr<IfcEllipse> ellipse (new IfcEllipse() );
+        insertEntity(ellipse);
+        ellipse->m_SemiAxis1 = radius2;
+        ellipse->m_SemiAxis2 = radius;
+        ellipse->m_Position = position;
+
+        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
+        insertEntity(p1);
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r ) ) );
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+
+        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
+        insertEntity(p2);
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+
+        shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
+        insertEntity(p3);
+        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r2 ) ) );
+
+        shared_ptr<IfcPolyline> line (new IfcPolyline() );
+        insertEntity(line);
+        line->m_Points.push_back(p1);
+        line->m_Points.push_back(p2);
+        line->m_Points.push_back(p3);
+
+        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
+        insertEntity(segLine);
+        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segLine->m_SameSense = true;
+        segLine->m_ParentCurve = line;
+
+        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
+        insertEntity(curve);
+        curve->m_BasisCurve = ellipse;
+        curve->m_Trim1.push_back(p3);
+        curve->m_Trim2.push_back(p1);
+        curve->m_SenseAgreement = false;
+        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
+
+        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
+        insertEntity(segCurve);
+        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segCurve->m_SameSense = true;
+        segCurve->m_ParentCurve = curve;
+
+        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
+        insertEntity(compositeCurve);
+        compositeCurve->m_Segments.push_back(segLine);
+        compositeCurve->m_Segments.push_back(segCurve);
+        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
+
+        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_OuterCurve = compositeCurve;
+
+        shared_ptr<IfcDirection> axis (new IfcDirection() );
+        insertEntity(axis);
+        axis->m_DirectionRatios.push_back(0);
+        axis->m_DirectionRatios.push_back(1);
+        axis->m_DirectionRatios.push_back(0);
+
+        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitX())));
+    } else {
+        auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
+    }
 }
 
 void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {

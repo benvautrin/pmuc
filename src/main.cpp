@@ -311,7 +311,7 @@ int main(int argc, char** argv)
                         case ELLIPTICALDISH: {
                             Primitives::EllipticalDish dish;
                             dish.data[0] = 4;
-                            dish.data[1] = 4;
+                            dish.data[1] = 2;
                             reader->createEllipticalDish(matrix, dish);
                         } break;
                         case SPHERICALDISH: {
