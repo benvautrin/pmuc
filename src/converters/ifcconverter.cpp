@@ -99,6 +99,10 @@
 #include <ifcpp/IFC4/include/IfcCompositeCurveSegment.h>
 #include <ifcpp/IFC4/include/IfcTransitionCode.h>
 #include <ifcpp/IFC4/include/IfcEllipse.h>
+#include <ifcpp/IFC4/include/IfcBooleanClippingResult.h>
+#include <ifcpp/IFC4/include/IfcBooleanOperator.h>
+#include <ifcpp/IFC4/include/IfcHalfSpaceSolid.h>
+#include <ifcpp/IFC4/include/IfcPlane.h>
 
 #include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
 
@@ -647,8 +651,91 @@ void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, cons
 }
 
 void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
-    auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+    if(params.xtshear() > FLT_EPSILON || params.ytshear() > FLT_EPSILON || params.xbshear() > FLT_EPSILON || params.ybshear() > FLT_EPSILON) {
+        createSlopedCylinder(matrix, params);
+    } else {
+        auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+    }
+}
+
+void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
+    if(m_primitives && std::abs(params.dtop() - params.dbottom()) < std::numeric_limits<float>::epsilon()) {
+        const auto transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        const float r = params.dtop();
+        const float halfHeight = params.height() * 0.5f;
+        const float topOffset = r * std::max(std::abs(tan(params.xtshear())),std::abs(tan(params.ytshear())));
+        const float bottomOffset = r * std::max(std::abs(tan(params.xtshear())),std::abs(tan(params.ytshear())));
+
+        shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
+        height->m_value = (params.height() + topOffset + bottomOffset) * s;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = r * s;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_Radius = radius;
+
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        Eigen::Vector3f offset(0, 0, -(halfHeight + bottomOffset) *  s);
+
+        shared_ptr<IfcExtrudedAreaSolid> cylinder ( new IfcExtrudedAreaSolid() );
+        insertEntity(cylinder);
+        cylinder->m_Depth = height;
+        cylinder->m_Position = getCoordinateSystem(transform, offset);
+        cylinder->m_SweptArea = profile;
+        cylinder->m_ExtrudedDirection = direction;
+
+        shared_ptr<IfcPlane> planeTop = createClippingPlane(halfHeight * s, Eigen::Vector3d(-sin(params.xtshear())*cos(params.ytshear()), -sin(params.ytshear()), cos(params.xtshear())*cos(params.ytshear())));
+
+        shared_ptr<IfcHalfSpaceSolid> halfSpaceSolid ( new IfcHalfSpaceSolid() );
+        insertEntity(halfSpaceSolid);
+        halfSpaceSolid->m_BaseSurface = planeTop;
+        halfSpaceSolid->m_AgreementFlag = false;
+
+        shared_ptr<IfcBooleanClippingResult> clippingResult1 ( new IfcBooleanClippingResult() );
+        insertEntity(clippingResult1);
+        clippingResult1->m_Operator = shared_ptr<IfcBooleanOperator >( new IfcBooleanOperator( IfcBooleanOperator::ENUM_DIFFERENCE ) );
+        clippingResult1->m_FirstOperand = cylinder;
+        clippingResult1->m_SecondOperand = halfSpaceSolid;
+
+        shared_ptr<IfcPlane> planeBottom = createClippingPlane(-halfHeight * s, Eigen::Vector3d(sin(params.xbshear())*cos(params.ybshear()),sin(params.ybshear()),-cos(params.xbshear())*cos(params.ybshear())));
+
+        shared_ptr<IfcHalfSpaceSolid> halfSpaceSolid2 ( new IfcHalfSpaceSolid() );
+        insertEntity(halfSpaceSolid2);
+        halfSpaceSolid2->m_BaseSurface = planeBottom;
+        halfSpaceSolid2->m_AgreementFlag = false;
+
+        shared_ptr<IfcBooleanClippingResult> clippingResult2 ( new IfcBooleanClippingResult() );
+        insertEntity(clippingResult2);
+        clippingResult2->m_Operator = shared_ptr<IfcBooleanOperator >( new IfcBooleanOperator( IfcBooleanOperator::ENUM_DIFFERENCE ) );
+        clippingResult2->m_FirstOperand = clippingResult1;
+        clippingResult2->m_SecondOperand = halfSpaceSolid2;
+
+        addRepresentationToShape(clippingResult2, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+    }
 }
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
@@ -1220,6 +1307,8 @@ void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Mes
     }
 }
 
+
+
 void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform) {
             // Now define the axis for revolving
         shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
@@ -1281,3 +1370,31 @@ shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transfor
     coordinate_system->m_RefDirection = refDirection;
     return coordinate_system;
 };
+
+shared_ptr<IfcPlane> IFCConverter::createClippingPlane(double zPos, const Eigen::Vector3d &n) {
+    shared_ptr<IfcCartesianPoint> planeLocation( new IfcCartesianPoint() );
+    insertEntity(planeLocation);
+    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(zPos) ) );
+
+
+    shared_ptr<IfcDirection> planeNormal (new IfcDirection() );
+    insertEntity(planeNormal);
+    planeNormal->m_DirectionRatios.push_back(n.x());
+    planeNormal->m_DirectionRatios.push_back(n.y());
+    planeNormal->m_DirectionRatios.push_back(n.z());
+
+    // IFCAXIS2PLACEMENT3D
+    shared_ptr<IfcAxis2Placement3D> planePosition ( new IfcAxis2Placement3D() );
+    insertEntity(planePosition);
+    planePosition->m_Location = planeLocation;
+    planePosition->m_Axis = planeNormal;
+
+    // IFCPLANE(#44);
+    shared_ptr<IfcPlane> plane ( new IfcPlane() );
+    insertEntity(plane);
+    plane->m_Position = planePosition;
+
+    return plane;
+}
