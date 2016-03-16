@@ -28,6 +28,8 @@
 #include <ifcpp/model/IfcPPModel.h>
 #include <ifcpp/model/StatusCallback.h>
 
+#include <Eigen/Core>
+
 #include <stack>
 
 class IfcOwnerHistory;
@@ -41,7 +43,12 @@ class IfcPropertySet;
 class IfcLabel;
 class IfcSurfaceStyle;
 class IfcPPEntity;
+class IfcAxis2Placement3D;
+class IfcProfileDef;
+class IfcDirection;
+class IfcPlane;
 
+typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
 
 class IFCConverter : public RVMReader
 {
@@ -106,11 +113,16 @@ class IFCConverter : public RVMReader
         shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
         shared_ptr<IfcMaterial> createMaterial(int id);
         shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
+        void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
         void insertEntity(shared_ptr<IfcPPEntity> e);
         void initModel();
         void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
         void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
+        void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform);
+
         void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
+        shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
+        shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
 };
 
 #endif // IFCCONVERTER_H

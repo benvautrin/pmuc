@@ -82,10 +82,35 @@
 #include <ifcpp/IFC4/include/IfcRelDefinesByProperties.h>
 #include <ifcpp/IFC4/include/IfcPropertySingleValue.h>
 #include <ifcpp/IFC4/include/IfcText.h>
+#include <ifcpp/IFC4/include/IfcExtrudedAreaSolid.h>
+#include <ifcpp/IFC4/include/IfcCircleProfileDef.h>
+#include <ifcpp/IFC4/include/IfcProfileTypeEnum.h>
+#include <ifcpp/IFC4/include/IfcAxis2Placement2D.h>
+#include <ifcpp/IFC4/include/IfcDirection.h>
+#include <ifcpp/IFC4/include/IfcRectangleProfileDef.h>
+#include <ifcpp/IFC4/include/IfcRevolvedAreaSolid.h>
+#include <ifcpp/IFC4/include/IfcPlaneAngleMeasure.h>
+#include <ifcpp/IFC4/include/IfcAxis1Placement.h>
+#include <ifcpp/IFC4/include/IfcTrimmedCurve.h>
+#include <ifcpp/IFC4/include/IfcTrimmingPreference.h>
+#include <ifcpp/IFC4/include/IfcArbitraryClosedProfileDef.h>
+#include <ifcpp/IFC4/include/IfcCircle.h>
+#include <ifcpp/IFC4/include/IfcCompositeCurve.h>
+#include <ifcpp/IFC4/include/IfcCompositeCurveSegment.h>
+#include <ifcpp/IFC4/include/IfcTransitionCode.h>
+#include <ifcpp/IFC4/include/IfcEllipse.h>
+#include <ifcpp/IFC4/include/IfcBooleanClippingResult.h>
+#include <ifcpp/IFC4/include/IfcBooleanOperator.h>
+#include <ifcpp/IFC4/include/IfcHalfSpaceSolid.h>
+#include <ifcpp/IFC4/include/IfcPlane.h>
+
+#include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
 
 #include <ifcpp/model/IfcPPGuid.h>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <Eigen/SVD>
 
 
 #include "../api/rvmmeshhelper.h"
@@ -109,20 +134,31 @@ namespace {
         return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
     }
 
-    Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
-        Eigen::Matrix4f result;
+    Transform3f toEigenTransform(const std::array<float, 12>& matrix) {
+        Transform3f result;
         result.setIdentity();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 3; j++) {
-                result(j, i)= matrix[i*3+j];
+        for (unsigned int i = 0; i < 3; i++) {
+            for (unsigned int j = 0; j < 4; j++) {
+                result(i, j) = matrix[i+j*3];
             }
         }
         return result;
     }
 
+    Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
+        return toEigenTransform(matrix).matrix();
+    }
+
     int toTimeStamp(const std::string& schema) {
         // TODO: Implement
         return 0;
+    }
+
+    float getScaleFromTransformation(const Transform3f& transform) {
+        Eigen::Matrix3f rotation;
+        Eigen::Matrix3f scale;
+        transform.computeRotationScaling(&rotation, &scale);
+        return scale(0,0);
     }
 }
 
@@ -288,39 +324,556 @@ void IFCConverter::createPyramid(const std::array<float, 12>& matrix, const Prim
 
 
 void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
-    writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
+    if (m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        float s = getScaleFromTransformation(transform);
+
+        shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
+        xDim->m_value = params.len[0] *  s;
+
+        shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
+        yDim->m_value = params.len[1] *  s;
+
+        shared_ptr<IfcPositiveLengthMeasure> zDim (new IfcPositiveLengthMeasure() );
+        zDim->m_value = params.len[2] * s;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcRectangleProfileDef> profile (new IfcRectangleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_XDim = xDim;
+        profile->m_YDim = yDim;
+
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f *  s);
+
+        shared_ptr<IfcExtrudedAreaSolid> box (new IfcExtrudedAreaSolid() );
+        insertEntity(box);
+        box->m_Depth = zDim;
+        box->m_Position = getCoordinateSystem(toEigenTransform(matrix), offset);
+        box->m_SweptArea = profile;
+        box->m_ExtrudedDirection = direction;
+
+        addRepresentationToShape(box, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
+    }
+
 }
 
 void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
-    writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        // Define the parametric profile first
+        shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
+        xDim->m_value = params.height() * s;
+
+        float yExtend = (params.routside() - params.rinside()) * s;
+        shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
+        yDim->m_value = yExtend;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(params.rinside() * s + 0.5 * yExtend) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcRectangleProfileDef> profile (new IfcRectangleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_XDim = xDim;
+        profile->m_YDim = yDim;
+
+        shared_ptr<IfcDirection> axis (new IfcDirection() );
+        insertEntity(axis);
+        axis->m_DirectionRatios.push_back(1);
+        axis->m_DirectionRatios.push_back(0);
+        axis->m_DirectionRatios.push_back(0);
+
+        addRevolvedAreaSolidToShape(profile, axis, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
+    } else {
+        writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
+    }
 }
 
 void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
-    auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        // Define the parametric profile first
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = params.radius() * s;
+
+        shared_ptr<IfcCartesianPoint> profile_location( new IfcCartesianPoint() );
+        insertEntity(profile_location);
+        profile_location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>( new IfcLengthMeasure(0.0) ) );
+        profile_location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>( new IfcLengthMeasure(params.offset() * s) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = profile_location;
+
+        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_Radius = radius;
+
+        shared_ptr<IfcDirection> axis (new IfcDirection() );
+        insertEntity(axis);
+        axis->m_DirectionRatios.push_back(1);
+        axis->m_DirectionRatios.push_back(0);
+        axis->m_DirectionRatios.push_back(0);
+
+        addRevolvedAreaSolidToShape(profile, axis, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
+    } else {
+        auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
+    }
 }
 
 void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
-    auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        double r = params.diameter() * s;
+        double r2 = params.radius() * s;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = r;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius2 (new IfcPositiveLengthMeasure() );
+        radius2->m_value = r2;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcDirection> direction( new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+        position->m_RefDirection = direction;
+
+        shared_ptr<IfcEllipse> ellipse (new IfcEllipse() );
+        insertEntity(ellipse);
+        ellipse->m_SemiAxis1 = radius2;
+        ellipse->m_SemiAxis2 = radius;
+        ellipse->m_Position = position;
+
+        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
+        insertEntity(p1);
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r ) ) );
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+
+        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
+        insertEntity(p2);
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+
+        shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
+        insertEntity(p3);
+        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r2 ) ) );
+
+        shared_ptr<IfcPolyline> line (new IfcPolyline() );
+        insertEntity(line);
+        line->m_Points.push_back(p1);
+        line->m_Points.push_back(p2);
+        line->m_Points.push_back(p3);
+
+        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
+        insertEntity(segLine);
+        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segLine->m_SameSense = true;
+        segLine->m_ParentCurve = line;
+
+        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
+        insertEntity(curve);
+        curve->m_BasisCurve = ellipse;
+        curve->m_Trim1.push_back(p3);
+        curve->m_Trim2.push_back(p1);
+        curve->m_SenseAgreement = false;
+        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
+
+        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
+        insertEntity(segCurve);
+        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segCurve->m_SameSense = true;
+        segCurve->m_ParentCurve = curve;
+
+        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
+        insertEntity(compositeCurve);
+        compositeCurve->m_Segments.push_back(segLine);
+        compositeCurve->m_Segments.push_back(segCurve);
+        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
+
+        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_OuterCurve = compositeCurve;
+
+        shared_ptr<IfcDirection> axis (new IfcDirection() );
+        insertEntity(axis);
+        axis->m_DirectionRatios.push_back(0);
+        axis->m_DirectionRatios.push_back(1);
+        axis->m_DirectionRatios.push_back(0);
+
+        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitX())));
+    } else {
+        auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
+    }
 }
 
 void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
-    writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        double r = params.diameter() * 0.5 * s;
+        double h = params.height() * s;
+        double offset = r - h;
+        double angle =  asin(1.0 - h / r);
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = r;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(-offset) ) );
+
+        shared_ptr<IfcDirection> direction( new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+        position->m_RefDirection = direction;
+
+        shared_ptr<IfcCircle> circle (new IfcCircle() );
+        insertEntity(circle);
+        circle->m_Radius = radius;
+        circle->m_Position = position;
+
+        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
+        insertEntity(p1);
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r * cos(angle) ) ) );
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r * sin(angle) - offset ) ) );
+
+        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
+        insertEntity(p2);
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+
+        shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
+        insertEntity(p3);
+        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( h ) ) );
+
+        shared_ptr<IfcPolyline> line (new IfcPolyline() );
+        insertEntity(line);
+        line->m_Points.push_back(p1);
+        line->m_Points.push_back(p2);
+        line->m_Points.push_back(p3);
+
+        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
+        insertEntity(segLine);
+        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segLine->m_SameSense = true;
+        segLine->m_ParentCurve = line;
+
+        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
+        insertEntity(curve);
+        curve->m_BasisCurve = circle;
+        curve->m_Trim1.push_back(p3);
+        curve->m_Trim2.push_back(p1);
+        curve->m_SenseAgreement = false;
+        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
+
+        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
+        insertEntity(segCurve);
+        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segCurve->m_SameSense = true;
+        segCurve->m_ParentCurve = curve;
+
+        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
+        insertEntity(compositeCurve);
+        compositeCurve->m_Segments.push_back(segLine);
+        compositeCurve->m_Segments.push_back(segCurve);
+        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
+
+        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_OuterCurve = compositeCurve;
+
+        shared_ptr<IfcDirection> axis (new IfcDirection() );
+        insertEntity(axis);
+        axis->m_DirectionRatios.push_back(0);
+        axis->m_DirectionRatios.push_back(1);
+        axis->m_DirectionRatios.push_back(0);
+
+        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitX())));
+    } else {
+        writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
+    }
 }
 
 void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
-    auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+    if(params.xtshear() > FLT_EPSILON || params.ytshear() > FLT_EPSILON || params.xbshear() > FLT_EPSILON || params.ybshear() > FLT_EPSILON) {
+        createSlopedCylinder(matrix, params);
+    } else {
+        auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+    }
+}
+
+void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
+    if(m_primitives && std::abs(params.dtop() - params.dbottom()) < std::numeric_limits<float>::epsilon()) {
+        const auto transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        const float r = params.dtop();
+        const float halfHeight = params.height() * 0.5f;
+        const float topOffset = r * std::max(std::abs(tan(params.xtshear())),std::abs(tan(params.ytshear())));
+        const float bottomOffset = r * std::max(std::abs(tan(params.xtshear())),std::abs(tan(params.ytshear())));
+
+        shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
+        height->m_value = (params.height() + topOffset + bottomOffset) * s;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = r * s;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_Radius = radius;
+
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        Eigen::Vector3f offset(0, 0, -(halfHeight + bottomOffset) *  s);
+
+        shared_ptr<IfcExtrudedAreaSolid> cylinder ( new IfcExtrudedAreaSolid() );
+        insertEntity(cylinder);
+        cylinder->m_Depth = height;
+        cylinder->m_Position = getCoordinateSystem(transform, offset);
+        cylinder->m_SweptArea = profile;
+        cylinder->m_ExtrudedDirection = direction;
+
+        shared_ptr<IfcPlane> planeTop = createClippingPlane(halfHeight * s, Eigen::Vector3d(-sin(params.xtshear())*cos(params.ytshear()), -sin(params.ytshear()), cos(params.xtshear())*cos(params.ytshear())));
+
+        shared_ptr<IfcHalfSpaceSolid> halfSpaceSolid ( new IfcHalfSpaceSolid() );
+        insertEntity(halfSpaceSolid);
+        halfSpaceSolid->m_BaseSurface = planeTop;
+        halfSpaceSolid->m_AgreementFlag = false;
+
+        shared_ptr<IfcBooleanClippingResult> clippingResult1 ( new IfcBooleanClippingResult() );
+        insertEntity(clippingResult1);
+        clippingResult1->m_Operator = shared_ptr<IfcBooleanOperator >( new IfcBooleanOperator( IfcBooleanOperator::ENUM_DIFFERENCE ) );
+        clippingResult1->m_FirstOperand = cylinder;
+        clippingResult1->m_SecondOperand = halfSpaceSolid;
+
+        shared_ptr<IfcPlane> planeBottom = createClippingPlane(-halfHeight * s, Eigen::Vector3d(sin(params.xbshear())*cos(params.ybshear()),sin(params.ybshear()),-cos(params.xbshear())*cos(params.ybshear())));
+
+        shared_ptr<IfcHalfSpaceSolid> halfSpaceSolid2 ( new IfcHalfSpaceSolid() );
+        insertEntity(halfSpaceSolid2);
+        halfSpaceSolid2->m_BaseSurface = planeBottom;
+        halfSpaceSolid2->m_AgreementFlag = false;
+
+        shared_ptr<IfcBooleanClippingResult> clippingResult2 ( new IfcBooleanClippingResult() );
+        insertEntity(clippingResult2);
+        clippingResult2->m_Operator = shared_ptr<IfcBooleanOperator >( new IfcBooleanOperator( IfcBooleanOperator::ENUM_DIFFERENCE ) );
+        clippingResult2->m_FirstOperand = clippingResult1;
+        clippingResult2->m_SecondOperand = halfSpaceSolid2;
+
+        addRepresentationToShape(clippingResult2, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+    }
 }
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
-    auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
-    writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
+    if (m_primitives) {
+        const auto transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
+        height->m_value = params.height() * s;
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = params.radius() * s;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+
+        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_Position = position;
+        profile->m_Radius = radius;
+
+        shared_ptr<IfcDirection> direction (new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        Eigen::Vector3f offset(0, 0, -params.height() * 0.5f *  s);
+
+        shared_ptr<IfcExtrudedAreaSolid> cylinder (new IfcExtrudedAreaSolid() );
+        insertEntity(cylinder);
+        cylinder->m_Depth = height;
+        cylinder->m_Position = getCoordinateSystem(transform, offset);
+        cylinder->m_SweptArea = profile;
+        cylinder->m_ExtrudedDirection = direction;
+
+        addRepresentationToShape(cylinder, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+    } else {
+        auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
+        writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
+    }
 }
 
 void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
-    writeMesh( RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
+    if(m_primitives) {
+        Transform3f transform = toEigenTransform(matrix);
+        const float s = getScaleFromTransformation(transform);
+
+        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
+        radius->m_value = params.diameter * 0.5f * s;
+
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcDirection> direction( new IfcDirection() );
+        insertEntity(direction);
+        direction->m_DirectionRatios.push_back(0);
+        direction->m_DirectionRatios.push_back(1);
+
+        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
+        insertEntity(position);
+        position->m_Location = location;
+        position->m_RefDirection = direction;
+
+        shared_ptr<IfcCircle> circle (new IfcCircle() );
+        insertEntity(circle);
+        circle->m_Radius = radius;
+        circle->m_Position = position;
+
+        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
+        insertEntity(p1);
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( radius->m_value ) ) );
+
+        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
+        insertEntity(p2);
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( -radius->m_value ) ) );
+
+        shared_ptr<IfcPolyline> line (new IfcPolyline() );
+        insertEntity(line);
+        line->m_Points.push_back(p2);
+        line->m_Points.push_back(p1);
+
+        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
+        insertEntity(segLine);
+        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segLine->m_SameSense = true;
+        segLine->m_ParentCurve = line;
+
+        //shared_ptr<IfcParameterValue> trim2 (new IfcParameterValue() );
+        //trim2->m_value = M_PI;
+
+        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
+        insertEntity(curve);
+        curve->m_BasisCurve = circle;
+        curve->m_Trim1.push_back(p1);
+        curve->m_Trim2.push_back(p2);
+        curve->m_SenseAgreement = false;
+        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
+
+        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
+        insertEntity(segCurve);
+        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
+        segCurve->m_SameSense = true;
+        segCurve->m_ParentCurve = curve;
+
+        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
+        insertEntity(compositeCurve);
+        compositeCurve->m_Segments.push_back(segLine);
+        compositeCurve->m_Segments.push_back(segCurve);
+        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
+
+
+        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
+        insertEntity(profile);
+        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
+        profile->m_OuterCurve = compositeCurve;
+
+        shared_ptr<IfcDirection> axis (new IfcDirection() );
+        insertEntity(axis);
+        axis->m_DirectionRatios.push_back(0);
+        axis->m_DirectionRatios.push_back(1);
+        axis->m_DirectionRatios.push_back(0);
+
+        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform);
+    } else {
+        writeMesh( RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
+    }
 }
 
 void IFCConverter::createLine(const std::array<float, 12>& m, const float& length, const float& thickness) {
@@ -752,4 +1305,96 @@ void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Mes
     } else {
         std::wcerr << message->m_message_text << std::endl;
     }
+}
+
+
+
+void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform) {
+            // Now define the axis for revolving
+        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+        insertEntity(location);
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+
+        shared_ptr<IfcAxis1Placement> placement (new IfcAxis1Placement() );
+        placement->m_Location = location;
+        placement->m_Axis = axis;
+        insertEntity(placement);
+
+        shared_ptr<IfcPlaneAngleMeasure> angleP (new IfcPlaneAngleMeasure() );
+        angleP->m_value = angle;
+
+        shared_ptr<IfcRevolvedAreaSolid> solid (new IfcRevolvedAreaSolid() );
+        insertEntity(solid);
+        solid->m_Axis = placement;
+        solid->m_Angle = angleP;
+        // Rotate the whole geometry (90° y-axis) because we defined it with y-up instead of z-up
+        solid->m_Position = getCoordinateSystem(transform, Eigen::Vector3f(0,0,0));
+        solid->m_SweptArea = profile;
+
+        addRepresentationToShape(solid, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+}
+
+shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
+
+    Eigen::Vector3f translation = matrix.translation() + matrix.rotation() * offset;
+
+    shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
+    insertEntity(location);
+    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.x()) ) );
+    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.y()) ) );
+    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.z()) ) );
+
+    Eigen::Matrix3f rotation = matrix.rotation();
+    Eigen::Vector3f z_axis = rotation * Eigen::Vector3f(0,0,1);
+    Eigen::Vector3f x_axis = rotation * Eigen::Vector3f(1,0,0);
+
+    shared_ptr<IfcDirection> axis (new IfcDirection() );
+    insertEntity(axis);
+    axis->m_DirectionRatios.push_back(z_axis.x());
+    axis->m_DirectionRatios.push_back(z_axis.y());
+    axis->m_DirectionRatios.push_back(z_axis.z());
+
+    shared_ptr<IfcDirection> refDirection (new IfcDirection() );
+    insertEntity(refDirection);
+    refDirection->m_DirectionRatios.push_back(x_axis.x());
+    refDirection->m_DirectionRatios.push_back(x_axis.y());
+    refDirection->m_DirectionRatios.push_back(x_axis.z());
+
+
+    shared_ptr<IfcAxis2Placement3D> coordinate_system( new IfcAxis2Placement3D() );
+    insertEntity(coordinate_system);
+    coordinate_system->m_Location = location;
+    coordinate_system->m_Axis = axis;
+    coordinate_system->m_RefDirection = refDirection;
+    return coordinate_system;
+};
+
+shared_ptr<IfcPlane> IFCConverter::createClippingPlane(double zPos, const Eigen::Vector3d &n) {
+    shared_ptr<IfcCartesianPoint> planeLocation( new IfcCartesianPoint() );
+    insertEntity(planeLocation);
+    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(zPos) ) );
+
+
+    shared_ptr<IfcDirection> planeNormal (new IfcDirection() );
+    insertEntity(planeNormal);
+    planeNormal->m_DirectionRatios.push_back(n.x());
+    planeNormal->m_DirectionRatios.push_back(n.y());
+    planeNormal->m_DirectionRatios.push_back(n.z());
+
+    // IFCAXIS2PLACEMENT3D
+    shared_ptr<IfcAxis2Placement3D> planePosition ( new IfcAxis2Placement3D() );
+    insertEntity(planePosition);
+    planePosition->m_Location = planeLocation;
+    planePosition->m_Axis = planeNormal;
+
+    // IFCPLANE(#44);
+    shared_ptr<IfcPlane> plane ( new IfcPlane() );
+    insertEntity(plane);
+    plane->m_Position = planePosition;
+
+    return plane;
 }
