@@ -1,12 +1,23 @@
-language: 
+language:
   - cpp
 
+addons:
+    apt:
+      packages:
+        - cmake
+        - cmake-data
+        - libxerces-c-dev
+        - libboost1.55-all-dev
+      sources:
+        - george-edison55-precise-backports
+        - boost-latest	
 compiler:
   - gcc
 
 script:
-  - bii build -- -j4
-  - bii test
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
+  - cmake --build . --target pmuc --config Release -- -j4
+  - ctest -C Release --output-on-failure
 
 before_script:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -14,10 +25,4 @@ before_script:
   - sudo apt-get install -qq gcc-4.8 g++-4.8
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-  - bii init -L
-  - bii find
 
-install:
-  - wget http://apt.biicode.com/install.sh && chmod +x install.sh && ./install.sh
-  - bii --version
-  - bii setup:cpp

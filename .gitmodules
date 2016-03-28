@@ -1,0 +1,12 @@
+[submodule "external/xiot"]
+	path = external/xiot
+	url = https://github.com/Supporting/xiot.git
+[submodule "external/OpenCOLLADA"]
+	path = external/OpenCOLLADA
+	url = https://github.com/KhronosGroup/OpenCOLLADA.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://github.com/RLovelett/eigen.git
+[submodule "external/ifcplusplus"]
+	path = external/ifcplusplus
+	url = https://github.com/Supporting/ifcplusplus

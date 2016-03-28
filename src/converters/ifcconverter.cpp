@@ -22,6 +22,12 @@
 
 #include "ifcconverter.h"
 
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES // For PI under VC++
+#endif
+
+#include <cmath>
+
 #define BOOST_DATE_TIME_NO_LIB
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

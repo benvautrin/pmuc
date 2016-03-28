@@ -1,7 +1,10 @@
 Plant Mock-Up Converter
 =======================
+[![Build Status](https://api.travis-ci.org/Supporting/pmuc.svg?branch=master)](https://travis-ci.org/Supporting/pmuc)
+[![Build status](https://ci.appveyor.com/api/projects/status/pt0xdf8srhyui2gc/branch/master?svg=true)](https://ci.appveyor.com/project/Supporting/pmuc/branch/master)
 
-Copyright © EDF 2013-2015
+
+Copyright © EDF 2013-2016
 
 About
 -----
@@ -26,30 +29,48 @@ See the LICENSE.txt file for details.
 
 ### Prerequisites
 
-On Unix and Linux, a g++ compiler >= 4.8 is requires.
-On Windows, you need at leas Visual Studio 2015. Other platforms / compilers / IDEs have not been tested but are likely to work as well (pls file an issue if not).
+On Unix and Linux, a g++ compiler >= 4.8 is required.
+On Windows, you need at least Visual Studio 2012. Other platforms / compilers / IDEs have not been tested but are likely to work as well (please file an issue if not).
 
-[biicode](https://www.biicode.com/) is required to download pmuc dependent libraries. Biicode also requires a [cmake](http://www.cmake.org/) version < 3.0. 
-
-On some platforms, all prequistes for biicode can be install running:
-    bii setup:cpp
+Building requires a [cmake](http://www.cmake.org/) version >= 2.8. 
 
 ### Dependencies
 
-Most dependencies are managed by biicode ([eigen](http://eigen.tuxfamily.org), [OpenCOLLADA](https://collada.org/mediawiki/index.php/OpenCOLLADA), [xiot](https://github.com/Supporting/xiot), [IFCPlusPlus](https://github.com/ifcquery/ifcplusplus)) including their subdependencies. Soley a biicode package for libiconv is missing, thus we deliver windows versions with the pmuc repository (contrib folder). On Linux, the functionality of libiconv should be available in standrd libraries (when build-essentials have been installed). If not, try:
+Most dependencies are included in git submodules, namely [eigen](http://eigen.tuxfamily.org), [OpenCOLLADA](https://collada.org/mediawiki/index.php/OpenCOLLADA), [xiot](https://github.com/Supporting/xiot), and [IFCPlusPlus](https://github.com/ifcquery/ifcplusplus). To inititalize the submodules, run:
 
-    sudo apt-get install libiconv-hook-dev
+    git submodule init
+    git submodule update
 
-<!-- An optional dependency also exists on iconv for encoding translations, Windows users can find it at : http://gnuwin32.sourceforge.net/packages/libiconv.htm -->
+Soley [boost](http://www.boost.org/) needs to be provided externally. On Linux it is sufficient to install the boost development package, e.g.:
 
+    sudo apt-get install libboost-all-dev
+
+On other systems, let the environment varaible ``BOOST_ROOT```point to Boost root directory.
 
 ### Run the build
 
-To start the build, run
+#### Windows
 
-    bii buzz
+Run cmake from a different directory than your source (e.g. in a ```build``` folder) and select the generator of your choice, e.g.:
+  
+    cmake -G "Visual Studio 14 2015 Win64" ..
 
-from the root directory.
+Open the generated IDE file (pmuc.sln) or start the build from command line:
+
+    cmake --build . --target pmuc --config Release
+
+#### Linux
+
+Run:
+  
+    mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
+    cmake --build . --target pmuc
+
+### Running Tests
+
+PMUC includes a number of running tests that can be run from the build directory using ```ctest```:
+
+    ctest -C Release --output-on-failure
 
 Credit
 ------
