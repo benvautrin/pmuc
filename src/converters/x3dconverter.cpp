@@ -20,7 +20,6 @@
  */
 
 // Only compile if XIOT is available.
-#ifdef XIOT_FOUND
 
 #include "x3dconverter.h"
 
@@ -617,4 +616,3 @@ std::pair<std::string, int> X3DConverter::getInstanceName(const std::vector<floa
     return std::make_pair("", 0);
 }
 
-#endif // XIOT_FOUND

@@ -1,19 +1,23 @@
+environment:
+  BOOST_ROOT: C:\Libraries\boost_1_59_0
+  CMAKE_GENERATOR: "Visual Studio 14 2015 Win64"
+  CMAKE_BUILD_TYPE: "Release"
+
 install:
-  - cinst biicode
-  - cmd: set PATH=%PATH:CMake 2.8\bin=%;C:\ProgramData\chocolatey\lib\cmake.3.0.2\content\cmake-3.0.2-win32-x86\bin
-  - cmd: set PATH=%PATH%;C:\Program Files (x86)\BiiCode\bii;
-  - cmd: bii --version
-  - cmd: cmake --version
+  - cmd: git submodule update --init --recursive
 
 build_script:
-  - cmd: bii init -L
-  - cmd: bii find
-  - cmd: bii cpp:configure -G "Visual Studio 12 Win64" || bii cpp:configure -G "Visual Studio 12 Win64"
-  - cmd: bii cpp:build --config RELEASE
+  - cmd: echo "Generator='%CMAKE_GENERATOR%', CMAKE_BUILD_TYPE='%CMAKE_BUILD_TYPE%'"
+  - cmd: echo "Platform='%Platform%'"
+  - cmd: cmake --version
+  - cmd: mkdir build
+  - cmd: cd build
+  - cmd: cmake -G "%CMAKE_GENERATOR%" "-DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE%"  ..
+  - cmd: cmake --build . --target pmuc --config %CMAKE_BUILD_TYPE%
 
 test_script:
-  - cmd: bii test -VV
+  - ctest -C "%CMAKE_BUILD_TYPE%" --output-on-failure
 
 artifacts:
-  path: /bin/pmuc.exe
-  name: pmuc
+  - path: build\bin\$(CMAKE_BUILD_TYPE)
+

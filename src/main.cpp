@@ -195,13 +195,11 @@ int main(int argc, char** argv)
                 if (options[format].count() > 0) {
                     RVMReader* reader;
                     switch (format) {
-#ifdef XIOT_FOUND
                         case X3D:
                         case X3DB: {
                             string name = filename + ".x3d" + (format == X3D ? "" : "b");
                             reader = new X3DConverter(name, format == X3DB);
                         } break;
-#endif // XIOT_FOUND
 
 #ifdef OPENCOLLADASW_FOUND
                         case COLLADA: {

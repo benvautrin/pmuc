@@ -19,8 +19,6 @@
  * MA 02110-1301  USA
  */
 
-// Only compile if OpenCOLLADA is available
-#ifdef OPENCOLLADASW_FOUND
 
 #include "colladaconverter.h"
 
@@ -687,4 +685,3 @@ void COLLADAConverter::writeMesh(const std::string &gid, const Mesh &mesh, const
     m_writer->closeElement(); // geometry
 }
 
-#endif // OPENCOLLADASW_FOUND
