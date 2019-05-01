@@ -28,6 +28,9 @@
 #include <ifcpp/model/IfcPPModel.h>
 #include <ifcpp/model/StatusCallback.h>
 
+#define EIGEN_DONT_VECTORIZE
+#define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+
 #include <Eigen/Core>
 
 #include <stack>

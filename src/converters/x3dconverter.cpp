@@ -31,6 +31,9 @@
 #include <xiot/X3DWriterFI.h>
 #include <xiot/X3DWriterXML.h>
 
+#define EIGEN_DONT_VECTORIZE
+#define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/SVD>
@@ -42,7 +45,6 @@
 
 using namespace std;
 using namespace XIOT;
-using namespace Eigen;
 
 X3DConverter::X3DConverter(const string& filename, bool binary) :
     RVMReader(),
@@ -528,7 +530,7 @@ void X3DConverter::createFacetGroup(const std::array<float, 12>& matrix,
 void X3DConverter::startShape(const std::array<float, 12>& matrix) {
 
     // Finding axis/angle from matrix using Eigen for its bullet proof implementation.
-    Transform<float, 3, Affine> t;
+    Eigen::Transform<float, 3, Eigen::Affine> t;
     t.setIdentity();
     for (unsigned int i = 0; i < 3; i++) {
         for (unsigned int j = 0; j < 4; j++) {
@@ -536,16 +538,16 @@ void X3DConverter::startShape(const std::array<float, 12>& matrix) {
         }
     }
 
-    Matrix3f rotationMatrix;
-    Matrix3f scaleMatrix;
+    Eigen::Matrix3f rotationMatrix;
+	Eigen::Matrix3f scaleMatrix;
     t.computeRotationScaling(&rotationMatrix, &scaleMatrix);
-	Quaternionf q;
-    AngleAxisf aa;
+	Eigen::Quaternionf q;
+	Eigen::AngleAxisf aa;
 	q = rotationMatrix;
     aa = q;
 
-    Vector3f scale = scaleMatrix.diagonal();
-    Vector3f translation = t.translation();
+	Eigen::Vector3f scale = scaleMatrix.diagonal();
+	Eigen::Vector3f translation = t.translation();
 
     startNode(ID::Transform);
     m_writers.back()->setSFVec3f(ID::translation, translation.x(), translation.y() , translation.z());
