@@ -26,6 +26,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdio>
+#include <cassert>
 #include <algorithm>
 #include <array>
 #include <stdint.h>
@@ -39,6 +40,19 @@ using namespace std;
 #else
 #define PATHSEP '/'
 #endif
+
+/**
+ * List of all RVM keywords used inside the RVM format
+ */
+static const std::vector<const char*> RVM_KEYWORDS = {
+    "HEAD",
+    "END",
+    "MODL",
+    "CNTB",
+    "PRIM",
+    "CNTE",
+    "COLR"
+};
 
 typedef std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F>>>>        FacetGroup;
 
@@ -76,6 +90,20 @@ struct Identifier
     inline bool empty() const
     {
         return *chrs == 0;
+    }
+
+    bool isValid() const
+    {
+        for(const auto &keyword : RVM_KEYWORDS)
+            if(*this == keyword)
+                return true;
+
+        return false;
+    }
+
+    inline std::string toString() const
+    {
+        return std::string(chrs, chrs + 4);
     }
 
     char        chrs[4];
@@ -199,6 +227,113 @@ string& read_<string>(istream& is, string& str)
     str = cbuffer;
 #endif
     return str;
+}
+
+/**
+ * Reads until either the end of the stream has been reached or a valid keyword has been found.
+ *
+ * @param in - The input stream
+ * @param outIdentifier - Reference for returning the keyword if one has been found.
+ *
+ * @return Returns true if a valid identifier has been found and false if the end of the stream has been reached.
+ */
+static bool readUntilValidIdentifier(std::istream& in, Identifier& outIdentifier)
+{
+    // internal buffer for storing previously read bytes
+    std::array<char, 16> buf;
+    std::size_t numBufBytes = 0;
+
+    // pointer onto the characters of the outgoing identifier
+    auto outChars = outIdentifier.chrs;
+
+    // lambda for removing the first byte of the buffer
+    auto removeFirstByte = [&buf, &numBufBytes]()
+    {
+        assert(!buf.empty());
+
+        std::copy(buf.begin() + 1, buf.end(), buf.begin());
+        -- numBufBytes;
+    };
+
+    // fill buffer up to the given amount of bytes
+    auto readBytesUntil = [&buf, &numBufBytes, &in](const std::size_t numBytes)
+    {
+        assert(numBytes <= 16);
+
+        if(numBytes > numBufBytes)
+        {
+            in.read(buf.data() + numBufBytes, numBytes - numBufBytes);
+            numBufBytes = numBytes;
+        }
+    };
+
+    // read as long as we have not reached the end of the stream
+    for(;in; removeFirstByte())
+    {
+        // ensure, that there are at least twelve bytes in the buffer
+        readBytesUntil(12);
+
+        // interpret the first 3 characters (12 bytes)
+        auto readFirstThreeChars = [&buf, &outChars]() -> bool
+        {
+            auto ptr = buf.begin();
+
+            for (std::size_t i = 0; i < 3; ++i, ptr += 4)
+            {
+                // the first three bytes of the current double word have to be zero
+                if (ptr[0] != 0 || ptr[1] != 0 || ptr[2] != 0)
+                    return false;
+
+                // extract character
+                outChars[i] = ptr[3];
+            }
+
+            return true;
+        };
+
+        if(!readFirstThreeChars())
+            continue;
+
+        // check if we got the end identifier
+        if(std::equal(outChars, outChars + 3, "END"))
+        {
+            outChars[3] = 0;
+            return true;
+        }
+
+        // check/read the next 4 bytes, i.e., the last character
+        auto readLastChar = [&buf, &readBytesUntil, &outChars]() -> bool
+        {
+            auto ptr = buf.begin() + 12;
+
+            // Check that the first 3 bytes are zero.
+            // Here, we are a little bit more carefull to read as few bytes as needed
+            for(std::size_t i=0; i<3; ++i)
+            {
+                // check if buffer is large enough
+                readBytesUntil(13 + i);
+
+                // stop reading if an invalid character is encountered
+                if(ptr[i] != 0)
+                    return false;
+            }
+
+            // finally, read last byte
+            readBytesUntil(16);
+            outChars[3] = ptr[3];
+
+            return true;
+        };
+
+        if(!readLastChar())
+            continue;
+
+        // finally check if identifier is valid
+        if(outIdentifier.isValid())
+            return true;
+    }
+
+    return false;
 }
 
 static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res)
@@ -411,7 +546,11 @@ bool RVMParser::readBuffer(const char* buffer) {
 bool RVMParser::readStream(istream& is)
 {
     Identifier id;
-    read_(is, id);
+    if(!readUntilValidIdentifier(is, id))
+    {
+        m_lastError = "Could not find HEAD identifier";
+        return false;
+    }
 
     if (id.empty())
     {
@@ -454,7 +593,11 @@ bool RVMParser::readStream(istream& is)
         m_reader.endHeader();
     }
 
-    read_(is, id);
+    if (!readUntilValidIdentifier(is, id)) {
+        m_lastError = "Incorrect file format while reading identifier.";
+        return false;
+    }
+
     if (id.empty()) {
         m_lastError = "Incorrect file format while reading identifier.";
         return false;
@@ -484,8 +627,12 @@ bool RVMParser::readStream(istream& is)
             if (!readPrimitive(is)) {
                 return false;
             }
+        } else if (id == "COLR") {
+            if (!readColor(is)) {
+                return false;
+            }
         } else {
-            m_lastError = "Unknown or invalid identifier found.";
+            m_lastError = "'" + id.toString() + "' Unknown or invalid identifier found.";
             return false;
         }
     }
@@ -722,6 +869,23 @@ bool RVMParser::readPrimitive(std::istream& is)
                 return false;
         }
     }
+    return true;
+}
+
+
+bool RVMParser::readColor(std::istream& is)
+{
+    const auto pos = int(is.tellg());
+
+    skip_<2>(is); // Garbage ?
+    const unsigned int version = read_<unsigned int>(is);
+    const unsigned int index = read_<unsigned int>(is);
+
+    std::array<std::uint8_t, 4> color;
+    is.read(reinterpret_cast<char*>(color.data()), 4);
+
+    m_reader.updateColorPalette(index, color);
+
     return true;
 }
 

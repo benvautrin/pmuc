@@ -212,6 +212,14 @@ class RVMReader
                                      const FGroup& vertexes) = 0;
 
         /**
+         * Setting/Replacing an existing entry in the color map.
+         *
+         * @param index - The index of the entry in the color map.
+         * @param color - The new color values to be set.
+         */
+        virtual void updateColorPalette(std::uint32_t index, const std::array<std::uint8_t, 4> &color) {}
+
+        /**
          * @brief Sets the maximum size for a side of a primitive when tesselating.
          * @param size
          */
