@@ -451,8 +451,8 @@ const Mesh RVMMeshHelper2::makePyramid(const Primitives::Pyramid& inP, const flo
     for (int i = 0; i < 8; i++)
     {
         Vector3F p;
-        p[0] = i < 4 ? pyramid[i * 3] * inP.xbottom() - inP.xoffset() * 0.5f: pyramid[i * 3] * inP.xtop() + inP.xoffset() * 0.5f;
-        p[1] = i < 4 ? pyramid[i * 3 + 1] * inP.ybottom() - inP.yoffset() * 0.5f  : pyramid[i * 3 + 1] * inP.ytop() + inP.yoffset() * 0.5f;
+        p[0] = i < 4 ? pyramid[i * 3] * inP.xbottom() : pyramid[i * 3] * inP.xtop() + inP.xoffset();
+        p[1] = i < 4 ? pyramid[i * 3 + 1] * inP.ybottom() : pyramid[i * 3 + 1] * inP.ytop() + inP.yoffset();
         p[2] = pyramid[i * 3 + 2] * inP.height();
         points.push_back(p);
     }
@@ -511,7 +511,6 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, un
 
     const unsigned long nrTrianglesSide = 2 * sides;
 
-    unsigned long v0, v1, v2, v3, n0, n1;
     for (unsigned long i = 0; i < sides; i++)
     {
         // Dimensions in x and y, z is height
@@ -522,13 +521,13 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, un
         positions.push_back(Vector3F(x*cylinder.radius(), y*cylinder.radius(), +halfHeight));
         normals.push_back(Vector3F(x,y,0));
 
-        v0 = i * 2;
-        v1 = v0 + 1;
-        v2 = (v0 + 2) % nrTrianglesSide;
-        v3 = (v0 + 3) % nrTrianglesSide;
+        const unsigned long v0 = i * 2;
+        const unsigned long v1 = v0 + 1;
+        const unsigned long v2 = (v0 + 2) % nrTrianglesSide;
+        const unsigned long v3 = (v0 + 3) % nrTrianglesSide;
 
-        n0 = i;
-        n1 = (n0 + 1) % sides;
+        const unsigned long n0 = i;
+        const unsigned long n1 = (n0 + 1) % sides;
 
         // First triangle (CW: 0, 2, 1)
         positionIndex.push_back(v0);
@@ -546,32 +545,6 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder &cylinder, un
         positionIndex.push_back(v3);
         normalIndex.push_back(n1);
     }
-    // bottom (index: sides*2)
-    positions.push_back(Vector3F(0, 0, -halfHeight));
-    // top (index: sides*2 + 1)
-    positions.push_back(Vector3F(0, 0, +halfHeight));
-    // down (index: sides)
-    normals.push_back(Vector3F(0, 0, -1));
-    // up (index: sides + 1)
-    normals.push_back(Vector3F(0, 0, -1));
-
-    for (unsigned long i = 0; i < sides; i++) {
-        positionIndex.push_back(sides*2); // bottom
-        positionIndex.push_back(i*2);
-        positionIndex.push_back((i*2 + 2) % nrTrianglesSide);
-        normalIndex.push_back(sides);
-        normalIndex.push_back(sides);
-        normalIndex.push_back(sides);
-    }
-
-    for (unsigned long i = 0; i < sides; i++) {
-        positionIndex.push_back(sides*2 + 1); // top
-        positionIndex.push_back(i*2 + 1);
-        positionIndex.push_back((i*2 + 3) % nrTrianglesSide);
-        normalIndex.push_back(sides + 1);
-        normalIndex.push_back(sides + 1);
-        normalIndex.push_back(sides + 1);
-    }
 
     Mesh result;
     result.positions = positions;
@@ -588,99 +561,97 @@ unsigned long RVMMeshHelper2::infoSnoutNumSides(const Primitives::Snout &snout, 
 
 const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned long sides)
 {
-    const float rtop = snout.dtop();
     const float rbottom = snout.dbottom();
+    const float rtop = snout.dtop();
     const float height = snout.height();
     const float xoffset = snout.xoffset();
     const float yoffset = snout.yoffset();
-    const float heightXOffsetTop = rtop * tan(snout.xtshear());
-    const float heightYOffsetTop = rtop * tan(snout.ytshear());
-    const float heightXOffsetBottom = rbottom * tan(snout.xbshear());
-    const float heightYOffsetBottom = rbottom * tan(snout.ybshear());
 
-    vector<Vector3F> points;
-    vector<Vector3F> normals;
     vector<unsigned long> index;
+    vector<Vector3F> points;
     vector<unsigned long> normalindex;
+    vector<Vector3F> vectors;
 
-    const float halfHeight = height / 2;
+    const float hh = height / 2;
 
     // Vector3Fes and normals
     Vector3F v;
     Vector3F n;
-
-    const float da = float(2.0f * M_PI / static_cast<float>(sides));
+    const float da = 2.0f * M_PI / static_cast<float>(sides);
     for (unsigned long i = 0; i < sides; i++)
     {
-        const float a = static_cast<float>(i)* da;
-        const float x = sin(a);
-        const float y = cos(a);
+        const float a = static_cast<float>(i) * da;
+        const float c = std::cos(a);
+        const float s = std::sin(a);
 
-        v[0] = rbottom * x;
-        v[1] = rbottom * y;
-        v[2] = -halfHeight + heightXOffsetBottom * x + heightYOffsetBottom * y;
+        //v[0] = rbottom * c; v[1] = rbottom * s; v[2] = -hh;
+        v[0] = rbottom * c - xoffset / 2.0f; v[1] = rbottom * s - yoffset / 2.0f; v[2] = -hh;
         points.push_back(v);
 
-        v[0] = rtop * x + xoffset;
-        v[1] = rtop * y + yoffset;
-        v[2] = halfHeight + heightXOffsetTop * x + heightYOffsetTop * y;
+        //v[0] = rtop * c + xoffset; v[1] = rtop * s + yoffset; v[2] = hh;
+        v[0] = rtop * c + xoffset / 2.0f; v[1] = rtop * s + yoffset / 2.0f; v[2] = hh;
         points.push_back(v);
-        if (height > 0.0f) {
-            normals.push_back(Vector3F(x,y,0));
-        } else {
-            normals.push_back(Vector3F(0,0,1));
+        if (height > 0.0f)
+        {
+            float dh = sqrt(fabs(((rtop * c + xoffset - rbottom * c)*(rtop * c + xoffset - rbottom * c) + (rtop * s + yoffset - rbottom * s)*(rtop * s + yoffset - rbottom * s)) / (height*height)));
+            n[0] = c; n[1] = s; n[2] = (rtop < rbottom) ? dh : -dh;
+            n.normalize();
         }
+        else
+            n[0] = 0; n[1] = 0; n[2] = 1;
+
+        vectors.push_back(n);
     }
 
     // Sides
     for (unsigned long i = 0; i < sides; i++)
     {
         index.push_back(i * 2);
-        index.push_back(i * 2 + 1);
         index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
+        index.push_back(i * 2 + 1);
 
-        normalindex.push_back(i);
         normalindex.push_back(i);
         normalindex.push_back(i < sides - 1 ? i + 1 : 0);
+        normalindex.push_back(i);
 
         index.push_back(i < sides - 1 ? i * 2 + 2 : 0);
-        index.push_back(i * 2 + 1);
         index.push_back(i < sides - 1 ? i * 2 + 3 : 1);
+        index.push_back(i * 2 + 1);
 
+        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
         normalindex.push_back(i < sides - 1 ? i + 1 : 0);
         normalindex.push_back(i);
-        normalindex.push_back(i < sides - 1 ? i + 1 : 0);
-
     }
 
     // Caps
-    // - Cap normals
-    const unsigned long nci = static_cast<unsigned long>(normals.size());
-    normals.push_back(Vector3F(sin(snout.xbshear())*cos(snout.ybshear()),sin(snout.ybshear()),-cos(snout.xbshear())*cos(snout.ybshear())));
-    normals.push_back(Vector3F(-sin(snout.xtshear())*cos(snout.ytshear()),-sin(snout.ytshear()),cos(snout.xtshear())*cos(snout.ytshear())));
-
-    // - Cap centers
+    // - Caps normals
+    const unsigned long nci = static_cast<unsigned long>(vectors.size());
+    n[0] = 0; n[1] = 0; n[2] = -1;
+    vectors.push_back(n);
+    n[0] = 0; n[1] = 0; n[2] = 1;
+    vectors.push_back(n);
+    // - Caps centers
     const unsigned long ci = static_cast<unsigned long>(points.size());
-    points.push_back(Vector3F(0 ,0, -halfHeight));
-    points.push_back(Vector3F(0, 0,  halfHeight));
-
-    // - Bottom caps indexes
+    v[0] = - xoffset / 2.0f; v[1] = -yoffset / 2.0f; v[2] = -hh;
+    points.push_back(v);
+    v[0] = xoffset / 2.0f; v[1] = yoffset / 2.0f; v[2] = hh;
+    points.push_back(v);
+    // - Caps indexes
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2);
-        index.push_back(j < sides - 1 ? (j + 1) * 2 : 0);
         index.push_back(ci);
+        index.push_back(j < sides - 1 ? (j + 1) * 2 : 0);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
         normalindex.push_back(nci);
     }
 
-    // - Top caps indexes
     for (unsigned long j = 0; j < sides; j++)
     {
         index.push_back(j * 2 + 1);
-        index.push_back(ci + 1);
         index.push_back(j < sides - 1 ? j * 2 + 3 : 1);
+        index.push_back(ci + 1);
         normalindex.push_back(nci + 1);
         normalindex.push_back(nci + 1);
         normalindex.push_back(nci + 1);
@@ -689,8 +660,9 @@ const Mesh RVMMeshHelper2::makeSnout(const Primitives::Snout& snout, unsigned lo
     Mesh result;
     result.positions = points;
     result.positionIndex = index;
-    result.normals = normals;
+    result.normals = vectors;
     result.normalIndex = normalindex;
+
     return result;
 }
 
