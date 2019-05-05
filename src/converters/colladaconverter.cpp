@@ -306,7 +306,7 @@ void COLLADAConverter::endModel() {
         m_writer->openElement(colladaKey[colladaKeys::diffuse]);
         m_writer->openElement(colladaKey[colladaKeys::color]);
         vector<float> color = RVMColorHelper::color(*it);
-        m_writer->appendValues(color[0], color[1], color[2], 0);
+        m_writer->appendValues(color[0], color[1], color[2], 0.0f);
         m_writer->closeElement(); // color
         m_writer->closeElement(); // diffuse
         m_writer->closeElement(); // lambert

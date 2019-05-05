@@ -21,3 +21,5 @@ CMakeList.txt.user*
 # Build specific temp files
 /bin
 /bii
+.vscode
+build
