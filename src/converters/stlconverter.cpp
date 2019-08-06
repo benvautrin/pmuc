@@ -37,11 +37,9 @@ using namespace std;
 
 STLConverter::STLConverter(const string& filename)
     : RVMReader(), mFile(filename.c_str(), fstream::out | fstream::binary), m_facetCount(0) {
-  std::cout << "OPEN" << std::endl;
 }
 
 STLConverter::~STLConverter() {
-  std::cout << "CLOSE" << std::endl;
   if (mFile.is_open()) {
     mFile.close();
   };
@@ -50,9 +48,9 @@ STLConverter::~STLConverter() {
 void STLConverter::startDocument() {}
 
 void STLConverter::endDocument() {
-  cout << "Facets: " << m_facetCount << std::endl;
-  cout << "Bounding Box: "
-       << "Min: " << m_boundingBox.min() << "Max: " << m_boundingBox.max() << std::endl;
+  cout << "Facets: " << m_facetCount << endl;
+  // cout << "Bounding Box: " << endl;
+  // cout << "Min: " << m_boundingBox.min() << "Max: " << m_boundingBox.max() << endl;
 
   // Go back to the place to write the facet count
   mFile.seekp(80);

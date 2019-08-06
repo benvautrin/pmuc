@@ -83,7 +83,7 @@ const string formatnames[] = {
     "X3D", "X3DB",
     "COLLADA",
     "IFC4", "IFC2x3",
-    "DSL", "DUMMY", "STL"
+    "DSL", "STL", "DUMMY"
 };
 
 enum primitives { BOX, SNOUT, CYLINDER, SPHERE, CIRCULARTORUS, RECTANGULARTORUS, PYRAMID, LINE, ELLIPTICALDISH, SPHERICALDISH };
