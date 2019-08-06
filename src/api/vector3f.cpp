@@ -44,6 +44,14 @@ Vector3F::Vector3F(const std::vector<float>& v) {
     m_values[2] = v[2];
 }
 
+Vector3F Vector3F::cross(const Vector3F& v) {
+    Vector3F d;
+    d.m_values[0] = y() * v.z() - v.y() * z();
+    d.m_values[1] = z() * v.x() - v.z() * x();
+    d.m_values[2] = x() * v.y() - v.x() * y();
+    return d;
+}
+
 Vector3F operator-(const std::vector<float>& p1, const std::vector<float>& p2) {
     Vector3F d;
     d.m_values[0] = p1[0] - p2[0];

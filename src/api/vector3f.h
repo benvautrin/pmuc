@@ -78,6 +78,8 @@ class Vector3F
             return 0.f;
         }
 
+        Vector3F cross(const Vector3F& y );
+
         inline bool equals(const Vector3F& v) const {
             return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
         }
