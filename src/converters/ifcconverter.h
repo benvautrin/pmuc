@@ -25,31 +25,12 @@
 #include "../api/rvmreader.h"
 #include "../api/rvmmeshhelper.h"
 
-#include <ifcpp/model/IfcPPModel.h>
-#include <ifcpp/model/StatusCallback.h>
-
 #define EIGEN_DONT_VECTORIZE
 #define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
 #include <Eigen/Core>
 
 #include <stack>
-
-class IfcOwnerHistory;
-class IfcRelAggregates;
-class IfcLocalPlacement;
-class IfcObjectDefinition;
-class IfcGeometricRepresentationContext;
-class IfcRepresentationItem;
-class IfcMaterial;
-class IfcPropertySet;
-class IfcLabel;
-class IfcSurfaceStyle;
-class IfcPPEntity;
-class IfcAxis2Placement3D;
-class IfcProfileDef;
-class IfcDirection;
-class IfcPlane;
 
 typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
 
@@ -99,33 +80,33 @@ class IFCConverter : public RVMReader
 
         virtual void createFacetGroup(const std::array<float, 12>& matrix,  const FGroup& vertexes);
 
-        static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
+        // static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
 
     private:
-        shared_ptr<IfcPPModel>                          m_model;
-        shared_ptr<IfcOwnerHistory>                     m_owner_history;
-        shared_ptr<IfcGeometricRepresentationContext>   m_context;
+        //IfcPPModel				                        m_model;
+        //shared_ptr<IfcOwnerHistory>                     m_owner_history;
+        //shared_ptr<IfcGeometricRepresentationContext>   m_context;
         std::string                                     m_filename;
-        std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
-        std::map<int, shared_ptr<IfcMaterial> >         m_materials;
-        std::map<int, shared_ptr<IfcSurfaceStyle> >     m_styles;
-        shared_ptr<IfcPropertySet>                      m_propertySet;
+        //std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
+        //std::map<int, shared_ptr<IfcMaterial> >         m_materials;
+        //std::map<int, shared_ptr<IfcSurfaceStyle> >     m_styles;
+        //shared_ptr<IfcPropertySet>                      m_propertySet;
         int                                             m_currentEntityId;
         std::stack<int>                                 m_currentMaterial;
 
-        shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
-        shared_ptr<IfcMaterial> createMaterial(int id);
-        shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
+        //shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
+        //shared_ptr<IfcMaterial> createMaterial(int id);
+        //shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
         void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
-        void insertEntity(shared_ptr<IfcPPEntity> e);
+        //void insertEntity(shared_ptr<IfcPPEntity> e);
         void initModel();
-        void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
-        void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
-        void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform);
+        //void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
+        //void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
+        //void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform);
 
         void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
-        shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
-        shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
+        //shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
+        //shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
 };
 
 #endif // IFCCONVERTER_H

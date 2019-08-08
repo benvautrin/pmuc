@@ -34,86 +34,6 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/locale/encoding_utf.hpp>
 
-#include <ifcpp/writer/IfcPPWriterSTEP.h>
-#include <ifcpp/IFC4/include/IfcProject.h>
-#include <ifcpp/IFC4/include/IfcPerson.h>
-#include <ifcpp/IFC4/include/IfcIdentifier.h>
-#include <ifcpp/IFC4/include/IfcOwnerHistory.h>
-#include <ifcpp/IFC4/include/IfcPersonAndOrganization.h>
-#include <ifcpp/IFC4/include/IfcLabel.h>
-#include <ifcpp/IFC4/include/IfcChangeActionEnum.h>
-#include <ifcpp/IFC4/include/IfcTimeStamp.h>
-#include <ifcpp/IFC4/include/IfcGloballyUniqueId.h>
-#include <ifcpp/IFC4/include/IfcBuilding.h>
-#include <ifcpp/IFC4/include/IfcSite.h>
-#include <ifcpp/IFC4/include/IfcPolyline.h>
-#include <ifcpp/IFC4/include/IfcCartesianPoint.h>
-#include <ifcpp/IFC4/include/IfcReflectanceMethodEnum.h>
-#include <ifcpp/IFC4/include/IfcAxis2Placement3D.h>
-#include <ifcpp/IFC4/include/IfcApplication.h>
-#include <ifcpp/IFC4/include/IfcLengthMeasure.h>
-#include <ifcpp/IFC4/include/IfcRelAggregates.h>
-#include <ifcpp/IFC4/include/IfcBuildingElementProxy.h>
-#include <ifcpp/IFC4/include/IfcProductDefinitionShape.h>
-#include <ifcpp/IFC4/include/IfcProduct.h>
-#include <ifcpp/IFC4/include/IfcShapeRepresentation.h>
-#include <ifcpp/IFC4/include/IfcGeometricRepresentationContext.h>
-#include <ifcpp/IFC4/include/IfcDimensionCount.h>
-#include <ifcpp/IFC4/include/IfcFaceBasedSurfaceModel.h>
-#include <ifcpp/IFC4/include/IfcConnectedFaceSet.h>
-#include <ifcpp/IFC4/include/IfcPolyLoop.h>
-#include <ifcpp/IFC4/include/IfcFaceOuterBound.h>
-#include <ifcpp/IFC4/include/IfcFace.h>
-#include <ifcpp/IFC4/include/IfcOrganization.h>
-#include <ifcpp/IFC4/include/IfcUnitAssignment.h>
-#include <ifcpp/IFC4/include/IfcSIUnit.h>
-#include <ifcpp/IFC4/include/IfcSIUnitName.h>
-#include <ifcpp/IFC4/include/IfcUnitEnum.h>
-#include <ifcpp/IFC4/include/IfcLocalPlacement.h>
-#include <ifcpp/IFC4/include/IfcTriangulatedFaceSet.h>
-#include <ifcpp/IFC4/include/IfcCartesianPointList3D.h>
-#include <ifcpp/IFC4/include/IfcLengthMeasure.h>
-#include <ifcpp/IFC4/include/IfcMaterial.h>
-#include <ifcpp/IFC4/include/IfcRelAssociatesMaterial.h>
-#include <ifcpp/IFC4/include/IfcMaterialDefinitionRepresentation.h>
-#include <ifcpp/IFC4/include/IfcStyledRepresentation.h>
-#include <ifcpp/IFC4/include/IfcStyledItem.h>
-#include <ifcpp/IFC4/include/IfcPresentationStyleAssignment.h>
-#include <ifcpp/IFC4/include/IfcColourRgb.h>
-#include <ifcpp/IFC4/include/IfcNormalisedRatioMeasure.h>
-#include <ifcpp/IFC4/include/IfcSurfaceStyleRendering.h>
-#include <ifcpp/IFC4/include/IfcSurfaceStyle.h>
-#include <ifcpp/IFC4/include/IfcSurfaceSide.h>
-#include <ifcpp/IFC4/include/IfcPropertySet.h>
-#include <ifcpp/IFC4/include/IfcRelDefinesByProperties.h>
-#include <ifcpp/IFC4/include/IfcPropertySingleValue.h>
-#include <ifcpp/IFC4/include/IfcText.h>
-#include <ifcpp/IFC4/include/IfcExtrudedAreaSolid.h>
-#include <ifcpp/IFC4/include/IfcCircleProfileDef.h>
-#include <ifcpp/IFC4/include/IfcProfileTypeEnum.h>
-#include <ifcpp/IFC4/include/IfcAxis2Placement2D.h>
-#include <ifcpp/IFC4/include/IfcDirection.h>
-#include <ifcpp/IFC4/include/IfcRectangleProfileDef.h>
-#include <ifcpp/IFC4/include/IfcRevolvedAreaSolid.h>
-#include <ifcpp/IFC4/include/IfcPlaneAngleMeasure.h>
-#include <ifcpp/IFC4/include/IfcAxis1Placement.h>
-#include <ifcpp/IFC4/include/IfcTrimmedCurve.h>
-#include <ifcpp/IFC4/include/IfcTrimmingPreference.h>
-#include <ifcpp/IFC4/include/IfcArbitraryClosedProfileDef.h>
-#include <ifcpp/IFC4/include/IfcCircle.h>
-#include <ifcpp/IFC4/include/IfcCompositeCurve.h>
-#include <ifcpp/IFC4/include/IfcCompositeCurveSegment.h>
-#include <ifcpp/IFC4/include/IfcTransitionCode.h>
-#include <ifcpp/IFC4/include/IfcEllipse.h>
-#include <ifcpp/IFC4/include/IfcBooleanClippingResult.h>
-#include <ifcpp/IFC4/include/IfcBooleanOperator.h>
-#include <ifcpp/IFC4/include/IfcHalfSpaceSolid.h>
-#include <ifcpp/IFC4/include/IfcPlane.h>
-
-#include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
-
-#include <ifcpp/model/IfcPPGuid.h>
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/SVD>
@@ -129,11 +49,11 @@
 using boost::locale::conv::utf_to_utf;
 
 namespace {
-    shared_ptr<IfcNormalisedRatioMeasure> getNormalisedRatioMeasure(double value) {
+   /* shared_ptr<IfcNormalisedRatioMeasure> getNormalisedRatioMeasure(double value) {
         shared_ptr<IfcNormalisedRatioMeasure> measure( new IfcNormalisedRatioMeasure() );
         measure->m_value = value;
         return measure;
-    }
+    }*/
 
     std::wstring utf8_to_wstring(const std::string& str)
     {
@@ -169,7 +89,7 @@ namespace {
 }
 
 
-IFCConverter::IFCConverter(const std::string& filename, const std::string& schema) : RVMReader(), m_filename(filename), m_model(new IfcPPModel()), m_currentEntityId(0) {
+IFCConverter::IFCConverter(const std::string& filename, const std::string& schema) : RVMReader(), m_filename(filename), m_currentEntityId(0) {
     std::string filename_escaped = boost::replace_all_copy(filename, "\\", "\\\\");
 	std::wstringstream strs;
 	strs << "ISO-10303-21;" << std::endl;
@@ -190,22 +110,22 @@ IFCConverter::IFCConverter(const std::string& filename, const std::string& schem
     strs << "FILE_SCHEMA(('" << schema.c_str() << "'));" << std::endl;
 	strs << "ENDSEC;" << std::endl;
 
-    m_model->setFileHeader(strs.str().c_str());
+    //m_model->setFileHeader(strs.str().c_str());
 }
 
 IFCConverter::~IFCConverter() {
 }
 
 void IFCConverter::startDocument() {
-    shared_ptr<IfcProject> project(new IfcProject());
+    /*shared_ptr<IfcProject> project(new IfcProject());
     insertEntity(project);
     project->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    m_model->setIfcProject(project);
+    m_model->setIfcProject(project);*/
 
 }
 
 void IFCConverter::endDocument() {
-    shared_ptr<IfcPPWriterSTEP> writer( new IfcPPWriterSTEP() );
+    /*shared_ptr<IfcPPWriterSTEP> writer( new IfcPPWriterSTEP() );
     writer->setMessageCallBack(this, &IFCConverter::messageCallBack);
     std::stringstream stream;
     std::ofstream fileStream(m_filename);
@@ -213,11 +133,11 @@ void IFCConverter::endDocument() {
     writer->writeModelToStream(stream, m_model);
     fileStream << stream.rdbuf();
     fileStream.close();
-    std::cout << std::endl; // Finish progress line
+    std::cout << std::endl; // Finish progress line*/
 }
 
 void IFCConverter::startHeader(const std::string& banner, const std::string& fileNote, const std::string& dateStr, const std::string& user, const std::string& encoding) {
-    m_model->getIfcProject()->m_OwnerHistory = createOwnerHistory(user, banner, toTimeStamp(dateStr));
+    // m_model->getIfcProject()->m_OwnerHistory = createOwnerHistory(user, banner, toTimeStamp(dateStr));
 }
 
 void IFCConverter::endHeader() {
@@ -226,9 +146,9 @@ void IFCConverter::endHeader() {
 
 void IFCConverter::startModel(const std::string& projectName, const std::string& name) {
     // TODO(ksons): Which is long name and which is name
-    m_model->getIfcProject()->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( projectName )));
+    /*m_model->getIfcProject()->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( projectName )));
     m_model->getIfcProject()->m_LongName = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name )));
-    m_model->getIfcProject()->m_Phase = shared_ptr<IfcLabel>(new IfcLabel(L"$"));
+    m_model->getIfcProject()->m_Phase = shared_ptr<IfcLabel>(new IfcLabel(L"$"));*/
 
     // Initialize model with site, building etc
     initModel();
@@ -237,18 +157,18 @@ void IFCConverter::startModel(const std::string& projectName, const std::string&
 }
 
 void IFCConverter::endModel() {
-    assert(m_relationStack.size() == 1);
+    /*assert(m_relationStack.size() == 1);
     shared_ptr<IfcRelAggregates> aggregates = m_relationStack.top();
 
     // Do not add aggregates for empty model
     if(aggregates->m_RelatedObjects.size() > 0) {
         insertEntity(aggregates);
     }
-    m_relationStack.pop();
+    m_relationStack.pop();*/
 }
 
 void IFCConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
-    shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
+    /*shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
     buildingElement->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     buildingElement->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name ) ) );
     buildingElement->m_OwnerHistory = m_owner_history;
@@ -268,23 +188,23 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
     m_relationStack.top()->m_RelatedObjects.push_back(buildingElement);
 
     // Make this group top of the stack
-    pushParentRelation(buildingElement);
+    pushParentRelation(buildingElement);*/
 }
 
 void IFCConverter::endGroup() {
-    shared_ptr<IfcRelAggregates> aggregates = m_relationStack.top();
+    /*shared_ptr<IfcRelAggregates> aggregates = m_relationStack.top();
 
     // Do not add aggregates for empty groups
     if(aggregates->m_RelatedObjects.size() > 0) {
         insertEntity(aggregates);
     }
     m_relationStack.pop();
-    m_currentMaterial.pop();
+    m_currentMaterial.pop();*/
 }
 
 void IFCConverter::startMetaData() {
     // Create a property set that holds all upcoming properties
-    m_propertySet = shared_ptr<IfcPropertySet>( new IfcPropertySet() );
+    /*m_propertySet = shared_ptr<IfcPropertySet>( new IfcPropertySet() );
     m_propertySet->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     m_propertySet->m_OwnerHistory = m_owner_history;
     m_propertySet->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"RVM Attributes" ));
@@ -301,7 +221,7 @@ void IFCConverter::startMetaData() {
     propertyRelation->m_RelatedObjects.push_back(relatedObject);
     propertyRelation->m_RelatingPropertyDefinition = m_propertySet;
     propertyRelation->m_OwnerHistory = m_owner_history;
-    insertEntity(propertyRelation);
+    insertEntity(propertyRelation);*/
 
 }
 
@@ -310,7 +230,7 @@ void IFCConverter::endMetaData() {
 }
 
 void IFCConverter::startMetaDataPair(const std::string &name, const std::string &value) {
-    assert(m_propertySet);
+    /*assert(m_propertySet);
     std::string value_escaped = boost::replace_all_copy(value, "\\", "\\\\");
 
     shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
@@ -318,7 +238,7 @@ void IFCConverter::startMetaDataPair(const std::string &name, const std::string 
     prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(name) ));
     prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring(value_escaped) ));
 
-    m_propertySet->m_HasProperties.push_back(prop);
+    m_propertySet->m_HasProperties.push_back(prop);*/
 }
 
 void IFCConverter::endMetaDataPair() {
@@ -330,7 +250,7 @@ void IFCConverter::createPyramid(const std::array<float, 12>& matrix, const Prim
 
 
 void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
-    if (m_primitives) {
+    /*if (m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
         float s = getScaleFromTransformation(transform);
 
@@ -378,11 +298,11 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
     } else {
         writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
     }
-
+	*/
 }
 
 void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
-    if(m_primitives) {
+    /*if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -419,11 +339,11 @@ void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, c
         addRevolvedAreaSolidToShape(profile, axis, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
     } else {
         writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
-    if(m_primitives) {
+    /*if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -456,11 +376,11 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
     } else {
         auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
         writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
-    if(m_primitives) {
+    /*if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -556,11 +476,11 @@ void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, con
     } else {
         auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
         writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
-    if(m_primitives) {
+    /*if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -653,7 +573,7 @@ void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, cons
         addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitX())));
     } else {
         writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
@@ -666,7 +586,7 @@ void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primit
 }
 
 void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
-    if(m_primitives && std::abs(params.dtop() - params.dbottom()) < std::numeric_limits<float>::epsilon()) {
+   /* if(m_primitives && std::abs(params.dtop() - params.dbottom()) < std::numeric_limits<float>::epsilon()) {
         const auto transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -741,11 +661,11 @@ void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, con
     } else {
         auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
         writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
-    if (m_primitives) {
+    /*if (m_primitives) {
         const auto transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -789,11 +709,11 @@ void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Pri
     } else {
         auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
         writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
-    if(m_primitives) {
+    /*if(m_primitives) {
         Transform3f transform = toEigenTransform(matrix);
         const float s = getScaleFromTransformation(transform);
 
@@ -879,7 +799,7 @@ void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primi
         addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform);
     } else {
         writeMesh( RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
-    }
+    }*/
 }
 
 void IFCConverter::createLine(const std::array<float, 12>& m, const float& length, const float& thickness) {
@@ -892,7 +812,7 @@ void IFCConverter::createLine(const std::array<float, 12>& m, const float& lengt
     Eigen::Vector4f start = origin - dir;
     Eigen::Vector4f end = origin + dir;
 
-    shared_ptr<IfcPolyline> line (new IfcPolyline() );
+    /*shared_ptr<IfcPolyline> line (new IfcPolyline() );
     insertEntity(line);
 
     shared_ptr<IfcCartesianPoint> startPoint (new IfcCartesianPoint() );
@@ -911,13 +831,13 @@ void IFCConverter::createLine(const std::array<float, 12>& m, const float& lengt
 
     line->m_Points.push_back(endPoint);
 
-    addRepresentationToShape(line, shared_ptr<IfcLabel>( new IfcLabel( L"GeometricCurveSet" ) ));
+    addRepresentationToShape(line, shared_ptr<IfcLabel>( new IfcLabel( L"GeometricCurveSet" ) ));*/
 }
 
 void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup& vertices) {
     Eigen::Matrix4f matrix = toEigenMatrix(m);
 
-    shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
+    /*shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     insertEntity(cfs);
 
     shared_ptr<IfcFaceBasedSurfaceModel> surfaceModel ( new IfcFaceBasedSurfaceModel() );
@@ -957,11 +877,11 @@ void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup
     }
 
     addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
-
+	*/
 
 }
 
-shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user, const std::string &banner, int timeStamp) {
+/*shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user, const std::string &banner, int timeStamp) {
     if(!m_owner_history) {
         // The creator/owner of this document
         // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcperson.htm
@@ -1037,11 +957,11 @@ shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &
         insertEntity(m_owner_history);
     }
     return m_owner_history;
-}
+}*/
 
 
 void IFCConverter::initModel() {
-
+/*
     // create Site
     shared_ptr<IfcSite> site( new IfcSite() );
     site->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
@@ -1114,19 +1034,19 @@ void IFCConverter::initModel() {
 
     insertEntity(unitAssignment);
     m_model->getIfcProject()->m_UnitsInContext = unitAssignment;
-
+	*/
 }
 
-void IFCConverter::pushParentRelation(shared_ptr<IfcObjectDefinition> parent) {
+/*void IFCConverter::pushParentRelation(shared_ptr<IfcObjectDefinition> parent) {
     shared_ptr<IfcRelAggregates> child_relations( new IfcRelAggregates() );
     child_relations->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
     child_relations->m_RelatingObject = parent;
     m_relationStack.push(child_relations);
-}
+}*/
 
 
 void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
-    shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
+   /* shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
     insertEntity(cfs);
 
     Eigen::Matrix4f matrix = toEigenMatrix(m);
@@ -1167,11 +1087,11 @@ void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
         bound->m_Bound = polygon;
 
     }
-    addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
+    addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));*/
 }
 
-void IFCConverter::addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type) {
-    shared_ptr<IfcObjectDefinition> parent = m_relationStack.top()->m_RelatingObject;
+/*void IFCConverter::addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type) {
+   shared_ptr<IfcObjectDefinition> parent = m_relationStack.top()->m_RelatingObject;
     shared_ptr<IfcProduct> parentProduct = dynamic_pointer_cast<IfcProduct>(parent);
     if(parentProduct) {
         if(!parentProduct->m_Representation) {
@@ -1221,17 +1141,17 @@ void IFCConverter::addRepresentationToShape(shared_ptr<IfcRepresentationItem> it
         parentProduct->m_ObjectPlacement = placement;
 
     }
-}
+}*/
 
-void IFCConverter::insertEntity(shared_ptr<IfcPPEntity> e) {
-    if(e->m_id < 0) {
+/*void IFCConverter::insertEntity(shared_ptr<IfcPPEntity> e) {
+   if(e->m_id < 0) {
         m_currentEntityId++;
         e->m_id = m_currentEntityId;
     }
     m_model->insertEntity(e);
-}
+}*/
 
-shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id) {
+/*shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id) {
     std::map<int, shared_ptr<IfcSurfaceStyle>>::iterator I = m_styles.find(id);
     if(I != m_styles.end()) {
         return (*I).second;
@@ -1263,9 +1183,9 @@ shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id) {
     surfaceStyle->m_Styles.push_back(surfaceStyleRendering);
 
     return surfaceStyle;
-}
+}*/
 
-shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
+/*shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
     std::map<int, shared_ptr<IfcMaterial>>::iterator I = m_materials.find(id);
     if(I != m_materials.end()) {
         return (*I).second;
@@ -1296,9 +1216,9 @@ shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
     materialDefinition->m_Representations.push_back(styledRepresentation);
 
     return material;
-}
+}*/
 
-void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> message) {
+/*void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> message) {
     if (message->m_message_type == StatusCallback::MESSAGE_TYPE_PROGRESS_VALUE) {
         IFCConverter* self = (IFCConverter*)obj_ptr;
         static bool first = true;
@@ -1311,11 +1231,11 @@ void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Mes
     } else {
         std::wcerr << message->m_message_text << std::endl;
     }
-}
+}*/
 
 
 
-void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform) {
+/*void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform) {
             // Now define the axis for revolving
         shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
         insertEntity(location);
@@ -1340,9 +1260,9 @@ void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile
         solid->m_SweptArea = profile;
 
         addRepresentationToShape(solid, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
-}
+}*/
 
-shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
+/*shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
 
     Eigen::Vector3f translation = matrix.translation() + matrix.rotation() * offset;
 
@@ -1375,9 +1295,9 @@ shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transfor
     coordinate_system->m_Axis = axis;
     coordinate_system->m_RefDirection = refDirection;
     return coordinate_system;
-};
+};*/
 
-shared_ptr<IfcPlane> IFCConverter::createClippingPlane(double zPos, const Eigen::Vector3d &n) {
+/*shared_ptr<IfcPlane> IFCConverter::createClippingPlane(double zPos, const Eigen::Vector3d &n) {
     shared_ptr<IfcCartesianPoint> planeLocation( new IfcCartesianPoint() );
     insertEntity(planeLocation);
     planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
@@ -1403,4 +1323,4 @@ shared_ptr<IfcPlane> IFCConverter::createClippingPlane(double zPos, const Eigen:
     plane->m_Position = planePosition;
 
     return plane;
-}
+}*/
