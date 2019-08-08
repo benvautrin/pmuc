@@ -32,6 +32,7 @@
 #include "converters/ifcconverter.h"
 #include "converters/x3dconverter.h"
 #include "converters/colladaconverter.h"
+#include "converters/stlconverter.h"
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES // For PI under VC++
@@ -48,7 +49,7 @@
 using namespace std;
 
 enum optionIndex { UNKNOWN, HELP, TEST,  X3D,
-    X3DB, COLLADA, IFC4, IFC2X3, DSL, DUMMY,
+    X3DB, COLLADA, IFC4, IFC2X3, DSL, STL, DUMMY,
     SKIPATT, SPLIT, AGGREGATE, PRIMITIVES, SIDESIZE,
     MINSIDES, OBJECT, COLOR, SCALE };
 
@@ -60,6 +61,7 @@ const option::Descriptor usage[] = {
     { COLLADA,      0, "",  "collada",       option::Arg::None,      "  --collada\tConvert to COLLADA format." },
     { IFC2X3,       0, "",  "ifc",           option::Arg::None,      "  --ifc\tConvert to IFC2x3." },
     { IFC4,         0, "",  "ifc4",          option::Arg::None,      "  --ifc4\tConvert to IFC4." },
+    { STL,          0, "",  "stl",           option::Arg::None,      "  --stl\tConvert to STL." },
     { DSL,          0, "",  "dsl",           option::Arg::None,      "  --dsl  \tConvert to DSL language." },
     { DUMMY,        0, "",  "dummy",         option::Arg::None,      "  --dummy\tPrint out the file structure." },
     { SKIPATT,      0, "",  "skipattributes",option::Arg::None,      "  --skipattributes \tIgnore attribute file." },
@@ -81,7 +83,7 @@ const string formatnames[] = {
     "X3D", "X3DB",
     "COLLADA",
     "IFC4", "IFC2x3",
-    "DSL", "DUMMY",
+    "DSL", "STL", "DUMMY"
 };
 
 enum primitives { BOX, SNOUT, CYLINDER, SPHERE, CIRCULARTORUS, RECTANGULARTORUS, PYRAMID, LINE, ELLIPTICALDISH, SPHERICALDISH };
@@ -108,7 +110,7 @@ void printStats(time_t duration, RVMParser &parser) {
 
 int main(int argc, char** argv)
 {
-    cout << "Plant Mock-Up Converter 1.1.1\nCopyright (C) EDF 2017" << endl;
+    cout << "Plant Mock-Up Converter 1.1.1\nCopyright (C) EDF 2013-19" << endl;
 
     argc -= (argc > 0); argv += (argc > 0);
     option::Stats stats(usage, argc, argv);
@@ -126,7 +128,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if ((options[X3D] || options[X3DB] || options[COLLADA] || options[DSL] || options[DUMMY] || options[IFC4]|| options[IFC2X3]) == 0) {
+    if ((options[X3D] || options[X3DB] || options[COLLADA] || options[DSL] || options[DUMMY] || options[IFC4]|| options[IFC2X3] || options[STL]) == 0) {
         cerr << "\nNo format specified.\n";
         option::printUsage(std::cerr, usage);
         return 1;
@@ -222,6 +224,11 @@ int main(int argc, char** argv)
                         case DSL: {
                             string name = filename + ".dsl3d";
                             reader = new DSLConverter(name);
+                        } break;
+                        case STL: {
+                            string name = filename + ".stl";
+                            cout << name << std::endl;
+                            reader = new STLConverter(name);
                         } break;
                     }
                     if (maxSideSize) {
@@ -446,6 +453,13 @@ int main(int argc, char** argv)
                             name = name.substr(0, name.rfind(".")) + ".dsl3d";
                             name = name.substr(name.rfind(PATHSEP) + 1);
                             reader = new DSLConverter(name);
+                        } break;
+
+                        case STL: {
+                            string name = !objectName.empty() ? objectName : filename;
+                            name = name.substr(0, name.rfind(".")) + ".stl";
+                            name = name.substr(name.rfind(PATHSEP) + 1);
+                            reader = new STLConverter(name);
                         } break;
                     }
                     if (maxSideSize) {
