@@ -24,12 +24,12 @@
 
 #include "../api/rvmreader.h"
 #include "../api/rvmmeshhelper.h"
+#include "ifcwriter.h"
 
 #define EIGEN_DONT_VECTORIZE
 #define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
 #include <Eigen/Core>
-
 #include <stack>
 
 typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
@@ -83,6 +83,9 @@ class IFCConverter : public RVMReader
         // static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
 
     private:
+        IFCStreamWriter* m_writer;
+        IfcEntity* m_project;
+
         //IfcPPModel				                        m_model;
         //shared_ptr<IfcOwnerHistory>                     m_owner_history;
         //shared_ptr<IfcGeometricRepresentationContext>   m_context;
@@ -94,7 +97,7 @@ class IFCConverter : public RVMReader
         int                                             m_currentEntityId;
         std::stack<int>                                 m_currentMaterial;
 
-        //shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
+        IfcReference createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
         //shared_ptr<IfcMaterial> createMaterial(int id);
         //shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
         void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);

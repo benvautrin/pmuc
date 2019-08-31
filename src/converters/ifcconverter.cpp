@@ -88,56 +88,46 @@ namespace {
     }
 }
 
+IFCConverter::IFCConverter(const std::string& filename, const std::string& schema)
+    : RVMReader(), m_filename(filename), m_currentEntityId(0) {
+  m_writer = new IFCStreamWriter(filename);
+  m_writer->startDocument();
 
-IFCConverter::IFCConverter(const std::string& filename, const std::string& schema) : RVMReader(), m_filename(filename), m_currentEntityId(0) {
-    std::string filename_escaped = boost::replace_all_copy(filename, "\\", "\\\\");
-	std::wstringstream strs;
-	strs << "ISO-10303-21;" << std::endl;
-	strs << "HEADER;" << std::endl;
-	strs << "FILE_DESCRIPTION(('PMUC generated IFC file.'),'2;1');" << std::endl;
-	strs << "FILE_NAME('" << filename_escaped.c_str() << "','";
+  FileDescription desc;
+  desc.description.push_back("PMUC generated IFC file.");
 
-	//2011-04-21T14:25:12
-	std::locale loc( std::wcout.getloc(), new boost::posix_time::wtime_facet( L"%Y-%m-%dT%H:%M:%S" ) );
-	std::basic_stringstream<wchar_t> wss;
-	wss.imbue( loc );
-	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
-	wss << now;
-	std::wstring ts = wss.str().c_str();
+  // 2011-04-21T14:25:12
+  std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y-%m-%dT%H:%M:%S"));
+  std::stringstream wss;
+  wss.imbue(loc);
+  boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+  wss << now;
+  std::string ts = wss.str();
 
-	strs << ts;
-	strs << "',(''),('',''),'','IfcPlusPlus','');" << std::endl;
-    strs << "FILE_SCHEMA(('" << schema.c_str() << "'));" << std::endl;
-	strs << "ENDSEC;" << std::endl;
+  FileName name;
+  name.name = boost::replace_all_copy(filename, "\\", "\\\\");
+  name.time_stamp_text = ts;
+  name.preprocessor_version = "IfcPlusPlus";
 
-    //m_model->setFileHeader(strs.str().c_str());
+  m_writer->addHeader(desc, name);
 }
 
 IFCConverter::~IFCConverter() {
 }
 
 void IFCConverter::startDocument() {
-    /*shared_ptr<IfcProject> project(new IfcProject());
-    insertEntity(project);
-    project->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    m_model->setIfcProject(project);*/
 
 }
 
 void IFCConverter::endDocument() {
-    /*shared_ptr<IfcPPWriterSTEP> writer( new IfcPPWriterSTEP() );
-    writer->setMessageCallBack(this, &IFCConverter::messageCallBack);
-    std::stringstream stream;
-    std::ofstream fileStream(m_filename);
-
-    writer->writeModelToStream(stream, m_model);
-    fileStream << stream.rdbuf();
-    fileStream.close();
-    std::cout << std::endl; // Finish progress line*/
+    m_writer->endDocument();
 }
 
 void IFCConverter::startHeader(const std::string& banner, const std::string& fileNote, const std::string& dateStr, const std::string& user, const std::string& encoding) {
-    // m_model->getIfcProject()->m_OwnerHistory = createOwnerHistory(user, banner, toTimeStamp(dateStr));
+    m_project = new IfcEntity("IFCPROJECT");
+    auto ownerHistory = createOwnerHistory(user, banner, toTimeStamp(dateStr));
+    m_project->attributes = { createBase64Uuid<char>(), ownerHistory };
+
 }
 
 void IFCConverter::endHeader() {
@@ -149,6 +139,15 @@ void IFCConverter::startModel(const std::string& projectName, const std::string&
     /*m_model->getIfcProject()->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( projectName )));
     m_model->getIfcProject()->m_LongName = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name )));
     m_model->getIfcProject()->m_Phase = shared_ptr<IfcLabel>(new IfcLabel(L"$"));*/
+    m_project->attributes.push_back(projectName); // name
+    m_project->attributes.push_back(name); // description
+    m_project->attributes.push_back(IFC_STRING_UNSET); // object type
+    m_project->attributes.push_back(IFC_STRING_UNSET); // long name
+    m_project->attributes.push_back(IFC_STRING_UNSET); // phase
+
+    m_writer->addEntity(*m_project);
+
+
 
     // Initialize model with site, building etc
     initModel();
@@ -881,84 +880,75 @@ void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup
 
 }
 
-/*shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user, const std::string &banner, int timeStamp) {
-    if(!m_owner_history) {
-        // The creator/owner of this document
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcperson.htm
-        // -
-        shared_ptr<IfcPerson> person( new IfcPerson() );
-        insertEntity(person);
-        person->m_Identification = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(user) ) );
-        // WR1 : EXISTS(FamilyName) OR EXISTS(GivenName);
-        person->m_FamilyName = shared_ptr<IfcLabel>( new IfcLabel( utf8_to_wstring(user) ) );
-        // IFC always write a list, and a list may not be empty for following attributes (thus we add some)
-        person->m_MiddleNames.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
-        person->m_PrefixTitles.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
-        person->m_SuffixTitles.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
+IfcReference IFCConverter::createOwnerHistory(const std::string& user, const std::string& banner, int timeStamp) {
+  // The creator/owner of this document
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcactorresource/lexical/ifcperson.htm
+  // -
+  IfcEntity person("IFCPERSON");
+  person.attributes = {user,
+                       user,
+                       IFC_STRING_UNSET,
+                       IfcStringList(),
+                       IfcStringList(),
+                       IfcStringList(),
+                       IFC_STRING_UNSET,
+                       IFC_STRING_UNSET};
+  IfcReference personRef = m_writer->addEntity(person);
 
-        shared_ptr<IfcOrganization> organization( new IfcOrganization() );
-        insertEntity(organization);
-        organization->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"unknown" ) );
+  IfcEntity organization("IFCORGANIZATION");
+  organization.attributes = {IFC_STRING_UNSET, "unknown", IFC_STRING_UNSET, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  IfcReference organizationRef = m_writer->addEntity(organization);
 
+  std::string developer = "unknown";
+  auto firstSpace = banner.find(" ");
+  if (firstSpace != std::string::npos) {
+    developer = banner.substr(0, firstSpace);
+  }
 
-        std::wstring developer = L"unknown";
-        auto firstSpace = banner.find(" ");
-        if(firstSpace != std::string::npos) {
-            developer = utf8_to_wstring(banner.substr(0, firstSpace));
-        }
-
-        // Find a version that starts with Mk and ends at the first string (or at the end of string if no space in string)
-        // Version is an empty string if no verison could be found by the rule above
-        std::wstring version = L"";
-        auto versionStart = banner.find("Mk");
-        if(versionStart != std::string::npos) {
-            auto versionEnd = banner.find(" ", versionStart);
-            if (versionEnd != std::string::npos) {
-                // Length of version
-                versionEnd -= versionStart;
-            }
-            version = utf8_to_wstring(banner.substr(versionStart, versionEnd));
-        }
-
-        // IfcOrganization requires at least a name
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcorganization.htm
-        // -
-        shared_ptr<IfcOrganization> applicationDeveloper( new IfcOrganization() );
-        insertEntity(applicationDeveloper);
-        applicationDeveloper->m_Name = shared_ptr<IfcLabel>( new IfcLabel( developer ) );
-
-        // IfcApplication requires ApplicationDeveloper, Version, ApplicationFullName, ApplicationIdentifier
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcutilityresource/lexical/ifcapplication.htm
-        // -
-        shared_ptr<IfcApplication> application( new IfcApplication() );
-        insertEntity(application);
-        application->m_ApplicationFullName = shared_ptr<IfcLabel>( new IfcLabel( utf8_to_wstring(banner) ) );
-        application->m_ApplicationIdentifier = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(banner) ) );
-        application->m_ApplicationDeveloper = applicationDeveloper;
-        application->m_Version = shared_ptr<IfcLabel>( new IfcLabel( version ) );
-
-        // IfcPersonAndOrganization requires ThePerson and TheOrganization
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcpersonandorganization.htm
-        // -
-        shared_ptr<IfcPersonAndOrganization> person_org( new IfcPersonAndOrganization() );
-        person_org->m_ThePerson = person;
-        person_org->m_TheOrganization = organization;
-        insertEntity(person_org);
-
-        // IfcOwnerHistory requires OwningApplication, ChangeAction, and CreationDate
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcutilityresource/lexical/ifcownerhistory.htm
-        // -
-        m_owner_history = shared_ptr<IfcOwnerHistory>( new IfcOwnerHistory() );
-        m_owner_history->m_OwningApplication = application;
-        // We use NOCHANGE, because the better fitting UNDEFINED is only availble since IFC4
-        m_owner_history->m_ChangeAction = shared_ptr<IfcChangeActionEnum>( new IfcChangeActionEnum( IfcChangeActionEnum::ENUM_NOCHANGE ) );
-        m_owner_history->m_OwningUser = person_org;
-        m_owner_history->m_CreationDate = shared_ptr<IfcTimeStamp>( new IfcTimeStamp( timeStamp ) );
-        insertEntity(m_owner_history);
+  // Find a version that starts with Mk and ends at the first string (or at the end of string if no space in string)
+  // Version is an empty string if no verison could be found by the rule above
+  std::string version = "";
+  auto versionStart = banner.find("Mk");
+  if (versionStart != std::string::npos) {
+    auto versionEnd = banner.find(" ", versionStart);
+    if (versionEnd != std::string::npos) {
+      // Length of version
+      versionEnd -= versionStart;
     }
-    return m_owner_history;
-}*/
+    version = banner.substr(versionStart, versionEnd);
+  }
 
+  // IfcOrganization requires at least a name
+  // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcorganization.htm
+  // -
+  IfcEntity applicationDeveloper("IFCORGANIZATION");
+  ;
+  applicationDeveloper.attributes = {IFC_STRING_UNSET, developer, IFC_STRING_UNSET, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  IfcReference appOrgRef = m_writer->addEntity(applicationDeveloper);
+
+  // IfcApplication requires ApplicationDeveloper, Version, ApplicationFullName, ApplicationIdentifier
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcutilityresource/lexical/ifcapplication.htm
+  IfcEntity application("IFCAPPLICATION");
+  application.attributes = {appOrgRef, version, banner, banner};
+  IfcReference owningApplication = m_writer->addEntity(application);
+
+  // IfcPersonAndOrganization requires ThePerson and TheOrganization
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcactorresource/lexical/ifcpersonandorganization.htm
+  // -
+  IfcEntity person_org("IFCPERSONANDORGANIZATION");
+  person_org.attributes = {personRef, organizationRef, IFC_STRING_UNSET};
+  IfcReference owningUser = m_writer->addEntity(person_org);
+
+  // IfcOwnerHistory requires OwningApplication, ChangeAction, and CreationDate
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcutilityresource/lexical/ifcownerhistory.htm
+  // -
+  IfcEntity owner_history("IFCOWNERHISTORY");
+  owner_history.attributes = {owningUser,       owningApplication, IFC_STRING_UNSET, ".NOCHANGE.",
+                              IFC_STRING_UNSET, IFC_STRING_UNSET,  IFC_STRING_UNSET, timeStamp};
+  IfcReference ownerRef = m_writer->addEntity(owner_history);
+
+  return ownerRef;
+}
 
 void IFCConverter::initModel() {
 /*
@@ -1255,7 +1245,7 @@ void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
         insertEntity(solid);
         solid->m_Axis = placement;
         solid->m_Angle = angleP;
-        // Rotate the whole geometry (90° y-axis) because we defined it with y-up instead of z-up
+        // Rotate the whole geometry (90 degree y-axis) because we defined it with y-up instead of z-up
         solid->m_Position = getCoordinateSystem(transform, Eigen::Vector3f(0,0,0));
         solid->m_SweptArea = profile;
 
