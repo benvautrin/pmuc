@@ -30,7 +30,7 @@ find_package(EIGEN REQUIRED)
 include_directories( ${EIGEN_INCLUDE_DIR} )
 
 # Find Boost dependencies
-find_package(Boost 1.71.0 REQUIRED)
+find_package(Boost 1.69.0 REQUIRED)
 IF(Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS}) 
 ENDIF()
