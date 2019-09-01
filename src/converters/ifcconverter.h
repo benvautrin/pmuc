@@ -31,6 +31,7 @@
 
 #include <Eigen/Core>
 #include <stack>
+#include <map>
 
 typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
 
@@ -83,33 +84,36 @@ class IFCConverter : public RVMReader
         // static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
 
     private:
-        IFCStreamWriter* m_writer;
-        IfcEntity* m_project;
+     IFCStreamWriter* m_writer;
+     IfcEntity* m_project;
+     IfcReference m_ownerHistory;
+     IfcReference m_contextRef;
 
-        //IfcPPModel				                        m_model;
-        //shared_ptr<IfcOwnerHistory>                     m_owner_history;
-        //shared_ptr<IfcGeometricRepresentationContext>   m_context;
-        std::string                                     m_filename;
-        //std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
-        //std::map<int, shared_ptr<IfcMaterial> >         m_materials;
-        //std::map<int, shared_ptr<IfcSurfaceStyle> >     m_styles;
-        //shared_ptr<IfcPropertySet>                      m_propertySet;
-        int                                             m_currentEntityId;
-        std::stack<int>                                 m_currentMaterial;
+     // IfcPPModel				                        m_model;
+     // shared_ptr<IfcOwnerHistory>                     m_owner_history;
+     // shared_ptr<IfcGeometricRepresentationContext>   m_context;
+     std::string m_filename;
+     std::stack<IfcEntity*> m_relationStack;
+     std::map<int, IfcReference> m_materials;
+     std::map<int, IfcReference> m_styles;
+     // shared_ptr<IfcPropertySet>                      m_propertySet;
+     int m_currentEntityId;
+     std::stack<int> m_currentMaterial;
 
-        IfcReference createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
-        //shared_ptr<IfcMaterial> createMaterial(int id);
-        //shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
-        void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
-        //void insertEntity(shared_ptr<IfcPPEntity> e);
-        void initModel();
-        //void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
-        //void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
-        //void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform);
+     void createOwnerHistory(const std::string& name, const std::string& banner, int timeStamp);
+     IfcReference createMaterial(int id);
+     IfcReference createSurfaceStyle(int id);
+     void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
+     // void insertEntity(shared_ptr<IfcPPEntity> e);
+     void initModel(const IfcReference projectRef);
+     void createParentChildRelation(const IfcReference parent);
+     // void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
+     // void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle,
+     // const Transform3f& transform);
 
-        void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
-        //shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
-        //shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
+     void writeMesh(const Mesh& mesh, const std::array<float, 12>& matrix);
+     // shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
+     // shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
 };
 
 #endif // IFCCONVERTER_H

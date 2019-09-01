@@ -34,14 +34,20 @@
 typedef std::string IfcString;
 typedef std::vector<IfcString> IfcStringList;
 typedef int IfcInteger;
+typedef float IfcFloat;
+typedef std::vector<IfcFloat> IfcFloatList;
 
 struct IfcReference {
   unsigned int value;
 
+  IfcReference() : value(0){};
   IfcReference(unsigned int v) : value(v){};
 };
+const IfcReference IFC_REFERENCE_UNSET = IfcReference{};
+typedef std::vector<IfcReference> IfcReferenceList;
 
-typedef std::variant<IfcString, IfcStringList, IfcReference, IfcInteger> IfcValue;
+typedef std::variant<IfcString, IfcStringList, IfcReference, IfcReferenceList, IfcInteger, IfcFloat, IfcFloatList>
+    IfcValue;
 typedef std::vector<IfcValue> IfcValueList;
 
 struct FileDescription {
@@ -82,7 +88,10 @@ class IFCStreamWriter {
     void operator()(const IfcString& s) const { writer->addString(s, lastAttribute); }
     void operator()(const IfcStringList& l) const { writer->addStringList(l, lastAttribute); }
     void operator()(const IfcReference& r) const { writer->addReference(r.value, lastAttribute); }
-    void operator()(IfcInteger i) const { writer->addInteger(i, lastAttribute); }
+    void operator()(const IfcReferenceList& l) const { writer->addReferenceList(l, lastAttribute); }
+    void operator()(IfcInteger i) const { writer->addNumber(i, lastAttribute); }
+    void operator()(IfcFloat f) const { writer->addNumber(f, lastAttribute); }
+    void operator()(IfcFloatList fl) const { writer->addNumberList(fl, lastAttribute); }
 
     AttributeVisitor(IFCStreamWriter* writer, bool lastAttribute) : writer(writer), lastAttribute(lastAttribute){};
   };
@@ -164,12 +173,47 @@ class IFCStreamWriter {
   }
 
   void addReference(unsigned long id, bool lastAttribute = false) {
+    if (!id) {
+      mFile << "*";
+      if (!lastAttribute) {
+        addAttributeSeparator();
+      }
+
+      return;
+    }
     mFile << "#";
-    addInteger(id, lastAttribute);
+    addNumber(id, lastAttribute);
   }
 
-  void addInteger(unsigned long id, bool lastAttribute = false) {
-    mFile << std::to_string(id);
+  void addReferenceList(const IfcReferenceList& list, bool lastAttribute = false) {
+    mFile << "(";
+    if (list.empty()) {
+      mFile << "..";
+    }
+    for (auto p = list.begin(); p != list.end(); ++p) {
+      addReference(p->value, p == list.end() - 1);
+    }
+    mFile << ")";
+    if (!lastAttribute) {
+      addAttributeSeparator();
+    }
+  }
+
+  template <typename T>
+  void addNumber(const T n, bool lastAttribute = false) {
+    mFile << std::to_string(n);
+    if (!lastAttribute) {
+      addAttributeSeparator();
+    }
+  }
+
+  template <typename T>
+  void addNumberList(const std::vector<T>& list, bool lastAttribute = false) {
+    mFile << "(";
+    for (auto p = list.begin(); p != list.end(); ++p) {
+      addNumber(*p, p == list.end() - 1);
+    }
+    mFile << ")";
     if (!lastAttribute) {
       addAttributeSeparator();
     }
