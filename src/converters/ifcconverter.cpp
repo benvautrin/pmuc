@@ -53,10 +53,6 @@ namespace {
      return measure;
  }*/
 
-std::wstring utf8_to_wstring(const std::string& str) {
-  return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
-}
-
 Transform3f toEigenTransform(const std::array<float, 12>& matrix) {
   Transform3f result;
   result.setIdentity();
@@ -259,35 +255,44 @@ void IFCConverter::endGroup() {
 
 void IFCConverter::startMetaData() {
   // Create a property set that holds all upcoming properties
-  /*m_propertySet = shared_ptr<IfcPropertySet>( new IfcPropertySet() );
-  m_propertySet->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() )
-  ); m_propertySet->m_OwnerHistory = m_owner_history; m_propertySet->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"RVM
-  Attributes" )); m_propertySet->m_Description = shared_ptr<IfcText>( new IfcText( L"Attributes from RVM Attribute file"
-  )); insertEntity(m_propertySet);
 
-  // A related object is required (typically a IfcBuildingElementProxy)
-  shared_ptr<IfcObjectDefinition> relatedObject = m_relationStack.top()->m_RelatingObject;
-  assert(relatedObject);
-
-  // Now link the created property set with the object
-  shared_ptr<IfcRelDefinesByProperties> propertyRelation( new IfcRelDefinesByProperties() );
-  propertyRelation->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22()
-  ) ); propertyRelation->m_RelatedObjects.push_back(relatedObject); propertyRelation->m_RelatingPropertyDefinition =
-  m_propertySet; propertyRelation->m_OwnerHistory = m_owner_history; insertEntity(propertyRelation);*/
+  m_propertySet = new IfcEntity("IFCPROPERTYSET");
+  m_propertySet->attributes = {createBase64Uuid<char>(),
+                               m_ownerHistory,                        // owner history
+                               "RVMAttributes",                       // Name
+                               "Attributes from RVM Attribute file",  // Description
+                               IfcReferenceList{}};
 }
 
-void IFCConverter::endMetaData() {}
+void IFCConverter::endMetaData() {
+  IfcReference propertySetRef = m_writer->addEntity(*m_propertySet);
+  // A related object is required (typically a IfcBuildingElementProxy)
+  auto aggregareAttributes = m_relationStack.top()->attributes;
+  auto relatedObject = std::get<IfcReference>(aggregareAttributes.at(aggregareAttributes.size() - 2));
+
+  // Now link the created property set with the object
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcreldefinesbyproperties.htm
+  IfcEntity propertyRelation("IFCRELDEFINESBYPROPERTIES");
+  propertyRelation.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,                   // owner history
+      IFC_STRING_UNSET,                 // Name
+      IFC_STRING_UNSET,                 // Description
+      IfcReferenceList{relatedObject},  // RelatedObjects
+      propertySetRef                    // RelatingPropertyDefinition
+
+  };
+  m_writer->addEntity(propertyRelation);
+}
 
 void IFCConverter::startMetaDataPair(const std::string& name, const std::string& value) {
-  /*assert(m_propertySet);
-  std::string value_escaped = boost::replace_all_copy(value, "\\", "\\\\");
+  assert(m_propertySet);
 
-  shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
-  insertEntity(prop);
-  prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(name) ));
-  prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring(value_escaped) ));
-
-  m_propertySet->m_HasProperties.push_back(prop);*/
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpropertyresource/lexical/ifcpropertysinglevalue.htm
+  IfcEntity prop("IFCPROPERTYSINGLEVALUE");
+  prop.attributes = {name, IFC_STRING_UNSET, IfcSimpleValue(value), IFC_STRING_UNSET};
+  IfcReference propRef = m_writer->addEntity(prop);
+  std::get<IfcReferenceList>(m_propertySet->attributes.back()).push_back(propRef);
 }
 
 void IFCConverter::endMetaDataPair() {}

@@ -88,6 +88,7 @@ class IFCConverter : public RVMReader
      IfcEntity* m_project;
      IfcReference m_ownerHistory;
      IfcReference m_contextRef;
+     IfcEntity* m_propertySet;
 
      // IfcPPModel				                        m_model;
      // shared_ptr<IfcOwnerHistory>                     m_owner_history;
@@ -96,7 +97,6 @@ class IFCConverter : public RVMReader
      std::stack<IfcEntity*> m_relationStack;
      std::map<int, IfcReference> m_materials;
      std::map<int, IfcReference> m_styles;
-     // shared_ptr<IfcPropertySet>                      m_propertySet;
      int m_currentEntityId;
      std::stack<int> m_currentMaterial;
 

@@ -25,11 +25,73 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/locale/encoding_utf.hpp>
+
 #include <fstream>
 #include <variant>
+#include <iostream>
+#include <iomanip>
 
 #define UNDEFINED_TEXT '*'
 #define IFC_STRING_UNSET "$"
+
+using boost::locale::conv::utf_to_utf;
+
+inline std::wstring utf8_to_wstring(const std::string& str) {
+  return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
+}
+
+// (Legally) stolen and adapted from IFCPlusPlus
+inline std::string encodeSTEPString(std::string utf8) {
+  std::wstring str = utf8_to_wstring(utf8);
+  wchar_t* stream_pos = (wchar_t*)str.c_str();
+  std::string result_str;
+  std::string beginUnicodeTag = "\\X2\\";
+  std::string endUnicodeTag = "\\X0\\";
+  bool hasOpenedUnicodeTag = false;
+
+  while (*stream_pos != '\0') {
+    wchar_t append_char = *stream_pos;
+    if (append_char > 0 && append_char < 128) {
+      if (hasOpenedUnicodeTag) {
+        result_str += endUnicodeTag;
+        hasOpenedUnicodeTag = false;
+      }
+      if (append_char == '\\') {
+        result_str.push_back("\\\\")
+      } else {
+        result_str.push_back((char)append_char);
+      }
+    } else {
+      int value = (int)(append_char);
+      wchar_t temporary[8];
+      swprintf(temporary, 5, L"%04X", value);
+
+      if (!hasOpenedUnicodeTag) {
+        result_str += beginUnicodeTag;
+        hasOpenedUnicodeTag = true;
+      }
+
+      char mb[8];
+      wctomb(mb, temporary[0]);
+      result_str.push_back(mb[0]);
+      wctomb(mb, temporary[1]);
+      result_str.push_back(mb[0]);
+      wctomb(mb, temporary[2]);
+      result_str.push_back(mb[0]);
+      wctomb(mb, temporary[3]);
+      result_str.push_back(mb[0]);
+    }
+    ++stream_pos;
+  }
+
+  if (hasOpenedUnicodeTag) {
+    result_str += endUnicodeTag;
+    hasOpenedUnicodeTag = false;
+  }
+
+  return result_str;
+}
 
 typedef std::string IfcString;
 typedef std::vector<IfcString> IfcStringList;
@@ -208,7 +270,7 @@ class IFCStreamWriter {
   }
 
   void addSimpleValue(const IfcSimpleValue& sv, bool lastAttribute = false) {
-    mFile << "IFCLABEL('" << sv.value << "')";
+    mFile << "IFCLABEL('" << encodeSTEPString(sv.value) << "')";
     if (!lastAttribute) {
       addAttributeSeparator();
     }
@@ -319,6 +381,7 @@ inline std::basic_string<T> createBase64Uuid() {
   std::basic_string<T> guid_compressed = compressGUID<T>(guid_uncompressed);
   return guid_compressed;
 }
+
 
 /*struct IfcUnitAssignment {};
 
