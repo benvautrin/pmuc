@@ -58,7 +58,7 @@ inline std::string encodeSTEPString(std::string utf8) {
         hasOpenedUnicodeTag = false;
       }
       if (append_char == '\\') {
-        result_str.push_back("\\\\")
+        result_str += "\\\\";
       } else {
         result_str.push_back((char)append_char);
       }
@@ -93,6 +93,29 @@ inline std::string encodeSTEPString(std::string utf8) {
   return result_str;
 }
 
+struct IfcEnum {
+  std::string value;
+
+  IfcEnum() : value(0){};
+  IfcEnum(std::string v) : value(v){};
+};
+
+const IfcEnum IFC_FALSE = IfcEnum{"F"};
+const IfcEnum IFC_TRUE = IfcEnum{"T"};
+const IfcEnum IFCREFLECTANCEMETHOD_BLINN = IfcEnum{"BLINN"};
+const IfcEnum IFCSURFACESIDE_BOTH = IfcEnum{"BOTH"};
+const IfcEnum IFCUNIT_LENGTHUNIT = IfcEnum{"LENGTHUNIT"};
+const IfcEnum IFCUNIT_PLANEANGLEUNIT = IfcEnum{"PLANEANGLEUNIT"};
+const IfcEnum IFCSIUNITNAME_METRE = IfcEnum{"METRE"};
+const IfcEnum IFCSIUNITNAME_RADIAN = IfcEnum{"RADIAN"};
+const IfcEnum IFCCHANGEACTIONENUM_NOCHANGE = IfcEnum{"NOCHANGE"};
+const IfcEnum IFCELEMENTCOMPOSITION_ELEMENT = IfcEnum{"ELEMENT"};
+const IfcEnum IFCPROFILETYPE_AREA = IfcEnum{"AREA"};
+const IfcEnum IFCTRANSITIONCODE_CONTINUOUS = IfcEnum{"CONTINUOUS"};
+const IfcEnum IFCTRIMMINGPREFERENCE_CARTESIAN = IfcEnum{"CARTESIAN"};
+const IfcEnum IFCBOOLEANOPERATOR_DIFFERENCE = IfcEnum{"DIFFERENCE"};
+
+
 typedef std::string IfcString;
 typedef std::vector<IfcString> IfcStringList;
 typedef int IfcInteger;
@@ -101,9 +124,11 @@ typedef std::vector<IfcFloat> IfcFloatList;
 
 struct IfcSimpleValue {
   std::string value;
+  std::string type;
 
   IfcSimpleValue() : value(0){};
-  IfcSimpleValue(std::string v) : value(v){};
+  IfcSimpleValue(std::string v) : value(v), type("IFCLABEL") {};
+  IfcSimpleValue(std::string v, std::string t) : value(v), type(t) {};
 };
 
 struct IfcReference {
@@ -115,7 +140,7 @@ struct IfcReference {
 const IfcReference IFC_REFERENCE_UNSET = IfcReference{};
 typedef std::vector<IfcReference> IfcReferenceList;
 
-typedef std::variant<IfcString, IfcStringList, IfcReference, IfcReferenceList, IfcInteger, IfcFloat, IfcFloatList, IfcSimpleValue>
+typedef std::variant<IfcString, IfcStringList, IfcReference, IfcReferenceList, IfcInteger, IfcFloat, IfcFloatList, IfcSimpleValue, IfcEnum>
     IfcValue;
 typedef std::vector<IfcValue> IfcValueList;
 
@@ -162,6 +187,7 @@ class IFCStreamWriter {
     void operator()(IfcFloat f) const { writer->addNumber(f, lastAttribute); }
     void operator()(IfcFloatList fl) const { writer->addNumberList(fl, lastAttribute); }
     void operator()(IfcSimpleValue sv) const { writer->addSimpleValue(sv, lastAttribute); }
+    void operator()(IfcEnum e) const { writer->addEnumeration(e, lastAttribute); }
 
     AttributeVisitor(IFCStreamWriter* writer, bool lastAttribute) : writer(writer), lastAttribute(lastAttribute){};
   };
@@ -200,6 +226,7 @@ class IFCStreamWriter {
     closeEntity();
 
     mFile << "ENDSEC;" << std::endl;
+    mFile << "DATA;" << std::endl;
   }
 
   IfcReference addEntity(const IfcEntity& entity) {
@@ -228,10 +255,17 @@ class IFCStreamWriter {
     }
   }
 
+  void addEnumeration(const IfcEnum& e, bool lastAttribute = false) {
+    mFile << "." << e.value << ".";
+    if (!lastAttribute) {
+      addAttributeSeparator();
+    }
+  }
+
   void addStringList(const std::vector<std::string>& list, bool lastAttribute = false) {
     mFile << "(";
     if (list.empty()) {
-      mFile << "..";
+      mFile << "''";
     }
     for (std::vector<std::string>::const_iterator p = list.begin(); p != list.end(); ++p) {
       addString(*p, p == list.end() - 1);
@@ -270,7 +304,11 @@ class IFCStreamWriter {
   }
 
   void addSimpleValue(const IfcSimpleValue& sv, bool lastAttribute = false) {
-    mFile << "IFCLABEL('" << encodeSTEPString(sv.value) << "')";
+    if (sv.type == "IFCLABEL") {
+      mFile << sv.type << "('" << encodeSTEPString(sv.value) << "')";
+    } else {
+      mFile << sv.type << "(" << sv.value << ")";
+    }
     if (!lastAttribute) {
       addAttributeSeparator();
     }

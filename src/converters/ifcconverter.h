@@ -88,32 +88,39 @@ class IFCConverter : public RVMReader
      IfcEntity* m_project;
      IfcReference m_ownerHistory;
      IfcReference m_contextRef;
+     IfcReference m_buildingRef;
      IfcEntity* m_propertySet;
 
      // IfcPPModel				                        m_model;
      // shared_ptr<IfcOwnerHistory>                     m_owner_history;
      // shared_ptr<IfcGeometricRepresentationContext>   m_context;
      std::string m_filename;
-     std::stack<IfcEntity*> m_relationStack;
+     std::stack<IfcEntity*> m_productStack;
+     std::stack<IfcReferenceList> m_productChildStack;
+     std::stack<IfcReferenceList> m_productRepresentationStack;
      std::map<int, IfcReference> m_materials;
      std::map<int, IfcReference> m_styles;
      int m_currentEntityId;
      std::stack<int> m_currentMaterial;
 
      void createOwnerHistory(const std::string& name, const std::string& banner, int timeStamp);
+     IfcReference createRepresentation();
      IfcReference createMaterial(int id);
      IfcReference createSurfaceStyle(int id);
      void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
      // void insertEntity(shared_ptr<IfcPPEntity> e);
      void initModel(const IfcReference projectRef);
-     void createParentChildRelation(const IfcReference parent);
-     // void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
+     void createParentChildRelation(const IfcReference parent, const IfcReferenceList &children);
+     void addStyleToItem(IfcReference item);
+     void addRevolvedAreaSolidToShape(IfcReference profile, IfcReference axis, float angle, const Transform3f& transform);
      // void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle,
      // const Transform3f& transform);
 
      void writeMesh(const Mesh& mesh, const std::array<float, 12>& matrix);
-     // shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
-     // shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
+     IfcReference getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset);
+     IfcReference addCartesianPoint(float x, float y, float z, std::string entity="IFCCARTESIANPOINT");
+     IfcReference addCartesianPoint(float x, float y, std::string entity="IFCCARTESIANPOINT");
+     IfcReference createClippingPlane(float zPos, const Eigen::Vector3f &n);
 };
 
 #endif // IFCCONVERTER_H
