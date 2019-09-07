@@ -37,6 +37,13 @@ typedef int IfcInteger;
 typedef float IfcFloat;
 typedef std::vector<IfcFloat> IfcFloatList;
 
+struct IfcSimpleValue {
+  std::string value;
+
+  IfcSimpleValue() : value(0){};
+  IfcSimpleValue(std::string v) : value(v){};
+};
+
 struct IfcReference {
   unsigned int value;
 
@@ -46,7 +53,7 @@ struct IfcReference {
 const IfcReference IFC_REFERENCE_UNSET = IfcReference{};
 typedef std::vector<IfcReference> IfcReferenceList;
 
-typedef std::variant<IfcString, IfcStringList, IfcReference, IfcReferenceList, IfcInteger, IfcFloat, IfcFloatList>
+typedef std::variant<IfcString, IfcStringList, IfcReference, IfcReferenceList, IfcInteger, IfcFloat, IfcFloatList, IfcSimpleValue>
     IfcValue;
 typedef std::vector<IfcValue> IfcValueList;
 
@@ -92,6 +99,7 @@ class IFCStreamWriter {
     void operator()(IfcInteger i) const { writer->addNumber(i, lastAttribute); }
     void operator()(IfcFloat f) const { writer->addNumber(f, lastAttribute); }
     void operator()(IfcFloatList fl) const { writer->addNumberList(fl, lastAttribute); }
+    void operator()(IfcSimpleValue sv) const { writer->addSimpleValue(sv, lastAttribute); }
 
     AttributeVisitor(IFCStreamWriter* writer, bool lastAttribute) : writer(writer), lastAttribute(lastAttribute){};
   };
@@ -194,6 +202,13 @@ class IFCStreamWriter {
       addReference(p->value, p == list.end() - 1);
     }
     mFile << ")";
+    if (!lastAttribute) {
+      addAttributeSeparator();
+    }
+  }
+
+  void addSimpleValue(const IfcSimpleValue& sv, bool lastAttribute = false) {
+    mFile << "IFCLABEL('" << sv.value << "')";
     if (!lastAttribute) {
       addAttributeSeparator();
     }
