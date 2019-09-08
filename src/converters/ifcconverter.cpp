@@ -107,6 +107,7 @@ void IFCConverter::startDocument() {}
 
 void IFCConverter::endDocument() {
   m_writer->endDocument();
+  delete m_writer;
 }
 
 void IFCConverter::startHeader(const std::string& banner,
@@ -174,6 +175,7 @@ void IFCConverter::startModel(const std::string& projectName, const std::string&
   m_project->attributes.push_back(unitAssignmentRef);               // UnitsInContext
 
   IfcReference projectRef = m_writer->addEntity(*m_project);
+  delete m_project;
 
   // Initialize model with site, building etc
   initModel(projectRef);
@@ -285,6 +287,7 @@ void IFCConverter::endGroup() {
   m_productRepresentationStack.pop();
   m_placementStack.pop();
   m_productChildStack.top().push_back(buildingElementRef);
+  delete buildingElement;
 }
 
 IfcReference IFCConverter::createRepresentation() {
