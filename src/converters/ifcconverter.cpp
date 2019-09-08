@@ -82,6 +82,7 @@ IFCConverter::IFCConverter(const std::string& filename, const std::string& schem
   m_writer->startDocument();
 
   FileDescription desc;
+  desc.description.push_back("ViewDefinition [StructuralAnalysisView]");
   desc.description.push_back("PMUC generated IFC file.");
 
   // 2011-04-21T14:25:12
@@ -216,6 +217,38 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
   m_productStack.push(buildingElement);
   m_productChildStack.push(IfcReferenceList{});
   m_productRepresentationStack.push(IfcReferenceList{});
+  m_productMetaDataStack.push(IfcReferenceList{});
+}
+
+void IFCConverter::createPropertySet(IfcReference relatedObject) {
+  assert(!m_productMetaDataStack.empty());
+
+  auto metaData = m_productMetaDataStack.top();
+
+  // Create a property set that holds all properties
+  IfcEntity propertySet("IFCPROPERTYSET");
+  propertySet.attributes = {createBase64Uuid<char>(),
+                            m_ownerHistory,                        // owner history
+                            "RVMAttributes",                       // Name
+                            "Attributes from RVM Attribute file",  // Description
+                            metaData};
+  auto propertySetRef = m_writer->addEntity(propertySet);
+
+  // A related object is required (typically a IfcBuildingElementProxy)
+
+  // Now link the created property set with the object
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcreldefinesbyproperties.htm
+  IfcEntity propertyRelation("IFCRELDEFINESBYPROPERTIES");
+  propertyRelation.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,                   // owner history
+      IFC_STRING_UNSET,                 // Name
+      IFC_STRING_UNSET,                 // Description
+      IfcReferenceList{relatedObject},  // RelatedObjects
+      propertySetRef                    // RelatingPropertyDefinition
+
+  };
+  m_writer->addEntity(propertyRelation);
 }
 
 void IFCConverter::endGroup() {
@@ -229,6 +262,9 @@ void IFCConverter::endGroup() {
 
   IfcReference material = createMaterial(m_currentMaterial.top());
   m_currentMaterial.pop();
+
+  createPropertySet(buildingElementRef);
+  m_productMetaDataStack.pop();
 
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcrelassociatesmaterial.htm
   IfcEntity materialAssociates("IFCRELASSOCIATESMATERIAL");
@@ -253,7 +289,7 @@ IfcReference IFCConverter::createRepresentation() {
     return IFC_REFERENCE_UNSET;
   }
   IfcEntity shapeRepresentation("IFCSHAPEREPRESENTATION");
-  shapeRepresentation.attributes = {m_contextRef, "Building", "SweptSolid", m_productRepresentationStack.top()};
+  shapeRepresentation.attributes = {m_contextRef, "Body", "SurfaceModel", m_productRepresentationStack.top()};
   auto shapeRepresentationRef = m_writer->addEntity(shapeRepresentation);
 
   IfcEntity shape("IFCPRODUCTDEFINITIONSHAPE");
@@ -264,45 +300,19 @@ IfcReference IFCConverter::createRepresentation() {
 }
 
 void IFCConverter::startMetaData() {
-  // Create a property set that holds all upcoming properties
-
-  m_propertySet = new IfcEntity("IFCPROPERTYSET");
-  m_propertySet->attributes = {createBase64Uuid<char>(),
-                               m_ownerHistory,                        // owner history
-                               "RVMAttributes",                       // Name
-                               "Attributes from RVM Attribute file",  // Description
-                               IfcReferenceList{}};
 }
 
 void IFCConverter::endMetaData() {
-  IfcReference propertySetRef = m_writer->addEntity(*m_propertySet);
-  // A related object is required (typically a IfcBuildingElementProxy)
-  /*auto aggregareAttributes = m_relationStack.top()->attributes;
-  auto relatedObject = std::get<IfcReference>(aggregareAttributes.at(aggregareAttributes.size() - 2));
-
-  // Now link the created property set with the object
-  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcreldefinesbyproperties.htm
-  IfcEntity propertyRelation("IFCRELDEFINESBYPROPERTIES");
-  propertyRelation.attributes = {
-      createBase64Uuid<char>(),
-      m_ownerHistory,                   // owner history
-      IFC_STRING_UNSET,                 // Name
-      IFC_STRING_UNSET,                 // Description
-      IfcReferenceList{relatedObject},  // RelatedObjects
-      propertySetRef                    // RelatingPropertyDefinition
-
-  };*/
-  // m_writer->addEntity(propertyRelation);
 }
 
 void IFCConverter::startMetaDataPair(const std::string& name, const std::string& value) {
   assert(m_propertySet);
-
-  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpropertyresource/lexical/ifcpropertysinglevalue.htm
-  IfcEntity prop("IFCPROPERTYSINGLEVALUE");
-  prop.attributes = {name, IFC_STRING_UNSET, IfcSimpleValue(value), IFC_STRING_UNSET};
-  IfcReference propRef = m_writer->addEntity(prop);
-  std::get<IfcReferenceList>(m_propertySet->attributes.back()).push_back(propRef);
+  if (!m_productMetaDataStack.empty()) {
+    // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpropertyresource/lexical/ifcpropertysinglevalue.htm
+    IfcEntity prop("IFCPROPERTYSINGLEVALUE");
+    prop.attributes = {name, IFC_STRING_UNSET, IfcSimpleValue(value), IFC_STRING_UNSET};
+    m_productMetaDataStack.top().push_back(m_writer->addEntity(prop));
+  }
 }
 
 void IFCConverter::endMetaDataPair() {}
@@ -340,7 +350,6 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
 
     // addRepresentationToShape(box, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
   } else {
-    std::cout << "Create Mesh Box" << std::endl;
     writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
   }
 }
