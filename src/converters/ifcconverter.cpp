@@ -188,21 +188,8 @@ void IFCConverter::endModel() {
 void IFCConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuildingelementproxy.htm
 
-  // TODO: Singleton for placement
-  IfcEntity location("IFCCARTESIANPOINT");
-  location.attributes = {IfcFloatList{0.0f, 0.0f, 0.0f}};
-  auto locationRef = m_writer->addEntity(location);
-
-  IfcEntity relative_placement("IFCAXIS2PLACEMENT3D");
-  relative_placement.attributes = {locationRef, IFC_STRING_UNSET, IFC_STRING_UNSET};
-  auto relativePlacementRef = m_writer->addEntity(relative_placement);
-
-  // Define a placement based on the relative placement defined above
-  // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm
-  // -
-  IfcEntity placement("IFCLOCALPLACEMENT");
-  placement.attributes = {IFC_STRING_UNSET, relativePlacementRef};
-  auto placementRef = m_writer->addEntity(placement);
+  auto placementRef = createPlacement(m_placementStack.top());
+  m_placementStack.push(placementRef);
 
   IfcEntity* buildingElement = new IfcEntity("IFCBUILDINGELEMENTPROXY");
   buildingElement->attributes = {
@@ -213,11 +200,27 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
       IFC_STRING_UNSET,  // Object Type
       placementRef,      // ObjectPlacement
   };
+
   m_currentMaterial.push(materialId);
   m_productStack.push(buildingElement);
   m_productChildStack.push(IfcReferenceList{});
   m_productRepresentationStack.push(IfcReferenceList{});
   m_productMetaDataStack.push(IfcReferenceList{});
+}
+
+IfcReference IFCConverter::createPlacement(IfcReference parentPlacement) {
+  auto locationRef = addCartesianPoint(0.0f, 0.0f, 0.0f);
+
+  IfcEntity relative_placement("IFCAXIS2PLACEMENT3D");
+  relative_placement.attributes = {locationRef, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  auto relativePlacementRef = m_writer->addEntity(relative_placement);
+
+  // Define a placement based on the relative placement defined above
+  // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm
+  // -
+  IfcEntity placement("IFCLOCALPLACEMENT");
+  placement.attributes = {parentPlacement, relativePlacementRef};
+  return m_writer->addEntity(placement);
 }
 
 void IFCConverter::createPropertySet(IfcReference relatedObject) {
@@ -281,6 +284,7 @@ void IFCConverter::endGroup() {
 
   m_productChildStack.pop();
   m_productRepresentationStack.pop();
+  m_placementStack.pop();
   m_productChildStack.top().push_back(buildingElementRef);
 }
 
@@ -299,11 +303,9 @@ IfcReference IFCConverter::createRepresentation() {
   return shapeRef;
 }
 
-void IFCConverter::startMetaData() {
-}
+void IFCConverter::startMetaData() {}
 
-void IFCConverter::endMetaData() {
-}
+void IFCConverter::endMetaData() {}
 
 void IFCConverter::startMetaDataPair(const std::string& name, const std::string& value) {
   assert(m_propertySet);
@@ -368,10 +370,10 @@ void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix,
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCRECTANGLEPROFILEDEF");
-    profile.attributes = {IFCPROFILETYPE_AREA, "BOXRECTANGLE", positionRef, params.height() * s, yExtend};
+    profile.attributes = {IFCPROFILETYPE_AREA, "RectangularTorus", positionRef, params.height() * s, yExtend};
     auto profileRef = m_writer->addEntity(profile);
+    // TODO(zero height)
 
-    auto directionRef = addCartesianPoint(0, 0, 1, "IFCDIRECTION");
     auto axisRef = addCartesianPoint(1, 0, 0, "IFCDIRECTION");
 
     addRevolvedAreaSolidToShape(profileRef, axisRef, params.angle(),
@@ -388,7 +390,6 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
 
     // Define the parametric profile first
     auto radius = params.radius() * s;
-
     auto locationRef = addCartesianPoint(0.0f, params.offset() * s);
 
     IfcEntity position("IFCAXIS2PLACEMENT2D");
@@ -396,13 +397,18 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCCIRCLEPROFILEDEF");
-    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, positionRef, radius};
+    profile.attributes = {IFCPROFILETYPE_AREA, "CircularTorus", positionRef, radius};
     auto profileRef = m_writer->addEntity(profile);
 
-    auto axisRef = addCartesianPoint(0.0f, 0.0f, 1.0f, "IFCDIRECTION");
+    std::cout << profileRef.value << ":" << transform.matrix() << std::endl;
+    std::cout << profileRef.value << ": radius :" << params.radius() << std::endl;
+    std::cout << profileRef.value << ": offset :" << params.offset() << std::endl;
+    std::cout << profileRef.value << ": angle :" << params.angle() << std::endl;
 
-    addRevolvedAreaSolidToShape(profileRef, axisRef, params.angle(),
-                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitY())));
+    auto axisRef = addCartesianPoint(1.0f, 0.0f, 0.0f, "IFCDIRECTION");
+
+    addRevolvedAreaSolidToShape(profileRef, axisRef, -params.angle(),
+                                transform.rotate(Eigen::AngleAxisf(float(-0.5 * M_PI), Eigen::Vector3f::UnitY())));
   } else {
     auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
     writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
@@ -843,24 +849,28 @@ void IFCConverter::initModel(const IfcReference projectRef) {
   IfcEntity site("IFCSITE");
   site.attributes = {
       createBase64Uuid<char>(),
-      m_ownerHistory,                 // owner history
-      "Site",                         // Name
-      IFC_STRING_UNSET,               // Description
-      IFC_STRING_UNSET,               // Object Type
-      IFC_REFERENCE_UNSET,            // ObjectPlacement
-      IFC_REFERENCE_UNSET,            // Representation
-      IFC_STRING_UNSET,               // LongName
-      IFCELEMENTCOMPOSITION_ELEMENT,  // CompositionType
-      IFC_STRING_UNSET,               // RefLatitude
-      IFC_STRING_UNSET,               // RefLongitude
-      IFC_STRING_UNSET,               // RefElevation
-      IFC_STRING_UNSET,               // LandTitleNumber
-      IFC_STRING_UNSET,               // SiteAddress
+      m_ownerHistory,                   // owner history
+      "Site",                           // Name
+      IFC_STRING_UNSET,                 // Description
+      IFC_STRING_UNSET,                 // Object Type
+      createPlacement(IfcReference{}),  // ObjectPlacement
+      IFC_REFERENCE_UNSET,              // Representation
+      IFC_STRING_UNSET,                 // LongName
+      IFCELEMENTCOMPOSITION_ELEMENT,    // CompositionType
+      IFC_STRING_UNSET,                 // RefLatitude
+      IFC_STRING_UNSET,                 // RefLongitude
+      IFC_STRING_UNSET,                 // RefElevation
+      IFC_STRING_UNSET,                 // LandTitleNumber
+      IFC_STRING_UNSET,                 // SiteAddress
   };
   IfcReference siteRef = m_writer->addEntity(site);
 
   // create Building
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuilding.htm
+
+  auto buildingPlacement = createPlacement(IfcReference{});
+  m_placementStack.push(buildingPlacement);
+
   IfcEntity building("IFCBUILDING");
   building.attributes = {
       createBase64Uuid<char>(),
@@ -868,7 +878,7 @@ void IFCConverter::initModel(const IfcReference projectRef) {
       "Building",                     // Name
       IFC_STRING_UNSET,               // Description
       IFC_STRING_UNSET,               // Object Type
-      IFC_REFERENCE_UNSET,            // ObjectPlacement
+      m_placementStack.top(),         // ObjectPlacement
       IFC_REFERENCE_UNSET,            // Representation
       IFC_STRING_UNSET,               // LongName
       IFCELEMENTCOMPOSITION_ELEMENT,  // CompositionType
@@ -1030,7 +1040,7 @@ IfcReference IFCConverter::createMaterial(int id) {
 
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcmaterialresource/lexical/ifcmaterial.htm
   IfcEntity material("IFCMATERIAL");
-  material.attributes = {"Material" + std::to_string(id), IFC_STRING_UNSET, IFC_STRING_UNSET};
+  material.attributes = {"Material" + std::to_string(id)};
   auto materialRef = m_writer->addEntity(material);
   m_materials.insert(std::make_pair(id, materialRef));
 

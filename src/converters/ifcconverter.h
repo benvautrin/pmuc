@@ -96,6 +96,7 @@ class IFCConverter : public RVMReader
      std::stack<IfcReferenceList> m_productMetaDataStack;
      std::stack<IfcReferenceList> m_productChildStack;
      std::stack<IfcReferenceList> m_productRepresentationStack;
+     std::stack<IfcReference> m_placementStack;
      std::map<int, IfcReference> m_materials;
      std::map<int, IfcReference> m_styles;
      int m_currentEntityId;
@@ -120,6 +121,7 @@ class IFCConverter : public RVMReader
      IfcReference addCartesianPoint(float x, float y, std::string entity="IFCCARTESIANPOINT");
      IfcReference createClippingPlane(float zPos, const Eigen::Vector3f &n);
      void createPropertySet(IfcReference relatedObject);
+     IfcReference createPlacement(IfcReference parentPlacement);
 };
 
 #endif // IFCCONVERTER_H
