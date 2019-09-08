@@ -47,11 +47,6 @@
 using boost::locale::conv::utf_to_utf;
 
 namespace {
-/* shared_ptr<IfcNormalisedRatioMeasure> getNormalisedRatioMeasure(double value) {
-     shared_ptr<IfcNormalisedRatioMeasure> measure( new IfcNormalisedRatioMeasure() );
-     measure->m_value = value;
-     return measure;
- }*/
 
 Transform3f toEigenTransform(const std::array<float, 12>& matrix) {
   Transform3f result;
@@ -406,197 +401,120 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
 }
 
 void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
-  /*if(m_primitives) {
-      Transform3f transform = toEigenTransform(matrix);
-      const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-      double r = params.diameter() * s;
-      double r2 = params.radius() * s;
+    float r = params.diameter() * s;
+    float r2 = params.radius() * s;
 
-      shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-      radius->m_value = r;
+    auto locationRef = addCartesianPoint(0.0f, 0.0);
+    auto directionRef = addCartesianPoint(0.0f, 1.0f, "IFCDIRECTION");
 
-      shared_ptr<IfcPositiveLengthMeasure> radius2 (new IfcPositiveLengthMeasure() );
-      radius2->m_value = r2;
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, directionRef};
+    auto positionRef = m_writer->addEntity(position);
 
-      shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-      insertEntity(location);
-      location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-      location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    IfcEntity ellipse("IFCELLIPSE");
+    ellipse.attributes = {positionRef, r2, r};
+    auto ellipseRef = m_writer->addEntity(ellipse);
 
-      shared_ptr<IfcDirection> direction( new IfcDirection() );
-      insertEntity(direction);
-      direction->m_DirectionRatios.push_back(0);
-      direction->m_DirectionRatios.push_back(1);
+    auto p1 = addCartesianPoint(r, 0.0);
+    auto p2 = addCartesianPoint(0.0, 0.0);
+    auto p3 = addCartesianPoint(0.0, r2);
 
-      shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
-      insertEntity(position);
-      position->m_Location = location;
-      position->m_RefDirection = direction;
+    IfcEntity line("IFCPOLYLINE");
+    line.attributes = {IfcReferenceList{p1, p2, p3}};
+    auto lineRef = m_writer->addEntity(line);
 
-      shared_ptr<IfcEllipse> ellipse (new IfcEllipse() );
-      insertEntity(ellipse);
-      ellipse->m_SemiAxis1 = radius2;
-      ellipse->m_SemiAxis2 = radius;
-      ellipse->m_Position = position;
+    IfcEntity segLine("IFCCOMPOSITECURVESEGMENT");
+    segLine.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, lineRef};
+    auto segLineRef = m_writer->addEntity(segLine);
 
-      shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
-      insertEntity(p1);
-      p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r ) ) );
-      p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+    IfcEntity curve("IFCTRIMMEDCURVE");
+    curve.attributes = {ellipseRef, IfcReferenceList{p3}, IfcReferenceList{p1}, IFC_FALSE,
+                        IFCTRIMMINGPREFERENCE_CARTESIAN};
+    auto curveRef = m_writer->addEntity(curve);
 
-      shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
-      insertEntity(p2);
-      p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-      p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+    IfcEntity segCurve("IFCCOMPOSITECURVESEGMENT");
+    segCurve.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, curveRef};
+    auto segCurveRef = m_writer->addEntity(segCurve);
 
-      shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
-      insertEntity(p3);
-      p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-      p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r2 ) ) );
+    IfcEntity compositeCurve("IFCCOMPOSITECURVE");
+    compositeCurve.attributes = {IfcReferenceList{segLineRef, segCurveRef}, IFC_FALSE};
+    auto compositeCurveRef = m_writer->addEntity(compositeCurve);
 
-      shared_ptr<IfcPolyline> line (new IfcPolyline() );
-      insertEntity(line);
-      line->m_Points.push_back(p1);
-      line->m_Points.push_back(p2);
-      line->m_Points.push_back(p3);
+    IfcEntity profile("IFCARBITRARYCLOSEDPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, compositeCurveRef};
+    auto profileRef = m_writer->addEntity(profile);
 
-      shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
-      insertEntity(segLine);
-      segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS
-  )); segLine->m_SameSense = true; segLine->m_ParentCurve = line;
+    auto axis = addCartesianPoint(0.0f, 1.0f, 0.0f, "IFCDIRECTION");
 
-      shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
-      insertEntity(curve);
-      curve->m_BasisCurve = ellipse;
-      curve->m_Trim1.push_back(p3);
-      curve->m_Trim2.push_back(p1);
-      curve->m_SenseAgreement = false;
-      curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference(
-  IfcTrimmingPreference::ENUM_CARTESIAN ) );
-
-      shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
-      insertEntity(segCurve);
-      segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS
-  )); segCurve->m_SameSense = true; segCurve->m_ParentCurve = curve;
-
-      shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
-      insertEntity(compositeCurve);
-      compositeCurve->m_Segments.push_back(segLine);
-      compositeCurve->m_Segments.push_back(segCurve);
-      compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
-
-      shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
-      insertEntity(profile);
-      profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA )
-  ); profile->m_OuterCurve = compositeCurve;
-
-      shared_ptr<IfcDirection> axis (new IfcDirection() );
-      insertEntity(axis);
-      axis->m_DirectionRatios.push_back(0);
-      axis->m_DirectionRatios.push_back(1);
-      axis->m_DirectionRatios.push_back(0);
-
-      addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),
-  Eigen::Vector3f::UnitX()))); } else { auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize,
-  m_minSides); writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
-  }*/
+    addRevolvedAreaSolidToShape(profileRef, axis, float(2.0 * M_PI),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
+  } else {
+    auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeEllipticalDish(params, sides.first, sides.second), matrix);
+  }
 }
 
 void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
-  /*if(m_primitives) {
-      Transform3f transform = toEigenTransform(matrix);
-      const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-      double r = params.diameter() * 0.5 * s;
-      double h = params.height() * s;
-      double offset = r - h;
-      double angle =  asin(1.0 - h / r);
+    float radius = params.diameter() * 0.5f * s;
+    float h = params.height() * s;
+    float offset = radius - h;
+    float angle = asin(1.0f - h / radius);
 
-      shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-      radius->m_value = r;
+    auto locationRef = addCartesianPoint(0.0f, -offset);
+    auto directionRef = addCartesianPoint(0.0f, 1.0f, "IFCDIRECTION");
 
-      shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-      insertEntity(location);
-      location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-      location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(-offset) ) );
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, directionRef};
+    auto positionRef = m_writer->addEntity(position);
 
-      shared_ptr<IfcDirection> direction( new IfcDirection() );
-      insertEntity(direction);
-      direction->m_DirectionRatios.push_back(0);
-      direction->m_DirectionRatios.push_back(1);
+    IfcEntity circle("IFCCIRCLE");
+    circle.attributes = {positionRef, radius};
+    auto circleRef = m_writer->addEntity(circle);
 
-      shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
-      insertEntity(position);
-      position->m_Location = location;
-      position->m_RefDirection = direction;
+    auto p1 = addCartesianPoint(radius * cos(angle), radius * sin(angle) - offset);
+    auto p2 = addCartesianPoint(0.0, 0.0);
+    auto p3 = addCartesianPoint(0.0, h);
 
-      shared_ptr<IfcCircle> circle (new IfcCircle() );
-      insertEntity(circle);
-      circle->m_Radius = radius;
-      circle->m_Position = position;
+    IfcEntity line("IFCPOLYLINE");
+    line.attributes = {IfcReferenceList{p1, p2, p3}};
+    auto lineRef = m_writer->addEntity(line);
 
-      shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
-      insertEntity(p1);
-      p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r * cos(angle) ) ) );
-      p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r * sin(angle) - offset ) ) );
+    IfcEntity segLine("IFCCOMPOSITECURVESEGMENT");
+    segLine.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, lineRef};
+    auto segLineRef = m_writer->addEntity(segLine);
 
-      shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
-      insertEntity(p2);
-      p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-      p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+    IfcEntity curve("IFCTRIMMEDCURVE");
+    curve.attributes = {circleRef, IfcReferenceList{p3}, IfcReferenceList{p1}, IFC_FALSE,
+                        IFCTRIMMINGPREFERENCE_CARTESIAN};
+    auto curveRef = m_writer->addEntity(curve);
 
-      shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
-      insertEntity(p3);
-      p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-      p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( h ) ) );
+    IfcEntity segCurve("IFCCOMPOSITECURVESEGMENT");
+    segCurve.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, curveRef};
+    auto segCurveRef = m_writer->addEntity(segCurve);
 
-      shared_ptr<IfcPolyline> line (new IfcPolyline() );
-      insertEntity(line);
-      line->m_Points.push_back(p1);
-      line->m_Points.push_back(p2);
-      line->m_Points.push_back(p3);
+    IfcEntity compositeCurve("IFCCOMPOSITECURVE");
+    compositeCurve.attributes = {IfcReferenceList{segLineRef, segCurveRef}, IFC_FALSE};
+    auto compositeCurveRef = m_writer->addEntity(compositeCurve);
 
-      shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
-      insertEntity(segLine);
-      segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS
-  )); segLine->m_SameSense = true; segLine->m_ParentCurve = line;
+    IfcEntity profile("IFCARBITRARYCLOSEDPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, compositeCurveRef};
+    auto profileRef = m_writer->addEntity(profile);
 
-      shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
-      insertEntity(curve);
-      curve->m_BasisCurve = circle;
-      curve->m_Trim1.push_back(p3);
-      curve->m_Trim2.push_back(p1);
-      curve->m_SenseAgreement = false;
-      curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference(
-  IfcTrimmingPreference::ENUM_CARTESIAN ) );
+    auto axis = addCartesianPoint(0.0f, 1.0f, 0.0f, "IFCDIRECTION");
 
-      shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
-      insertEntity(segCurve);
-      segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS
-  )); segCurve->m_SameSense = true; segCurve->m_ParentCurve = curve;
-
-      shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
-      insertEntity(compositeCurve);
-      compositeCurve->m_Segments.push_back(segLine);
-      compositeCurve->m_Segments.push_back(segCurve);
-      compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
-
-      shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
-      insertEntity(profile);
-      profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA )
-  ); profile->m_OuterCurve = compositeCurve;
-
-      shared_ptr<IfcDirection> axis (new IfcDirection() );
-      insertEntity(axis);
-      axis->m_DirectionRatios.push_back(0);
-      axis->m_DirectionRatios.push_back(1);
-      axis->m_DirectionRatios.push_back(0);
-
-      addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),
-  Eigen::Vector3f::UnitX()))); } else { writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides),
-  matrix);
-  }*/
+    addRevolvedAreaSolidToShape(profileRef, axis, float(2.0 * M_PI),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
+  } else {
+    writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
+  }
 }
 
 void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
