@@ -96,7 +96,7 @@ IFCConverter::IFCConverter(const std::string& filename, const std::string& schem
   FileName name;
   name.name = boost::replace_all_copy(filename, "\\", "\\\\");
   name.time_stamp_text = ts;
-  name.preprocessor_version = "IfcPlusPlus";
+  name.preprocessor_version = "PMUC";
 
   m_writer->addHeader(desc, name);
 }
