@@ -22,15 +22,15 @@
 #ifndef IFCWRITER_H
 #define IFCWRITER_H
 
+#include <boost/locale/encoding_utf.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <boost/locale/encoding_utf.hpp>
 
 #include <fstream>
-#include <variant>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
+#include <variant>
 
 #define UNDEFINED_TEXT '*'
 #define IFC_STRING_UNSET "$"
@@ -115,7 +115,6 @@ const IfcEnum IFCTRANSITIONCODE_CONTINUOUS = IfcEnum{"CONTINUOUS"};
 const IfcEnum IFCTRIMMINGPREFERENCE_CARTESIAN = IfcEnum{"CARTESIAN"};
 const IfcEnum IFCBOOLEANOPERATOR_DIFFERENCE = IfcEnum{"DIFFERENCE"};
 
-
 typedef std::string IfcString;
 typedef std::vector<IfcString> IfcStringList;
 typedef int IfcInteger;
@@ -127,8 +126,8 @@ struct IfcSimpleValue {
   std::string type;
 
   IfcSimpleValue() : value(0){};
-  IfcSimpleValue(std::string v) : value(v), type("IFCLABEL") {};
-  IfcSimpleValue(std::string v, std::string t) : value(v), type(t) {};
+  IfcSimpleValue(std::string v) : value(v), type("IFCLABEL"){};
+  IfcSimpleValue(std::string v, std::string t) : value(v), type(t){};
 };
 
 struct IfcReference {
@@ -140,7 +139,15 @@ struct IfcReference {
 const IfcReference IFC_REFERENCE_UNSET = IfcReference{};
 typedef std::vector<IfcReference> IfcReferenceList;
 
-typedef std::variant<IfcString, IfcStringList, IfcReference, IfcReferenceList, IfcInteger, IfcFloat, IfcFloatList, IfcSimpleValue, IfcEnum>
+typedef std::variant<IfcString,
+                     IfcStringList,
+                     IfcReference,
+                     IfcReferenceList,
+                     IfcInteger,
+                     IfcFloat,
+                     IfcFloatList,
+                     IfcSimpleValue,
+                     IfcEnum>
     IfcValue;
 typedef std::vector<IfcValue> IfcValueList;
 
@@ -351,6 +358,7 @@ class IFCStreamWriter {
   unsigned long mEntityNumber;
 };
 
+// (Legally) stolen and adapted from IFCPlusPlus
 ///@brief Creates a GUID string with 36 characters including dashes, for example: "F103000C-9865-44EE-BE6E-CCC780B81423"
 template <typename T>
 inline std::basic_string<T> createGUID32() {
@@ -420,84 +428,4 @@ inline std::basic_string<T> createBase64Uuid() {
   return guid_compressed;
 }
 
-
-/*struct IfcUnitAssignment {};
-
-struct IfcRepresentationContext {};
-
-
-
-struct IfcPerson {
-  IfcIdentifier identification;
-  IfcLabel familyName;
-  IfcLabel givenName;
-  std::vector<IfcLabel> middleNames;
-  std::vector<IfcLabel> prefixTitles;
-  std::vector<IfcLabel> suffixTitles;
-};
-
-struct IfcOrganization {
-  IfcIdentifier id;
-  IfcLabel name;
-  IfcText description;
-};
-
-struct IfcPersonAndOrganization {
-  IfcPerson thePerson;
-  IfcOrganization theOrganization;
-};
-
-struct IfcApplication {
-  IfcOrganization applicationDeveloper;
-  IfcLabel version;
-  IfcLabel applicationFullName;
-  IfcIdentifier applicationIdentifier;
-};
-
-struct IfcOwnerHistory : public IfcEntity {
-  IfcPersonAndOrganization owningUser;
-  IfcApplication owningApplication;
-  IfcStateEnum state;
-  IfcChangeActionEnum changeAction;
-  IfcTimeStamp lastModifiedDate;
-  IfcPersonAndOrganization lastModifyingUser;
-  IfcApplication lastModifyingApplication;
-  IfcTimeStamp creationDate;
-
-  IfcOwnerHistory() : IfcEntity(0){};
-};
-
-struct IfcRoot : public IfcEntity {
-  IfcGloballyUniqueId globalId;
-  IfcReference ownerHistory;
-  IfcLabel name;
-  IfcText description;
-
-  IfcRoot(IFCStreamWriter* writer) : IfcEntity(writer), globalId(createBase64Uuid<char>()), description(UNDEFINED_TEXT)
-{}
-};
-
-struct IfcContext : public IfcRoot {
-  IfcLabel objectType;
-  IfcLabel longName;
-  IfcLabel phase;
-  IfcUnitAssignment representationContexts;
-  IfcRepresentationContext unitsInContext;
-
-  IfcContext(IFCStreamWriter* writer) : IfcRoot(writer){};
-};
-
-struct IfcProject : public IfcContext {
-  IfcProject(IFCStreamWriter* writer) : IfcContext(writer){};
-
-  void flush() {
-    entityNumber = writer->startEntity("IFCPROJECT");
-    writer->addString(globalId);
-    writer->addReference(ownerHistory);
-    writer->addString(name);
-    writer->addString(description);
-
-    writer->closeEntity();
-  }
-};*/
 #endif

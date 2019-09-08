@@ -1,7 +1,7 @@
 /*
  * Plant Mock-Up Converter
  *
- * Copyright (c) 2013, EDF. All rights reserved.
+ * Copyright (c) 2013-19, EDF. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -65,6 +65,7 @@ Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
 
 int toTimeStamp(const std::string& schema) {
   // TODO: Implement
+  // std::cout << schema << std::endl;
   return 0;
 }
 
@@ -76,8 +77,7 @@ float getScaleFromTransformation(const Transform3f& transform) {
 }
 }  // namespace
 
-IFCConverter::IFCConverter(const std::string& filename, const std::string& schema)
-    : RVMReader(), m_filename(filename), m_currentEntityId(0) {
+IFCConverter::IFCConverter(const std::string& filename, const std::string& schema) : RVMReader(), m_filename(filename) {
   m_writer = new IFCStreamWriter(filename);
   m_writer->startDocument();
 
@@ -223,7 +223,7 @@ IfcReference IFCConverter::createPlacement(IfcReference parentPlacement) {
   return m_writer->addEntity(placement);
 }
 
-void IFCConverter::createPropertySet(IfcReference relatedObject) {
+IfcReference IFCConverter::createPropertySet(IfcReference relatedObject) {
   assert(!m_productMetaDataStack.empty());
 
   auto metaData = m_productMetaDataStack.top();
@@ -236,8 +236,6 @@ void IFCConverter::createPropertySet(IfcReference relatedObject) {
                             "Attributes from RVM Attribute file",  // Description
                             metaData};
   auto propertySetRef = m_writer->addEntity(propertySet);
-
-  // A related object is required (typically a IfcBuildingElementProxy)
 
   // Now link the created property set with the object
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcreldefinesbyproperties.htm
@@ -252,6 +250,7 @@ void IFCConverter::createPropertySet(IfcReference relatedObject) {
 
   };
   m_writer->addEntity(propertyRelation);
+  return propertySetRef;
 }
 
 void IFCConverter::endGroup() {
@@ -308,7 +307,6 @@ void IFCConverter::startMetaData() {}
 void IFCConverter::endMetaData() {}
 
 void IFCConverter::startMetaDataPair(const std::string& name, const std::string& value) {
-  assert(m_propertySet);
   if (!m_productMetaDataStack.empty()) {
     // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpropertyresource/lexical/ifcpropertysinglevalue.htm
     IfcEntity prop("IFCPROPERTYSINGLEVALUE");
@@ -343,14 +341,13 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
     Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f * s);
 
     IfcEntity box("IFCEXTRUDEDAREASOLID");
-    box.attributes = {profileRef, getCoordinateSystem(toEigenTransform(matrix), offset), directionRef,
+    box.attributes = {profileRef, createCoordinateSystem(toEigenTransform(matrix), offset), directionRef,
                       params.len[2] * s};
     auto boxRef = m_writer->addEntity(box);
 
     m_productRepresentationStack.top().push_back(boxRef);
+    // "SweptSolid"
     addStyleToItem(boxRef);
-
-    // addRepresentationToShape(box, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
   } else {
     writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
   }
@@ -567,7 +564,7 @@ void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, con
     Eigen::Vector3f offset(0, 0, -(halfHeight + bottomOffset) * s);
 
     IfcEntity cylinder("IFCEXTRUDEDAREASOLID");
-    cylinder.attributes = {profileRef, getCoordinateSystem(transform, offset), directionRef, height};
+    cylinder.attributes = {profileRef, createCoordinateSystem(transform, offset), directionRef, height};
     auto cylinderRef = m_writer->addEntity(cylinder);
 
     IfcReference planeTopRef = createClippingPlane(
@@ -597,7 +594,7 @@ void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, con
     m_productRepresentationStack.top().push_back(clippingResult2Ref);
     addStyleToItem(clippingResult2Ref);
 
-    // addRepresentationToShape(clippingResult2, shared_ptr<IfcLabel>(new IfcLabel(L"SweptSolid")));
+    // "SweptSolid"
   } else {
     auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
     writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
@@ -627,13 +624,13 @@ void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Pri
     Eigen::Vector3f offset(0, 0, -params.height() * 0.5f * s);
 
     IfcEntity cylinder("IFCEXTRUDEDAREASOLID");
-    cylinder.attributes = {profileRef, getCoordinateSystem(transform, offset), directionRef, height};
+    cylinder.attributes = {profileRef, createCoordinateSystem(transform, offset), directionRef, height};
     auto cylinderRef = m_writer->addEntity(cylinder);
 
     m_productRepresentationStack.top().push_back(cylinderRef);
+    // SweptSolid
     addStyleToItem(cylinderRef);
 
-    // addRepresentationToShape(cylinder, shared_ptr<IfcLabel>(new IfcLabel(L"SweptSolid")));
   } else {
     auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
     writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
@@ -667,9 +664,6 @@ void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primi
     IfcEntity segLine("IFCCOMPOSITECURVESEGMENT");
     segLine.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, lineRef};
     auto segLineRef = m_writer->addEntity(segLine);
-
-    // shared_ptr<IfcParameterValue> trim2 (new IfcParameterValue() );
-    // trim2->m_value = M_PI;
 
     IfcEntity curve("IFCTRIMMEDCURVE");
     curve.attributes = {circleRef, IfcReferenceList{p1}, IfcReferenceList{p2}, IFC_FALSE,
@@ -768,8 +762,8 @@ void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup
   auto surfaceModelRef = m_writer->addEntity(surfaceModel);
 
   m_productRepresentationStack.top().push_back(surfaceModelRef);
+  // "SurfaceModel"
   addStyleToItem(surfaceModelRef);
-  // addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
 }
 
 void IFCConverter::createOwnerHistory(const std::string& user, const std::string& banner, int timeStamp) {
@@ -984,14 +978,6 @@ void IFCConverter::addStyleToItem(IfcReference item) {
   m_writer->addEntity(styledItem);
 }
 
-/*void IFCConverter::insertEntity(shared_ptr<IfcPPEntity> e) {
-   if(e->m_id < 0) {
-        m_currentEntityId++;
-        e->m_id = m_currentEntityId;
-    }
-    m_model->insertEntity(e);
-}*/
-
 IfcReference IFCConverter::createSurfaceStyle(int id) {
   auto I = m_styles.find(id);
   if (I != m_styles.end()) {
@@ -1083,12 +1069,12 @@ void IFCConverter::addRevolvedAreaSolidToShape(IfcReference profileRef,
 
   // Rotate the whole geometry (90 degree y-axis) because we defined it with y-up instead of z-up
   IfcEntity solid("IFCREVOLVEDAREASOLID");
-  solid.attributes = {profileRef, getCoordinateSystem(transform, Eigen::Vector3f(0, 0, 0)), placementRef, angle};
+  solid.attributes = {profileRef, createCoordinateSystem(transform, Eigen::Vector3f(0, 0, 0)), placementRef, angle};
   auto solidRef = m_writer->addEntity(solid);
 
   m_productRepresentationStack.top().push_back(solidRef);
+  // "SweptSolid"
   addStyleToItem(solidRef);
-  // addRepresentationToShape(solid, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
 }
 
 IfcReference IFCConverter::addCartesianPoint(float x, float y, float z, std::string entity) {
@@ -1103,7 +1089,7 @@ IfcReference IFCConverter::addCartesianPoint(float x, float y, std::string entit
   return m_writer->addEntity(point);
 }
 
-IfcReference IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
+IfcReference IFCConverter::createCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
   Eigen::Vector3f translation = matrix.translation() + matrix.rotation() * offset;
 
   IfcReference locationRef = addCartesianPoint(translation.x(), translation.y(), translation.z());
@@ -1129,7 +1115,7 @@ IfcReference IFCConverter::createClippingPlane(float zPos, const Eigen::Vector3f
   planePosition.attributes = {planeLocationRef, planeNormalRef, IFC_REFERENCE_UNSET};
   auto planePositionRef = m_writer->addEntity(planePosition);
 
-  // IFCPLANE(#44);
+  // IFCPLANE
   IfcEntity plane("IFCPLANE");
   plane.attributes = {planePositionRef};
 
