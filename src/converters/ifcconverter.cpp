@@ -376,8 +376,9 @@ void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix,
 
     auto axisRef = addCartesianPoint(1, 0, 0, "IFCDIRECTION");
 
-    addRevolvedAreaSolidToShape(profileRef, axisRef, params.angle(),
-                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitY())));
+    addRevolvedAreaSolidToShape(profileRef, axisRef, -params.angle(),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitY()))
+                                    .rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
   } else {
     writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
   }
@@ -400,15 +401,11 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
     profile.attributes = {IFCPROFILETYPE_AREA, "CircularTorus", positionRef, radius};
     auto profileRef = m_writer->addEntity(profile);
 
-    std::cout << profileRef.value << ":" << transform.matrix() << std::endl;
-    std::cout << profileRef.value << ": radius :" << params.radius() << std::endl;
-    std::cout << profileRef.value << ": offset :" << params.offset() << std::endl;
-    std::cout << profileRef.value << ": angle :" << params.angle() << std::endl;
-
     auto axisRef = addCartesianPoint(1.0f, 0.0f, 0.0f, "IFCDIRECTION");
 
     addRevolvedAreaSolidToShape(profileRef, axisRef, -params.angle(),
-                                transform.rotate(Eigen::AngleAxisf(float(-0.5 * M_PI), Eigen::Vector3f::UnitY())));
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitY()))
+                                    .rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
   } else {
     auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
     writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
