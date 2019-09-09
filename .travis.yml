@@ -2,7 +2,7 @@ language:
   - cpp
 
 dist:
- - xenial
+ - bionic
 
 os:
 - linux

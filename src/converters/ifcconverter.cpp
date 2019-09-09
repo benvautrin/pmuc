@@ -1,29 +1,28 @@
 /*
-* Plant Mock-Up Converter
-*
-* Copyright (c) 2013, EDF. All rights reserved.
-*
-* This library is free software; you can redistribute it and/or
-* modify it under the terms of the GNU Lesser General Public
-* License as published by the Free Software Foundation; either
-* version 2.1 of the License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-* MA 02110-1301  USA
-*/
-
+ * Plant Mock-Up Converter
+ *
+ * Copyright (c) 2013-19, EDF. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+ */
 
 #include "ifcconverter.h"
 
 #ifdef _MSC_VER
-#define _USE_MATH_DEFINES // For PI under VC++
+#define _USE_MATH_DEFINES  // For PI under VC++
 #endif
 
 #include <cmath>
@@ -34,1373 +33,1094 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/locale/encoding_utf.hpp>
 
-#include <ifcpp/writer/IfcPPWriterSTEP.h>
-#include <ifcpp/IFC4/include/IfcProject.h>
-#include <ifcpp/IFC4/include/IfcPerson.h>
-#include <ifcpp/IFC4/include/IfcIdentifier.h>
-#include <ifcpp/IFC4/include/IfcOwnerHistory.h>
-#include <ifcpp/IFC4/include/IfcPersonAndOrganization.h>
-#include <ifcpp/IFC4/include/IfcLabel.h>
-#include <ifcpp/IFC4/include/IfcChangeActionEnum.h>
-#include <ifcpp/IFC4/include/IfcTimeStamp.h>
-#include <ifcpp/IFC4/include/IfcGloballyUniqueId.h>
-#include <ifcpp/IFC4/include/IfcBuilding.h>
-#include <ifcpp/IFC4/include/IfcSite.h>
-#include <ifcpp/IFC4/include/IfcPolyline.h>
-#include <ifcpp/IFC4/include/IfcCartesianPoint.h>
-#include <ifcpp/IFC4/include/IfcReflectanceMethodEnum.h>
-#include <ifcpp/IFC4/include/IfcAxis2Placement3D.h>
-#include <ifcpp/IFC4/include/IfcApplication.h>
-#include <ifcpp/IFC4/include/IfcLengthMeasure.h>
-#include <ifcpp/IFC4/include/IfcRelAggregates.h>
-#include <ifcpp/IFC4/include/IfcBuildingElementProxy.h>
-#include <ifcpp/IFC4/include/IfcProductDefinitionShape.h>
-#include <ifcpp/IFC4/include/IfcProduct.h>
-#include <ifcpp/IFC4/include/IfcShapeRepresentation.h>
-#include <ifcpp/IFC4/include/IfcGeometricRepresentationContext.h>
-#include <ifcpp/IFC4/include/IfcDimensionCount.h>
-#include <ifcpp/IFC4/include/IfcFaceBasedSurfaceModel.h>
-#include <ifcpp/IFC4/include/IfcConnectedFaceSet.h>
-#include <ifcpp/IFC4/include/IfcPolyLoop.h>
-#include <ifcpp/IFC4/include/IfcFaceOuterBound.h>
-#include <ifcpp/IFC4/include/IfcFace.h>
-#include <ifcpp/IFC4/include/IfcOrganization.h>
-#include <ifcpp/IFC4/include/IfcUnitAssignment.h>
-#include <ifcpp/IFC4/include/IfcSIUnit.h>
-#include <ifcpp/IFC4/include/IfcSIUnitName.h>
-#include <ifcpp/IFC4/include/IfcUnitEnum.h>
-#include <ifcpp/IFC4/include/IfcLocalPlacement.h>
-#include <ifcpp/IFC4/include/IfcTriangulatedFaceSet.h>
-#include <ifcpp/IFC4/include/IfcCartesianPointList3D.h>
-#include <ifcpp/IFC4/include/IfcLengthMeasure.h>
-#include <ifcpp/IFC4/include/IfcMaterial.h>
-#include <ifcpp/IFC4/include/IfcRelAssociatesMaterial.h>
-#include <ifcpp/IFC4/include/IfcMaterialDefinitionRepresentation.h>
-#include <ifcpp/IFC4/include/IfcStyledRepresentation.h>
-#include <ifcpp/IFC4/include/IfcStyledItem.h>
-#include <ifcpp/IFC4/include/IfcPresentationStyleAssignment.h>
-#include <ifcpp/IFC4/include/IfcColourRgb.h>
-#include <ifcpp/IFC4/include/IfcNormalisedRatioMeasure.h>
-#include <ifcpp/IFC4/include/IfcSurfaceStyleRendering.h>
-#include <ifcpp/IFC4/include/IfcSurfaceStyle.h>
-#include <ifcpp/IFC4/include/IfcSurfaceSide.h>
-#include <ifcpp/IFC4/include/IfcPropertySet.h>
-#include <ifcpp/IFC4/include/IfcRelDefinesByProperties.h>
-#include <ifcpp/IFC4/include/IfcPropertySingleValue.h>
-#include <ifcpp/IFC4/include/IfcText.h>
-#include <ifcpp/IFC4/include/IfcExtrudedAreaSolid.h>
-#include <ifcpp/IFC4/include/IfcCircleProfileDef.h>
-#include <ifcpp/IFC4/include/IfcProfileTypeEnum.h>
-#include <ifcpp/IFC4/include/IfcAxis2Placement2D.h>
-#include <ifcpp/IFC4/include/IfcDirection.h>
-#include <ifcpp/IFC4/include/IfcRectangleProfileDef.h>
-#include <ifcpp/IFC4/include/IfcRevolvedAreaSolid.h>
-#include <ifcpp/IFC4/include/IfcPlaneAngleMeasure.h>
-#include <ifcpp/IFC4/include/IfcAxis1Placement.h>
-#include <ifcpp/IFC4/include/IfcTrimmedCurve.h>
-#include <ifcpp/IFC4/include/IfcTrimmingPreference.h>
-#include <ifcpp/IFC4/include/IfcArbitraryClosedProfileDef.h>
-#include <ifcpp/IFC4/include/IfcCircle.h>
-#include <ifcpp/IFC4/include/IfcCompositeCurve.h>
-#include <ifcpp/IFC4/include/IfcCompositeCurveSegment.h>
-#include <ifcpp/IFC4/include/IfcTransitionCode.h>
-#include <ifcpp/IFC4/include/IfcEllipse.h>
-#include <ifcpp/IFC4/include/IfcBooleanClippingResult.h>
-#include <ifcpp/IFC4/include/IfcBooleanOperator.h>
-#include <ifcpp/IFC4/include/IfcHalfSpaceSolid.h>
-#include <ifcpp/IFC4/include/IfcPlane.h>
-
-#include <ifcpp/IFC4/include/IfcPositiveLengthMeasure.h>
-
-#include <ifcpp/model/IfcPPGuid.h>
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/SVD>
 
-
-#include "../api/rvmmeshhelper.h"
 #include "../api/rvmcolorhelper.h"
+#include "../api/rvmmeshhelper.h"
 
+#include <cassert>
 #include <fstream>
 #include <string>
-#include <cassert>
 
 using boost::locale::conv::utf_to_utf;
 
 namespace {
-    shared_ptr<IfcNormalisedRatioMeasure> getNormalisedRatioMeasure(double value) {
-        shared_ptr<IfcNormalisedRatioMeasure> measure( new IfcNormalisedRatioMeasure() );
-        measure->m_value = value;
-        return measure;
-    }
 
-    std::wstring utf8_to_wstring(const std::string& str)
-    {
-        return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
+Transform3f toEigenTransform(const std::array<float, 12>& matrix) {
+  Transform3f result;
+  result.setIdentity();
+  for (unsigned int i = 0; i < 3; i++) {
+    for (unsigned int j = 0; j < 4; j++) {
+      result(i, j) = matrix[i + j * 3];
     }
-
-    Transform3f toEigenTransform(const std::array<float, 12>& matrix) {
-        Transform3f result;
-        result.setIdentity();
-        for (unsigned int i = 0; i < 3; i++) {
-            for (unsigned int j = 0; j < 4; j++) {
-                result(i, j) = matrix[i+j*3];
-            }
-        }
-        return result;
-    }
-
-    Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
-        return toEigenTransform(matrix).matrix();
-    }
-
-    int toTimeStamp(const std::string& schema) {
-        // TODO: Implement
-        return 0;
-    }
-
-    float getScaleFromTransformation(const Transform3f& transform) {
-        Eigen::Matrix3f rotation;
-        Eigen::Matrix3f scale;
-        transform.computeRotationScaling(&rotation, &scale);
-        return scale(0,0);
-    }
+  }
+  return result;
 }
 
-
-IFCConverter::IFCConverter(const std::string& filename, const std::string& schema) : RVMReader(), m_filename(filename), m_model(new IfcPPModel()), m_currentEntityId(0) {
-    std::string filename_escaped = boost::replace_all_copy(filename, "\\", "\\\\");
-	std::wstringstream strs;
-	strs << "ISO-10303-21;" << std::endl;
-	strs << "HEADER;" << std::endl;
-	strs << "FILE_DESCRIPTION(('PMUC generated IFC file.'),'2;1');" << std::endl;
-	strs << "FILE_NAME('" << filename_escaped.c_str() << "','";
-
-	//2011-04-21T14:25:12
-	std::locale loc( std::wcout.getloc(), new boost::posix_time::wtime_facet( L"%Y-%m-%dT%H:%M:%S" ) );
-	std::basic_stringstream<wchar_t> wss;
-	wss.imbue( loc );
-	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
-	wss << now;
-	std::wstring ts = wss.str().c_str();
-
-	strs << ts;
-	strs << "',(''),('',''),'','IfcPlusPlus','');" << std::endl;
-    strs << "FILE_SCHEMA(('" << schema.c_str() << "'));" << std::endl;
-	strs << "ENDSEC;" << std::endl;
-
-    m_model->setFileHeader(strs.str().c_str());
+Eigen::Matrix4f toEigenMatrix(const std::array<float, 12>& matrix) {
+  return toEigenTransform(matrix).matrix();
 }
 
-IFCConverter::~IFCConverter() {
+int toTimeStamp(const std::string& schema) {
+  // TODO: Implement
+  // std::cout << schema << std::endl;
+  return 0;
 }
 
-void IFCConverter::startDocument() {
-    shared_ptr<IfcProject> project(new IfcProject());
-    insertEntity(project);
-    project->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    m_model->setIfcProject(project);
-
+float getScaleFromTransformation(const Transform3f& transform) {
+  Eigen::Matrix3f rotation;
+  Eigen::Matrix3f scale;
+  transform.computeRotationScaling(&rotation, &scale);
+  return scale(0, 0);
 }
+}  // namespace
+
+IFCConverter::IFCConverter(const std::string& filename, const std::string& schema) : RVMReader(), m_filename(filename) {
+  m_writer = new IFCStreamWriter(filename);
+  m_writer->startDocument();
+
+  FileDescription desc;
+  desc.description.push_back("ViewDefinition [StructuralAnalysisView]");
+  desc.description.push_back("PMUC generated IFC file.");
+
+  // 2011-04-21T14:25:12
+  std::stringstream wss;
+  boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%Y-%m-%dT%H:%M:%S");
+  wss.imbue(std::locale(std::cout.getloc(), facet));
+  boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+  wss << now;
+  std::string ts = wss.str();
+
+  FileName name;
+  name.name = boost::replace_all_copy(filename, "\\", "\\\\");
+  name.time_stamp_text = ts;
+  name.preprocessor_version = "PMUC";
+
+  m_writer->addHeader(desc, name);
+}
+
+IFCConverter::~IFCConverter() {}
+
+void IFCConverter::startDocument() {}
 
 void IFCConverter::endDocument() {
-    shared_ptr<IfcPPWriterSTEP> writer( new IfcPPWriterSTEP() );
-    writer->setMessageCallBack(this, &IFCConverter::messageCallBack);
-    std::stringstream stream;
-    std::ofstream fileStream(m_filename);
-
-    writer->writeModelToStream(stream, m_model);
-    fileStream << stream.rdbuf();
-    fileStream.close();
-    std::cout << std::endl; // Finish progress line
+  m_writer->endDocument();
+  delete m_writer;
 }
 
-void IFCConverter::startHeader(const std::string& banner, const std::string& fileNote, const std::string& dateStr, const std::string& user, const std::string& encoding) {
-    m_model->getIfcProject()->m_OwnerHistory = createOwnerHistory(user, banner, toTimeStamp(dateStr));
+void IFCConverter::startHeader(const std::string& banner,
+                               const std::string& fileNote,
+                               const std::string& dateStr,
+                               const std::string& user,
+                               const std::string& encoding) {
+  createOwnerHistory(user, banner, toTimeStamp(dateStr));
+
+  m_project = new IfcEntity("IFCPROJECT");
+  m_project->attributes = {createBase64Uuid<char>(), m_ownerHistory};
 }
 
-void IFCConverter::endHeader() {
-
-}
+void IFCConverter::endHeader() {}
 
 void IFCConverter::startModel(const std::string& projectName, const std::string& name) {
-    // TODO(ksons): Which is long name and which is name
-    m_model->getIfcProject()->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( projectName )));
-    m_model->getIfcProject()->m_LongName = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name )));
-    m_model->getIfcProject()->m_Phase = shared_ptr<IfcLabel>(new IfcLabel(L"$"));
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcgeometryresource/lexical/ifccartesianpoint.htm
+  IfcEntity location("IFCCARTESIANPOINT");
+  location.attributes = {IfcFloatList{0.0f, 0.0f, 0.0f}};
+  IfcReference locationRef = m_writer->addEntity(location);
 
-    // Initialize model with site, building etc
-    initModel();
+  IfcEntity world_coordinate_system("IFCAXIS2PLACEMENT3D");
+  world_coordinate_system.attributes = {
+      locationRef,          // Location
+      IFC_REFERENCE_UNSET,  // Axis (Z)
+      IFC_REFERENCE_UNSET   // RefDirection (X)
+  };
+  IfcReference world_coordinate_systemRef = m_writer->addEntity(world_coordinate_system);
 
+  // 3d representation context
+  IfcEntity context("IFCGEOMETRICREPRESENTATIONCONTEXT");
+  context.attributes = {IFC_STRING_UNSET,  // ContextIdentifier
+                        "Model",
+                        3,                           // dimension count
+                        IFC_STRING_UNSET,            // precision
+                        world_coordinate_systemRef,  // WorldCoordinateSystem
+                        IFC_REFERENCE_UNSET};
+  m_contextRef = m_writer->addEntity(context);
 
+  // IfcUnitAssignment
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcmeasureresource/lexical/ifcunitassignment.htm
+
+  // length unit [m]
+  IfcEntity lenghtUnit("IFCSIUNIT");
+  lenghtUnit.attributes = {IFC_REFERENCE_UNSET, IFCUNIT_LENGTHUNIT, IFC_STRING_UNSET, IFCSIUNITNAME_METRE};
+  IfcReference lenghtUnitRef = m_writer->addEntity(lenghtUnit);
+
+  // plane unit [rad]
+  IfcEntity plane_angle_unit("IFCSIUNIT");
+  plane_angle_unit.attributes = {IFC_REFERENCE_UNSET, IFCUNIT_PLANEANGLEUNIT, IFC_STRING_UNSET, IFCSIUNITNAME_RADIAN};
+  IfcReference plane_angle_unitRef = m_writer->addEntity(plane_angle_unit);
+
+  // Unit Assignment
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcmeasureresource/lexical/ifcunitassignment.htm
+  IfcEntity unitAssignment("IFCUNITASSIGNMENT");
+  unitAssignment.attributes = {IfcReferenceList{lenghtUnitRef, plane_angle_unitRef}};
+  IfcReference unitAssignmentRef = m_writer->addEntity(unitAssignment);
+
+  m_project->attributes.push_back(projectName);                     // name
+  m_project->attributes.push_back(name);                            // description
+  m_project->attributes.push_back(IFC_STRING_UNSET);                // object type
+  m_project->attributes.push_back(name);                            // long name
+  m_project->attributes.push_back(IFC_STRING_UNSET);                // phase
+  m_project->attributes.push_back(IfcReferenceList{m_contextRef});  // RepresentationContexts
+  m_project->attributes.push_back(unitAssignmentRef);               // UnitsInContext
+
+  IfcReference projectRef = m_writer->addEntity(*m_project);
+  delete m_project;
+
+  // Initialize model with site, building etc
+  initModel(projectRef);
 }
 
 void IFCConverter::endModel() {
-    assert(m_relationStack.size() == 1);
-    shared_ptr<IfcRelAggregates> aggregates = m_relationStack.top();
-
-    // Do not add aggregates for empty model
-    if(aggregates->m_RelatedObjects.size() > 0) {
-        insertEntity(aggregates);
-    }
-    m_relationStack.pop();
+  assert(m_productStack.size() == 0);
+  assert(m_productChildStack.size() == 1);
+  createParentChildRelation(m_buildingRef, m_productChildStack.top());
 }
 
 void IFCConverter::startGroup(const std::string& name, const Vector3F& translation, const int& materialId) {
-    shared_ptr<IfcBuildingElementProxy> buildingElement( new IfcBuildingElementProxy() );
-    buildingElement->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    buildingElement->m_Name = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring( name ) ) );
-    buildingElement->m_OwnerHistory = m_owner_history;
-    insertEntity(buildingElement);
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuildingelementproxy.htm
 
-    shared_ptr<IfcMaterial> material = createMaterial(materialId);
-    shared_ptr<IfcRelAssociatesMaterial> materialAssociates( new IfcRelAssociatesMaterial() );
-    materialAssociates->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    materialAssociates->m_OwnerHistory = m_owner_history;
-    materialAssociates->m_RelatedObjects.push_back(buildingElement);
-    materialAssociates->m_RelatingMaterial = material;
-    insertEntity(materialAssociates);
+  auto placementRef = createPlacement(m_placementStack.top());
+  m_placementStack.push(placementRef);
 
-    m_currentMaterial.push(materialId);
+  IfcEntity* buildingElement = new IfcEntity("IFCBUILDINGELEMENTPROXY");
+  buildingElement->attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,    // owner history
+      name,              // Name
+      IFC_STRING_UNSET,  // Description
+      IFC_STRING_UNSET,  // Object Type
+      placementRef,      // ObjectPlacement
+  };
 
-    // Build relation with parent group
-    m_relationStack.top()->m_RelatedObjects.push_back(buildingElement);
+  m_currentMaterial.push(materialId);
+  m_productStack.push(buildingElement);
+  m_productChildStack.push(IfcReferenceList{});
+  m_productRepresentationStack.push(IfcReferenceList{});
+  m_productMetaDataStack.push(IfcReferenceList{});
+}
 
-    // Make this group top of the stack
-    pushParentRelation(buildingElement);
+IfcReference IFCConverter::createPlacement(IfcReference parentPlacement) {
+  auto locationRef = addCartesianPoint(0.0f, 0.0f, 0.0f);
+
+  IfcEntity relative_placement("IFCAXIS2PLACEMENT3D");
+  relative_placement.attributes = {locationRef, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  auto relativePlacementRef = m_writer->addEntity(relative_placement);
+
+  // Define a placement based on the relative placement defined above
+  // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm
+  // -
+  IfcEntity placement("IFCLOCALPLACEMENT");
+  placement.attributes = {parentPlacement, relativePlacementRef};
+  return m_writer->addEntity(placement);
+}
+
+IfcReference IFCConverter::createPropertySet(IfcReference relatedObject) {
+  assert(!m_productMetaDataStack.empty());
+
+  auto metaData = m_productMetaDataStack.top();
+
+  // Create a property set that holds all properties
+  IfcEntity propertySet("IFCPROPERTYSET");
+  propertySet.attributes = {createBase64Uuid<char>(),
+                            m_ownerHistory,                        // owner history
+                            "RVMAttributes",                       // Name
+                            "Attributes from RVM Attribute file",  // Description
+                            metaData};
+  auto propertySetRef = m_writer->addEntity(propertySet);
+
+  // Now link the created property set with the object
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcreldefinesbyproperties.htm
+  IfcEntity propertyRelation("IFCRELDEFINESBYPROPERTIES");
+  propertyRelation.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,                   // owner history
+      IFC_STRING_UNSET,                 // Name
+      IFC_STRING_UNSET,                 // Description
+      IfcReferenceList{relatedObject},  // RelatedObjects
+      propertySetRef                    // RelatingPropertyDefinition
+
+  };
+  m_writer->addEntity(propertyRelation);
+  return propertySetRef;
 }
 
 void IFCConverter::endGroup() {
-    shared_ptr<IfcRelAggregates> aggregates = m_relationStack.top();
+  auto buildingElement = m_productStack.top();
+  buildingElement->attributes.push_back(createRepresentation());  // Representation
+  buildingElement->attributes.push_back(IFC_STRING_UNSET);        // Tag
+  buildingElement->attributes.push_back(IFC_REFERENCE_UNSET);     // CompositionType
 
-    // Do not add aggregates for empty groups
-    if(aggregates->m_RelatedObjects.size() > 0) {
-        insertEntity(aggregates);
-    }
-    m_relationStack.pop();
-    m_currentMaterial.pop();
+  IfcReference buildingElementRef = m_writer->addEntity(*buildingElement);
+  m_productStack.pop();
+
+  IfcReference material = createMaterial(m_currentMaterial.top());
+  m_currentMaterial.pop();
+
+  createPropertySet(buildingElementRef);
+  m_productMetaDataStack.pop();
+
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcrelassociatesmaterial.htm
+  IfcEntity materialAssociates("IFCRELASSOCIATESMATERIAL");
+  materialAssociates.attributes = {createBase64Uuid<char>(),
+                                   m_ownerHistory,       // owner history
+                                   "material_relation",  // Name
+                                   IFC_STRING_UNSET,     // Description
+                                   IfcReferenceList{buildingElementRef},
+                                   material};
+  m_writer->addEntity(materialAssociates);
+
+  // Make this group top of the stack
+  createParentChildRelation(buildingElementRef, m_productChildStack.top());
+
+  m_productChildStack.pop();
+  m_productRepresentationStack.pop();
+  m_placementStack.pop();
+  m_productChildStack.top().push_back(buildingElementRef);
+  delete buildingElement;
 }
 
-void IFCConverter::startMetaData() {
-    // Create a property set that holds all upcoming properties
-    m_propertySet = shared_ptr<IfcPropertySet>( new IfcPropertySet() );
-    m_propertySet->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    m_propertySet->m_OwnerHistory = m_owner_history;
-    m_propertySet->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"RVM Attributes" ));
-    m_propertySet->m_Description = shared_ptr<IfcText>( new IfcText( L"Attributes from RVM Attribute file" ));
-    insertEntity(m_propertySet);
+IfcReference IFCConverter::createRepresentation() {
+  if (!m_productRepresentationStack.top().size()) {
+    return IFC_REFERENCE_UNSET;
+  }
+  IfcEntity shapeRepresentation("IFCSHAPEREPRESENTATION");
+  shapeRepresentation.attributes = {m_contextRef, "Body", "SurfaceModel", m_productRepresentationStack.top()};
+  auto shapeRepresentationRef = m_writer->addEntity(shapeRepresentation);
 
-    // A related object is required (typically a IfcBuildingElementProxy)
-    shared_ptr<IfcObjectDefinition> relatedObject = m_relationStack.top()->m_RelatingObject;
-    assert(relatedObject);
+  IfcEntity shape("IFCPRODUCTDEFINITIONSHAPE");
+  shape.attributes = {IFC_REFERENCE_UNSET, IFC_REFERENCE_UNSET, IfcReferenceList{shapeRepresentationRef}};
+  auto shapeRef = m_writer->addEntity(shape);
 
-    // Now link the created property set with the object
-    shared_ptr<IfcRelDefinesByProperties> propertyRelation( new IfcRelDefinesByProperties() );
-    propertyRelation->m_GlobalId = shared_ptr<IfcGloballyUniqueId>(new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    propertyRelation->m_RelatedObjects.push_back(relatedObject);
-    propertyRelation->m_RelatingPropertyDefinition = m_propertySet;
-    propertyRelation->m_OwnerHistory = m_owner_history;
-    insertEntity(propertyRelation);
-
+  return shapeRef;
 }
 
-void IFCConverter::endMetaData() {
+void IFCConverter::startMetaData() {}
 
+void IFCConverter::endMetaData() {}
+
+void IFCConverter::startMetaDataPair(const std::string& name, const std::string& value) {
+  if (!m_productMetaDataStack.empty()) {
+    // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpropertyresource/lexical/ifcpropertysinglevalue.htm
+    IfcEntity prop("IFCPROPERTYSINGLEVALUE");
+    prop.attributes = {name, IFC_STRING_UNSET, IfcSimpleValue(value), IFC_STRING_UNSET};
+    m_productMetaDataStack.top().push_back(m_writer->addEntity(prop));
+  }
 }
 
-void IFCConverter::startMetaDataPair(const std::string &name, const std::string &value) {
-    assert(m_propertySet);
-    std::string value_escaped = boost::replace_all_copy(value, "\\", "\\\\");
-
-    shared_ptr<IfcPropertySingleValue> prop( new IfcPropertySingleValue() );
-    insertEntity(prop);
-    prop->m_Name = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(name) ));
-    prop->m_NominalValue = shared_ptr<IfcLabel>(new IfcLabel( utf8_to_wstring(value_escaped) ));
-
-    m_propertySet->m_HasProperties.push_back(prop);
-}
-
-void IFCConverter::endMetaDataPair() {
-}
+void IFCConverter::endMetaDataPair() {}
 
 void IFCConverter::createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params) {
-    writeMesh(RVMMeshHelper2::makePyramid(params, m_maxSideSize, m_minSides), matrix);
+  writeMesh(RVMMeshHelper2::makePyramid(params, m_maxSideSize, m_minSides), matrix);
 }
-
 
 void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitives::Box& params) {
-    if (m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    float s = getScaleFromTransformation(transform);
 
-        shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
-        xDim->m_value = params.len[0] *  s;
+    auto locationRef = addCartesianPoint(0, 0);
 
-        shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
-        yDim->m_value = params.len[1] *  s;
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcPositiveLengthMeasure> zDim (new IfcPositiveLengthMeasure() );
-        zDim->m_value = params.len[2] * s;
+    IfcEntity profile("IFCRECTANGLEPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, "BOXRECTANGLE", positionRef, params.len[0] * s, params.len[1] * s};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    auto directionRef = addCartesianPoint(0, 0, 1, "IFCDIRECTION");
 
-        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
+    Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f * s);
 
-        shared_ptr<IfcRectangleProfileDef> profile (new IfcRectangleProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_Position = position;
-        profile->m_XDim = xDim;
-        profile->m_YDim = yDim;
+    IfcEntity box("IFCEXTRUDEDAREASOLID");
+    box.attributes = {profileRef, createCoordinateSystem(toEigenTransform(matrix), offset), directionRef,
+                      params.len[2] * s};
+    auto boxRef = m_writer->addEntity(box);
 
-        shared_ptr<IfcDirection> direction (new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(1);
-
-        Eigen::Vector3f offset(0, 0, -params.len[2] * 0.5f *  s);
-
-        shared_ptr<IfcExtrudedAreaSolid> box (new IfcExtrudedAreaSolid() );
-        insertEntity(box);
-        box->m_Depth = zDim;
-        box->m_Position = getCoordinateSystem(toEigenTransform(matrix), offset);
-        box->m_SweptArea = profile;
-        box->m_ExtrudedDirection = direction;
-
-        addRepresentationToShape(box, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
-    } else {
-        writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
-    }
-
+    m_productRepresentationStack.top().push_back(boxRef);
+    // "SweptSolid"
+    addStyleToItem(boxRef);
+  } else {
+    writeMesh(RVMMeshHelper2::makeBox(params, m_maxSideSize, m_minSides), matrix);
+  }
 }
 
-void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params) {
-    if(m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix,
+                                          const Primitives::RectangularTorus& params) {
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-        // Define the parametric profile first
-        shared_ptr<IfcPositiveLengthMeasure> xDim (new IfcPositiveLengthMeasure() );
-        xDim->m_value = params.height() * s;
+    auto yExtend = (params.routside() - params.rinside()) * s;
+    auto locationRef = addCartesianPoint(0.0f, params.rinside() * s + 0.5f * yExtend);
 
-        float yExtend = (params.routside() - params.rinside()) * s;
-        shared_ptr<IfcPositiveLengthMeasure> yDim (new IfcPositiveLengthMeasure() );
-        yDim->m_value = yExtend;
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(params.rinside() * s + 0.5 * yExtend) ) );
+    IfcEntity profile("IFCRECTANGLEPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, "RectangularTorus", positionRef, params.height() * s, yExtend};
+    auto profileRef = m_writer->addEntity(profile);
+    // TODO(zero height)
 
-        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
+    auto axisRef = addCartesianPoint(1, 0, 0, "IFCDIRECTION");
 
-        shared_ptr<IfcRectangleProfileDef> profile (new IfcRectangleProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_Position = position;
-        profile->m_XDim = xDim;
-        profile->m_YDim = yDim;
-
-        shared_ptr<IfcDirection> axis (new IfcDirection() );
-        insertEntity(axis);
-        axis->m_DirectionRatios.push_back(1);
-        axis->m_DirectionRatios.push_back(0);
-        axis->m_DirectionRatios.push_back(0);
-
-        addRevolvedAreaSolidToShape(profile, axis, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
-    } else {
-        writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
-    }
+    addRevolvedAreaSolidToShape(profileRef, axisRef, -params.angle(),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitY()))
+                                    .rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
+  } else {
+    writeMesh(RVMMeshHelper2::makeRectangularTorus(params, m_maxSideSize, m_minSides), matrix);
+  }
 }
 
 void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params) {
-    if(m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-        // Define the parametric profile first
-        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = params.radius() * s;
+    // Define the parametric profile first
+    auto radius = params.radius() * s;
+    auto locationRef = addCartesianPoint(0.0f, params.offset() * s);
 
-        shared_ptr<IfcCartesianPoint> profile_location( new IfcCartesianPoint() );
-        insertEntity(profile_location);
-        profile_location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>( new IfcLengthMeasure(0.0) ) );
-        profile_location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>( new IfcLengthMeasure(params.offset() * s) ) );
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = profile_location;
+    IfcEntity profile("IFCCIRCLEPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, "CircularTorus", positionRef, radius};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_Position = position;
-        profile->m_Radius = radius;
+    auto axisRef = addCartesianPoint(1.0f, 0.0f, 0.0f, "IFCDIRECTION");
 
-        shared_ptr<IfcDirection> axis (new IfcDirection() );
-        insertEntity(axis);
-        axis->m_DirectionRatios.push_back(1);
-        axis->m_DirectionRatios.push_back(0);
-        axis->m_DirectionRatios.push_back(0);
-
-        addRevolvedAreaSolidToShape(profile, axis, params.angle(), transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitY())));
-    } else {
-        auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
-        writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
-    }
+    addRevolvedAreaSolidToShape(profileRef, axisRef, -params.angle(),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitY()))
+                                    .rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
+  } else {
+    auto sides = RVMMeshHelper2::infoCircularTorusNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeCircularTorus(params, sides.first, sides.second), matrix);
+  }
 }
 
 void IFCConverter::createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params) {
-    if(m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-        double r = params.diameter() * s;
-        double r2 = params.radius() * s;
+    float r = params.diameter() * s;
+    float r2 = params.radius() * s;
 
-        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = r;
+    auto locationRef = addCartesianPoint(0.0f, 0.0);
+    auto directionRef = addCartesianPoint(0.0f, 1.0f, "IFCDIRECTION");
 
-        shared_ptr<IfcPositiveLengthMeasure> radius2 (new IfcPositiveLengthMeasure() );
-        radius2->m_value = r2;
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, directionRef};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    IfcEntity ellipse("IFCELLIPSE");
+    ellipse.attributes = {positionRef, r2, r};
+    auto ellipseRef = m_writer->addEntity(ellipse);
 
-        shared_ptr<IfcDirection> direction( new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(1);
+    auto p1 = addCartesianPoint(r, 0.0);
+    auto p2 = addCartesianPoint(0.0, 0.0);
+    auto p3 = addCartesianPoint(0.0, r2);
 
-        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
-        position->m_RefDirection = direction;
+    IfcEntity line("IFCPOLYLINE");
+    line.attributes = {IfcReferenceList{p1, p2, p3}};
+    auto lineRef = m_writer->addEntity(line);
 
-        shared_ptr<IfcEllipse> ellipse (new IfcEllipse() );
-        insertEntity(ellipse);
-        ellipse->m_SemiAxis1 = radius2;
-        ellipse->m_SemiAxis2 = radius;
-        ellipse->m_Position = position;
+    IfcEntity segLine("IFCCOMPOSITECURVESEGMENT");
+    segLine.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, lineRef};
+    auto segLineRef = m_writer->addEntity(segLine);
 
-        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
-        insertEntity(p1);
-        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r ) ) );
-        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+    IfcEntity curve("IFCTRIMMEDCURVE");
+    curve.attributes = {ellipseRef, IfcReferenceList{p3}, IfcReferenceList{p1}, IFC_FALSE,
+                        IFCTRIMMINGPREFERENCE_CARTESIAN};
+    auto curveRef = m_writer->addEntity(curve);
 
-        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
-        insertEntity(p2);
-        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+    IfcEntity segCurve("IFCCOMPOSITECURVESEGMENT");
+    segCurve.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, curveRef};
+    auto segCurveRef = m_writer->addEntity(segCurve);
 
-        shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
-        insertEntity(p3);
-        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r2 ) ) );
+    IfcEntity compositeCurve("IFCCOMPOSITECURVE");
+    compositeCurve.attributes = {IfcReferenceList{segLineRef, segCurveRef}, IFC_FALSE};
+    auto compositeCurveRef = m_writer->addEntity(compositeCurve);
 
-        shared_ptr<IfcPolyline> line (new IfcPolyline() );
-        insertEntity(line);
-        line->m_Points.push_back(p1);
-        line->m_Points.push_back(p2);
-        line->m_Points.push_back(p3);
+    IfcEntity profile("IFCARBITRARYCLOSEDPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, compositeCurveRef};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
-        insertEntity(segLine);
-        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
-        segLine->m_SameSense = true;
-        segLine->m_ParentCurve = line;
+    auto axis = addCartesianPoint(0.0f, 1.0f, 0.0f, "IFCDIRECTION");
 
-        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
-        insertEntity(curve);
-        curve->m_BasisCurve = ellipse;
-        curve->m_Trim1.push_back(p3);
-        curve->m_Trim2.push_back(p1);
-        curve->m_SenseAgreement = false;
-        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
-
-        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
-        insertEntity(segCurve);
-        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
-        segCurve->m_SameSense = true;
-        segCurve->m_ParentCurve = curve;
-
-        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
-        insertEntity(compositeCurve);
-        compositeCurve->m_Segments.push_back(segLine);
-        compositeCurve->m_Segments.push_back(segCurve);
-        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
-
-        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_OuterCurve = compositeCurve;
-
-        shared_ptr<IfcDirection> axis (new IfcDirection() );
-        insertEntity(axis);
-        axis->m_DirectionRatios.push_back(0);
-        axis->m_DirectionRatios.push_back(1);
-        axis->m_DirectionRatios.push_back(0);
-
-        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitX())));
-    } else {
-        auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
-        writeMesh(RVMMeshHelper2::makeEllipticalDish(params,sides.first, sides.second), matrix);
-    }
+    addRevolvedAreaSolidToShape(profileRef, axis, float(2.0 * M_PI),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
+  } else {
+    auto sides = RVMMeshHelper2::infoEllipticalDishNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeEllipticalDish(params, sides.first, sides.second), matrix);
+  }
 }
 
 void IFCConverter::createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params) {
-    if(m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-        double r = params.diameter() * 0.5 * s;
-        double h = params.height() * s;
-        double offset = r - h;
-        double angle =  asin(1.0 - h / r);
+    float radius = params.diameter() * 0.5f * s;
+    float h = params.height() * s;
+    float offset = radius - h;
+    float angle = asin(1.0f - h / radius);
 
-        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = r;
+    auto locationRef = addCartesianPoint(0.0f, -offset);
+    auto directionRef = addCartesianPoint(0.0f, 1.0f, "IFCDIRECTION");
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(-offset) ) );
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, directionRef};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcDirection> direction( new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(1);
+    IfcEntity circle("IFCCIRCLE");
+    circle.attributes = {positionRef, radius};
+    auto circleRef = m_writer->addEntity(circle);
 
-        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
-        position->m_RefDirection = direction;
+    auto p1 = addCartesianPoint(radius * cos(angle), radius * sin(angle) - offset);
+    auto p2 = addCartesianPoint(0.0, 0.0);
+    auto p3 = addCartesianPoint(0.0, h);
 
-        shared_ptr<IfcCircle> circle (new IfcCircle() );
-        insertEntity(circle);
-        circle->m_Radius = radius;
-        circle->m_Position = position;
+    IfcEntity line("IFCPOLYLINE");
+    line.attributes = {IfcReferenceList{p1, p2, p3}};
+    auto lineRef = m_writer->addEntity(line);
 
-        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
-        insertEntity(p1);
-        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r * cos(angle) ) ) );
-        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( r * sin(angle) - offset ) ) );
+    IfcEntity segLine("IFCCOMPOSITECURVESEGMENT");
+    segLine.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, lineRef};
+    auto segLineRef = m_writer->addEntity(segLine);
 
-        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
-        insertEntity(p2);
-        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
+    IfcEntity curve("IFCTRIMMEDCURVE");
+    curve.attributes = {circleRef, IfcReferenceList{p3}, IfcReferenceList{p1}, IFC_FALSE,
+                        IFCTRIMMINGPREFERENCE_CARTESIAN};
+    auto curveRef = m_writer->addEntity(curve);
 
-        shared_ptr<IfcCartesianPoint> p3 (new IfcCartesianPoint() );
-        insertEntity(p3);
-        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-        p3->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( h ) ) );
+    IfcEntity segCurve("IFCCOMPOSITECURVESEGMENT");
+    segCurve.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, curveRef};
+    auto segCurveRef = m_writer->addEntity(segCurve);
 
-        shared_ptr<IfcPolyline> line (new IfcPolyline() );
-        insertEntity(line);
-        line->m_Points.push_back(p1);
-        line->m_Points.push_back(p2);
-        line->m_Points.push_back(p3);
+    IfcEntity compositeCurve("IFCCOMPOSITECURVE");
+    compositeCurve.attributes = {IfcReferenceList{segLineRef, segCurveRef}, IFC_FALSE};
+    auto compositeCurveRef = m_writer->addEntity(compositeCurve);
 
-        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
-        insertEntity(segLine);
-        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
-        segLine->m_SameSense = true;
-        segLine->m_ParentCurve = line;
+    IfcEntity profile("IFCARBITRARYCLOSEDPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, compositeCurveRef};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
-        insertEntity(curve);
-        curve->m_BasisCurve = circle;
-        curve->m_Trim1.push_back(p3);
-        curve->m_Trim2.push_back(p1);
-        curve->m_SenseAgreement = false;
-        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
+    auto axis = addCartesianPoint(0.0f, 1.0f, 0.0f, "IFCDIRECTION");
 
-        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
-        insertEntity(segCurve);
-        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
-        segCurve->m_SameSense = true;
-        segCurve->m_ParentCurve = curve;
-
-        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
-        insertEntity(compositeCurve);
-        compositeCurve->m_Segments.push_back(segLine);
-        compositeCurve->m_Segments.push_back(segCurve);
-        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
-
-        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_OuterCurve = compositeCurve;
-
-        shared_ptr<IfcDirection> axis (new IfcDirection() );
-        insertEntity(axis);
-        axis->m_DirectionRatios.push_back(0);
-        axis->m_DirectionRatios.push_back(1);
-        axis->m_DirectionRatios.push_back(0);
-
-        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform.rotate(Eigen::AngleAxisf(float(0.5*M_PI),  Eigen::Vector3f::UnitX())));
-    } else {
-        writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
-    }
+    addRevolvedAreaSolidToShape(profileRef, axis, float(2.0 * M_PI),
+                                transform.rotate(Eigen::AngleAxisf(float(0.5 * M_PI), Eigen::Vector3f::UnitX())));
+  } else {
+    writeMesh(RVMMeshHelper2::makeSphericalDish(params, m_maxSideSize, m_minSides), matrix);
+  }
 }
 
 void IFCConverter::createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
-    if(params.xtshear() > FLT_EPSILON || params.ytshear() > FLT_EPSILON || params.xbshear() > FLT_EPSILON || params.ybshear() > FLT_EPSILON) {
-        createSlopedCylinder(matrix, params);
-    } else {
-        auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
-        writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
-    }
+  if (params.xtshear() > FLT_EPSILON || params.ytshear() > FLT_EPSILON || params.xbshear() > FLT_EPSILON ||
+      params.ybshear() > FLT_EPSILON) {
+    createSlopedCylinder(matrix, params);
+  } else {
+    auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+  }
 }
 
 void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params) {
-    if(m_primitives && std::abs(params.dtop() - params.dbottom()) < std::numeric_limits<float>::epsilon()) {
-        const auto transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+  if (m_primitives && std::abs(params.dtop() - params.dbottom()) < std::numeric_limits<float>::epsilon()) {
+    const auto transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-        const float r = params.dtop();
-        const float halfHeight = params.height() * 0.5f;
-        const float topOffset = r * std::max(std::abs(tan(params.xtshear())),std::abs(tan(params.ytshear())));
-        const float bottomOffset = r * std::max(std::abs(tan(params.xtshear())),std::abs(tan(params.ytshear())));
+    const float r = params.dtop();
+    const float halfHeight = params.height() * 0.5f;
+    const float topOffset = r * std::max(std::abs(tan(params.xtshear())), std::abs(tan(params.ytshear())));
+    const float bottomOffset = r * std::max(std::abs(tan(params.xtshear())), std::abs(tan(params.ytshear())));
 
-        shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
-        height->m_value = (params.height() + topOffset + bottomOffset) * s;
+    auto height = (params.height() + topOffset + bottomOffset) * s;
+    auto radius = r * s;
 
-        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = r * s;
+    auto locationRef = addCartesianPoint(0.0, 0.0);
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
+    IfcEntity profile("IFCCIRCLEPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, positionRef, radius};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_Position = position;
-        profile->m_Radius = radius;
+    auto directionRef = addCartesianPoint(0, 0, 1, "IFCDIRECTION");
 
-        shared_ptr<IfcDirection> direction (new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(1);
+    Eigen::Vector3f offset(0, 0, -(halfHeight + bottomOffset) * s);
 
-        Eigen::Vector3f offset(0, 0, -(halfHeight + bottomOffset) *  s);
+    IfcEntity cylinder("IFCEXTRUDEDAREASOLID");
+    cylinder.attributes = {profileRef, createCoordinateSystem(transform, offset), directionRef, height};
+    auto cylinderRef = m_writer->addEntity(cylinder);
 
-        shared_ptr<IfcExtrudedAreaSolid> cylinder ( new IfcExtrudedAreaSolid() );
-        insertEntity(cylinder);
-        cylinder->m_Depth = height;
-        cylinder->m_Position = getCoordinateSystem(transform, offset);
-        cylinder->m_SweptArea = profile;
-        cylinder->m_ExtrudedDirection = direction;
+    IfcReference planeTopRef = createClippingPlane(
+        halfHeight * s, Eigen::Vector3f(-sin(params.xtshear()) * cos(params.ytshear()), -sin(params.ytshear()),
+                                        cos(params.xtshear()) * cos(params.ytshear())));
 
-        shared_ptr<IfcPlane> planeTop = createClippingPlane(halfHeight * s, Eigen::Vector3d(-sin(params.xtshear())*cos(params.ytshear()), -sin(params.ytshear()), cos(params.xtshear())*cos(params.ytshear())));
+    IfcEntity halfSpaceSolid("IFCHALFSPACESOLID");
+    halfSpaceSolid.attributes = {planeTopRef, IFC_FALSE};
+    auto halfSpaceSolidRef = m_writer->addEntity(halfSpaceSolid);
 
-        shared_ptr<IfcHalfSpaceSolid> halfSpaceSolid ( new IfcHalfSpaceSolid() );
-        insertEntity(halfSpaceSolid);
-        halfSpaceSolid->m_BaseSurface = planeTop;
-        halfSpaceSolid->m_AgreementFlag = false;
+    IfcEntity clippingResult1("IFCBOOLEANCLIPPINGRESULT");
+    clippingResult1.attributes = {IFCBOOLEANOPERATOR_DIFFERENCE, cylinderRef, halfSpaceSolidRef};
+    auto clippingResult1Ref = m_writer->addEntity(clippingResult1);
 
-        shared_ptr<IfcBooleanClippingResult> clippingResult1 ( new IfcBooleanClippingResult() );
-        insertEntity(clippingResult1);
-        clippingResult1->m_Operator = shared_ptr<IfcBooleanOperator >( new IfcBooleanOperator( IfcBooleanOperator::ENUM_DIFFERENCE ) );
-        clippingResult1->m_FirstOperand = cylinder;
-        clippingResult1->m_SecondOperand = halfSpaceSolid;
+    IfcReference planeBottomRef = createClippingPlane(
+        -halfHeight * s, Eigen::Vector3f(sin(params.xbshear()) * cos(params.ybshear()), sin(params.ybshear()),
+                                         -cos(params.xbshear()) * cos(params.ybshear())));
 
-        shared_ptr<IfcPlane> planeBottom = createClippingPlane(-halfHeight * s, Eigen::Vector3d(sin(params.xbshear())*cos(params.ybshear()),sin(params.ybshear()),-cos(params.xbshear())*cos(params.ybshear())));
+    IfcEntity halfSpaceSolid2("IFCHALFSPACESOLID");
+    halfSpaceSolid2.attributes = {planeBottomRef, IFC_FALSE};
+    auto halfSpaceSolid2Ref = m_writer->addEntity(halfSpaceSolid2);
 
-        shared_ptr<IfcHalfSpaceSolid> halfSpaceSolid2 ( new IfcHalfSpaceSolid() );
-        insertEntity(halfSpaceSolid2);
-        halfSpaceSolid2->m_BaseSurface = planeBottom;
-        halfSpaceSolid2->m_AgreementFlag = false;
+    IfcEntity clippingResult2("IFCBOOLEANCLIPPINGRESULT");
+    clippingResult2.attributes = {IFCBOOLEANOPERATOR_DIFFERENCE, clippingResult1Ref, halfSpaceSolid2Ref};
+    auto clippingResult2Ref = m_writer->addEntity(clippingResult2);
 
-        shared_ptr<IfcBooleanClippingResult> clippingResult2 ( new IfcBooleanClippingResult() );
-        insertEntity(clippingResult2);
-        clippingResult2->m_Operator = shared_ptr<IfcBooleanOperator >( new IfcBooleanOperator( IfcBooleanOperator::ENUM_DIFFERENCE ) );
-        clippingResult2->m_FirstOperand = clippingResult1;
-        clippingResult2->m_SecondOperand = halfSpaceSolid2;
+    m_productRepresentationStack.top().push_back(clippingResult2Ref);
+    addStyleToItem(clippingResult2Ref);
 
-        addRepresentationToShape(clippingResult2, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
-    } else {
-        auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
-        writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
-    }
+    // "SweptSolid"
+  } else {
+    auto sides = RVMMeshHelper2::infoSnoutNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeSnout(params, sides), matrix);
+  }
 }
 
 void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params) {
-    if (m_primitives) {
-        const auto transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    const auto transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
 
-        shared_ptr<IfcPositiveLengthMeasure> height (new IfcPositiveLengthMeasure() );
-        height->m_value = params.height() * s;
+    auto height = params.height() * s;
+    auto radius = params.radius() * s;
 
-        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = params.radius() * s;
+    auto locationRef = addCartesianPoint(0.0, 0.0);
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcAxis2Placement2D> position (new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
+    IfcEntity profile("IFCCIRCLEPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, positionRef, radius};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcCircleProfileDef> profile (new IfcCircleProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_Position = position;
-        profile->m_Radius = radius;
+    auto directionRef = addCartesianPoint(0, 0, 1, "IFCDIRECTION");
 
-        shared_ptr<IfcDirection> direction (new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(1);
+    Eigen::Vector3f offset(0, 0, -params.height() * 0.5f * s);
 
-        Eigen::Vector3f offset(0, 0, -params.height() * 0.5f *  s);
+    IfcEntity cylinder("IFCEXTRUDEDAREASOLID");
+    cylinder.attributes = {profileRef, createCoordinateSystem(transform, offset), directionRef, height};
+    auto cylinderRef = m_writer->addEntity(cylinder);
 
-        shared_ptr<IfcExtrudedAreaSolid> cylinder (new IfcExtrudedAreaSolid() );
-        insertEntity(cylinder);
-        cylinder->m_Depth = height;
-        cylinder->m_Position = getCoordinateSystem(transform, offset);
-        cylinder->m_SweptArea = profile;
-        cylinder->m_ExtrudedDirection = direction;
+    m_productRepresentationStack.top().push_back(cylinderRef);
+    // SweptSolid
+    addStyleToItem(cylinderRef);
 
-        addRepresentationToShape(cylinder, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
-    } else {
-        auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
-        writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
-    }
+  } else {
+    auto sides = RVMMeshHelper2::infoCylinderNumSides(params, m_maxSideSize, m_minSides);
+    writeMesh(RVMMeshHelper2::makeCylinder(params, sides), matrix);
+  }
 }
 
 void IFCConverter::createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params) {
-    if(m_primitives) {
-        Transform3f transform = toEigenTransform(matrix);
-        const float s = getScaleFromTransformation(transform);
+  if (m_primitives) {
+    Transform3f transform = toEigenTransform(matrix);
+    const float s = getScaleFromTransformation(transform);
+    auto radius = params.diameter * 0.5f * s;
 
-        shared_ptr<IfcPositiveLengthMeasure> radius (new IfcPositiveLengthMeasure() );
-        radius->m_value = params.diameter * 0.5f * s;
+    auto locationRef = addCartesianPoint(0, 0);
+    auto directionRef = addCartesianPoint(0, 1, "IFCDIRECTION");
 
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
+    IfcEntity position("IFCAXIS2PLACEMENT2D");
+    position.attributes = {locationRef, directionRef};
+    auto positionRef = m_writer->addEntity(position);
 
-        shared_ptr<IfcDirection> direction( new IfcDirection() );
-        insertEntity(direction);
-        direction->m_DirectionRatios.push_back(0);
-        direction->m_DirectionRatios.push_back(1);
+    IfcEntity circle("IFCCIRCLE");
+    circle.attributes = {positionRef, radius};
+    auto circleRef = m_writer->addEntity(circle);
 
-        shared_ptr<IfcAxis2Placement2D> position( new IfcAxis2Placement2D() );
-        insertEntity(position);
-        position->m_Location = location;
-        position->m_RefDirection = direction;
+    auto p1 = addCartesianPoint(0.0, radius);
+    auto p2 = addCartesianPoint(0.0, -radius);
 
-        shared_ptr<IfcCircle> circle (new IfcCircle() );
-        insertEntity(circle);
-        circle->m_Radius = radius;
-        circle->m_Position = position;
+    IfcEntity line("IFCPOLYLINE");
+    line.attributes = {IfcReferenceList{p1, p2}};
+    auto lineRef = m_writer->addEntity(line);
 
-        shared_ptr<IfcCartesianPoint> p1 (new IfcCartesianPoint() );
-        insertEntity(p1);
-        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-        p1->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( radius->m_value ) ) );
+    IfcEntity segLine("IFCCOMPOSITECURVESEGMENT");
+    segLine.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, lineRef};
+    auto segLineRef = m_writer->addEntity(segLine);
 
-        shared_ptr<IfcCartesianPoint> p2 (new IfcCartesianPoint() );
-        insertEntity(p2);
-        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( 0.0 ) ) );
-        p2->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( -radius->m_value ) ) );
+    IfcEntity curve("IFCTRIMMEDCURVE");
+    curve.attributes = {circleRef, IfcReferenceList{p1}, IfcReferenceList{p2}, IFC_FALSE,
+                        IFCTRIMMINGPREFERENCE_CARTESIAN};
+    auto curveRef = m_writer->addEntity(curve);
 
-        shared_ptr<IfcPolyline> line (new IfcPolyline() );
-        insertEntity(line);
-        line->m_Points.push_back(p2);
-        line->m_Points.push_back(p1);
+    IfcEntity segCurve("IFCCOMPOSITECURVESEGMENT");
+    segCurve.attributes = {IFCTRANSITIONCODE_CONTINUOUS, IFC_TRUE, curveRef};
+    auto segCurveRef = m_writer->addEntity(segCurve);
 
-        shared_ptr<IfcCompositeCurveSegment> segLine (new IfcCompositeCurveSegment() );
-        insertEntity(segLine);
-        segLine->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
-        segLine->m_SameSense = true;
-        segLine->m_ParentCurve = line;
+    IfcEntity compositeCurve("IFCCOMPOSITECURVE");
+    compositeCurve.attributes = {IfcReferenceList{segLineRef, segCurveRef}, IFC_FALSE};
+    auto compositeCurveRef = m_writer->addEntity(compositeCurve);
 
-        //shared_ptr<IfcParameterValue> trim2 (new IfcParameterValue() );
-        //trim2->m_value = M_PI;
+    IfcEntity profile("IFCARBITRARYCLOSEDPROFILEDEF");
+    profile.attributes = {IFCPROFILETYPE_AREA, IFC_STRING_UNSET, compositeCurveRef};
+    auto profileRef = m_writer->addEntity(profile);
 
-        shared_ptr<IfcTrimmedCurve> curve (new IfcTrimmedCurve() );
-        insertEntity(curve);
-        curve->m_BasisCurve = circle;
-        curve->m_Trim1.push_back(p1);
-        curve->m_Trim2.push_back(p2);
-        curve->m_SenseAgreement = false;
-        curve->m_MasterRepresentation = shared_ptr<IfcTrimmingPreference>(new IfcTrimmingPreference( IfcTrimmingPreference::ENUM_CARTESIAN ) );
+    auto axisRef = addCartesianPoint(0, 1, 0, "IFCDIRECTION");
 
-        shared_ptr<IfcCompositeCurveSegment> segCurve (new IfcCompositeCurveSegment() );
-        insertEntity(segCurve);
-        segCurve->m_Transition = shared_ptr<IfcTransitionCode>(new IfcTransitionCode( IfcTransitionCode::ENUM_CONTINUOUS ));
-        segCurve->m_SameSense = true;
-        segCurve->m_ParentCurve = curve;
-
-        shared_ptr<IfcCompositeCurve> compositeCurve (new IfcCompositeCurve() );
-        insertEntity(compositeCurve);
-        compositeCurve->m_Segments.push_back(segLine);
-        compositeCurve->m_Segments.push_back(segCurve);
-        compositeCurve->m_SelfIntersect = LogicalEnum::LOGICAL_FALSE;
-
-
-        shared_ptr<IfcArbitraryClosedProfileDef> profile( new IfcArbitraryClosedProfileDef() );
-        insertEntity(profile);
-        profile->m_ProfileType = shared_ptr<IfcProfileTypeEnum>( new IfcProfileTypeEnum( IfcProfileTypeEnum::ENUM_AREA ) );
-        profile->m_OuterCurve = compositeCurve;
-
-        shared_ptr<IfcDirection> axis (new IfcDirection() );
-        insertEntity(axis);
-        axis->m_DirectionRatios.push_back(0);
-        axis->m_DirectionRatios.push_back(1);
-        axis->m_DirectionRatios.push_back(0);
-
-        addRevolvedAreaSolidToShape(profile, axis, 2.0 * M_PI, transform);
-    } else {
-        writeMesh( RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
-    }
+    addRevolvedAreaSolidToShape(profileRef, axisRef, 2.0 * (float)M_PI, transform);
+  } else {
+    writeMesh(RVMMeshHelper2::makeSphere(params, m_maxSideSize, m_minSides), matrix);
+  }
 }
 
 void IFCConverter::createLine(const std::array<float, 12>& m, const float& length, const float& thickness) {
-    Eigen::Matrix4f matrix = toEigenMatrix(m);
-    Eigen::Vector4f origin = matrix.col(3);
+  Eigen::Matrix4f matrix = toEigenMatrix(m);
+  Eigen::Vector4f origin = matrix.col(3);
 
-    Eigen::Vector4f dir(0.0f, 0.0f, length * thickness * 0.5f, 0.0f);
-    dir = matrix * dir;
+  Eigen::Vector4f dir(0.0f, 0.0f, length * thickness * 0.5f, 0.0f);
+  dir = matrix * dir;
 
-    Eigen::Vector4f start = origin - dir;
-    Eigen::Vector4f end = origin + dir;
+  Eigen::Vector4f start = origin - dir;
+  Eigen::Vector4f end = origin + dir;
 
-    shared_ptr<IfcPolyline> line (new IfcPolyline() );
-    insertEntity(line);
+  IfcEntity startPoint("IFCCARTESIANPOINT");
+  startPoint.attributes = {IfcFloatList{start.x(), start.y(), start.z()}};
+  auto startRef = m_writer->addEntity(startPoint);
 
-    shared_ptr<IfcCartesianPoint> startPoint (new IfcCartesianPoint() );
-    insertEntity(startPoint);
-    startPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( start.x() ) ) );
-    startPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( start.y() ) ) );
-    startPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( start.z() ) ) );
+  IfcEntity endPoint("IFCCARTESIANPOINT");
+  endPoint.attributes = {IfcFloatList{end.x(), end.y(), end.z()}};
+  auto endRef = m_writer->addEntity(endPoint);
 
-    line->m_Points.push_back(startPoint);
+  IfcEntity line("IFCPOLYLINE");
+  line.attributes = {IfcReferenceList{startRef, endRef}};
+  auto lineRef = m_writer->addEntity(line);
 
-    shared_ptr<IfcCartesianPoint> endPoint (new IfcCartesianPoint() );
-    insertEntity(endPoint);
-    endPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( end.x() ) ) );
-    endPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( end.y() ) ) );
-    endPoint->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure( end.z() ) ) );
-
-    line->m_Points.push_back(endPoint);
-
-    addRepresentationToShape(line, shared_ptr<IfcLabel>( new IfcLabel( L"GeometricCurveSet" ) ));
+  m_productRepresentationStack.top().push_back(lineRef);
+  addStyleToItem(lineRef);
 }
 
 void IFCConverter::createFacetGroup(const std::array<float, 12>& m, const FGroup& vertices) {
-    Eigen::Matrix4f matrix = toEigenMatrix(m);
+  Eigen::Matrix4f matrix = toEigenMatrix(m);
 
-    shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
-    insertEntity(cfs);
+  IfcReferenceList faceSet;
+  for (unsigned int i = 0; i < vertices.size(); i++) {
+    IfcReferenceList boundList;
+    for (unsigned int j = 0; j < vertices[i].size(); j++) {
+      IfcReferenceList vertexList;
+      for (unsigned int k = 0; k < vertices[i][j].size(); k++) {
+        // Transform vertex
+        Vector3F v = vertices[i][j].at(k).first;
+        Eigen::Vector4f vertex(v.x(), v.y(), v.z(), 1.0f);
+        vertex = matrix * vertex;
 
-    shared_ptr<IfcFaceBasedSurfaceModel> surfaceModel ( new IfcFaceBasedSurfaceModel() );
-    insertEntity(surfaceModel);
-    surfaceModel->m_FbsmFaces.push_back(cfs);
+        auto pointRef = addCartesianPoint(vertex.x(), vertex.y(), vertex.z());
+        vertexList.push_back(pointRef);
+      }
+      // Add face to faceset
+      IfcEntity polygon("IFCPOLYLOOP");
+      polygon.attributes = {vertexList};
+      auto polygonRef = m_writer->addEntity(polygon);
 
-    for (unsigned int i = 0; i < vertices.size(); i++) {
-        shared_ptr<IfcFace> face (new IfcFace() );
-        insertEntity(face);
+      IfcEntity bound("IFCFACEBOUND");
+      bound.attributes = {polygonRef, IFC_FALSE};
+      auto boundRef = m_writer->addEntity(bound);
 
-        for (unsigned int j = 0; j < vertices[i].size(); j++) {
-            shared_ptr<IfcPolyLoop> polygon (new IfcPolyLoop() );
-            insertEntity(polygon);
-
-            shared_ptr<IfcFaceBound> bound (new IfcFaceBound() );
-            insertEntity(bound);
-            bound->m_Bound = polygon;
-            bound->m_Orientation = false;
-
-            for (unsigned int k = 0; k < vertices[i][j].size(); k++) {
-                // Transform vertex
-                Vector3F v = vertices[i][j].at(k).first;
-                Eigen::Vector4f vertex(v.x(), v.y(), v.z(), 1.0f);
-                vertex = matrix * vertex;
-
-                shared_ptr<IfcCartesianPoint> point (new IfcCartesianPoint() );
-                insertEntity(point);
-                point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex.x()) ) );
-                point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex.y()) ) );
-                point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex.z()) ) );
-                polygon->m_Polygon.push_back(point);
-            }
-            face->m_Bounds.push_back(bound);
-        }
-        // Add face to faceset
-        cfs->m_CfsFaces.push_back(face);
+      boundList.push_back(boundRef);
     }
 
-    addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
+    IfcEntity face("IFCFACE");
+    face.attributes = {boundList};
+    auto faceRef = m_writer->addEntity(face);
 
+    // Add face to faceset
+    faceSet.push_back(faceRef);
+  }
 
+  IfcEntity cfs("IFCCONNECTEDFACESET");
+  cfs.attributes = {faceSet};
+  auto csfRef = m_writer->addEntity(cfs);
+
+  IfcEntity surfaceModel("IFCFACEBASEDSURFACEMODEL");
+  surfaceModel.attributes = {IfcReferenceList{csfRef}};
+  auto surfaceModelRef = m_writer->addEntity(surfaceModel);
+
+  m_productRepresentationStack.top().push_back(surfaceModelRef);
+  // "SurfaceModel"
+  addStyleToItem(surfaceModelRef);
 }
 
-shared_ptr<IfcOwnerHistory> IFCConverter::createOwnerHistory(const std::string &user, const std::string &banner, int timeStamp) {
-    if(!m_owner_history) {
-        // The creator/owner of this document
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcperson.htm
-        // -
-        shared_ptr<IfcPerson> person( new IfcPerson() );
-        insertEntity(person);
-        person->m_Identification = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(user) ) );
-        // WR1 : EXISTS(FamilyName) OR EXISTS(GivenName);
-        person->m_FamilyName = shared_ptr<IfcLabel>( new IfcLabel( utf8_to_wstring(user) ) );
-        // IFC always write a list, and a list may not be empty for following attributes (thus we add some)
-        person->m_MiddleNames.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
-        person->m_PrefixTitles.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
-        person->m_SuffixTitles.push_back( shared_ptr<IfcLabel>( new IfcLabel( L"" ) ) );
+void IFCConverter::createOwnerHistory(const std::string& user, const std::string& banner, int timeStamp) {
+  // The creator/owner of this document
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcactorresource/lexical/ifcperson.htm
+  // -
+  IfcEntity person("IFCPERSON");
+  person.attributes = {user,
+                       user,
+                       IFC_STRING_UNSET,
+                       IfcStringList(),
+                       IfcStringList(),
+                       IfcStringList(),
+                       IFC_STRING_UNSET,
+                       IFC_STRING_UNSET};
+  IfcReference personRef = m_writer->addEntity(person);
 
-        shared_ptr<IfcOrganization> organization( new IfcOrganization() );
-        insertEntity(organization);
-        organization->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"unknown" ) );
+  IfcEntity organization("IFCORGANIZATION");
+  organization.attributes = {IFC_STRING_UNSET, "unknown", IFC_STRING_UNSET, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  IfcReference organizationRef = m_writer->addEntity(organization);
 
+  std::string developer = "unknown";
+  auto firstSpace = banner.find(" ");
+  if (firstSpace != std::string::npos) {
+    developer = banner.substr(0, firstSpace);
+  }
 
-        std::wstring developer = L"unknown";
-        auto firstSpace = banner.find(" ");
-        if(firstSpace != std::string::npos) {
-            developer = utf8_to_wstring(banner.substr(0, firstSpace));
-        }
-
-        // Find a version that starts with Mk and ends at the first string (or at the end of string if no space in string)
-        // Version is an empty string if no verison could be found by the rule above
-        std::wstring version = L"";
-        auto versionStart = banner.find("Mk");
-        if(versionStart != std::string::npos) {
-            auto versionEnd = banner.find(" ", versionStart);
-            if (versionEnd != std::string::npos) {
-                // Length of version
-                versionEnd -= versionStart;
-            }
-            version = utf8_to_wstring(banner.substr(versionStart, versionEnd));
-        }
-
-        // IfcOrganization requires at least a name
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcorganization.htm
-        // -
-        shared_ptr<IfcOrganization> applicationDeveloper( new IfcOrganization() );
-        insertEntity(applicationDeveloper);
-        applicationDeveloper->m_Name = shared_ptr<IfcLabel>( new IfcLabel( developer ) );
-
-        // IfcApplication requires ApplicationDeveloper, Version, ApplicationFullName, ApplicationIdentifier
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcutilityresource/lexical/ifcapplication.htm
-        // -
-        shared_ptr<IfcApplication> application( new IfcApplication() );
-        insertEntity(application);
-        application->m_ApplicationFullName = shared_ptr<IfcLabel>( new IfcLabel( utf8_to_wstring(banner) ) );
-        application->m_ApplicationIdentifier = shared_ptr<IfcIdentifier>( new IfcIdentifier( utf8_to_wstring(banner) ) );
-        application->m_ApplicationDeveloper = applicationDeveloper;
-        application->m_Version = shared_ptr<IfcLabel>( new IfcLabel( version ) );
-
-        // IfcPersonAndOrganization requires ThePerson and TheOrganization
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcpersonandorganization.htm
-        // -
-        shared_ptr<IfcPersonAndOrganization> person_org( new IfcPersonAndOrganization() );
-        person_org->m_ThePerson = person;
-        person_org->m_TheOrganization = organization;
-        insertEntity(person_org);
-
-        // IfcOwnerHistory requires OwningApplication, ChangeAction, and CreationDate
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcutilityresource/lexical/ifcownerhistory.htm
-        // -
-        m_owner_history = shared_ptr<IfcOwnerHistory>( new IfcOwnerHistory() );
-        m_owner_history->m_OwningApplication = application;
-        // We use NOCHANGE, because the better fitting UNDEFINED is only availble since IFC4
-        m_owner_history->m_ChangeAction = shared_ptr<IfcChangeActionEnum>( new IfcChangeActionEnum( IfcChangeActionEnum::ENUM_NOCHANGE ) );
-        m_owner_history->m_OwningUser = person_org;
-        m_owner_history->m_CreationDate = shared_ptr<IfcTimeStamp>( new IfcTimeStamp( timeStamp ) );
-        insertEntity(m_owner_history);
+  // Find a version that starts with Mk and ends at the first string (or at the end of string if no space in string)
+  // Version is an empty string if no verison could be found by the rule above
+  std::string version = "";
+  auto versionStart = banner.find("Mk");
+  if (versionStart != std::string::npos) {
+    auto versionEnd = banner.find(" ", versionStart);
+    if (versionEnd != std::string::npos) {
+      // Length of version
+      versionEnd -= versionStart;
     }
-    return m_owner_history;
+    version = banner.substr(versionStart, versionEnd);
+  }
+
+  // IfcOrganization requires at least a name
+  // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcactorresource/lexical/ifcorganization.htm
+  // -
+  IfcEntity applicationDeveloper("IFCORGANIZATION");
+  ;
+  applicationDeveloper.attributes = {IFC_STRING_UNSET, developer, IFC_STRING_UNSET, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  IfcReference appOrgRef = m_writer->addEntity(applicationDeveloper);
+
+  // IfcApplication requires ApplicationDeveloper, Version, ApplicationFullName, ApplicationIdentifier
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcutilityresource/lexical/ifcapplication.htm
+  IfcEntity application("IFCAPPLICATION");
+  application.attributes = {appOrgRef, version, banner, banner};
+  IfcReference owningApplication = m_writer->addEntity(application);
+
+  // IfcPersonAndOrganization requires ThePerson and TheOrganization
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcactorresource/lexical/ifcpersonandorganization.htm
+  // -
+  IfcEntity person_org("IFCPERSONANDORGANIZATION");
+  person_org.attributes = {personRef, organizationRef, IFC_STRING_UNSET};
+  IfcReference owningUser = m_writer->addEntity(person_org);
+
+  // IfcOwnerHistory requires OwningApplication, ChangeAction, and CreationDate
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcutilityresource/lexical/ifcownerhistory.htm
+  // -
+  IfcEntity owner_history("IFCOWNERHISTORY");
+  owner_history.attributes = {owningUser,       owningApplication, IFC_STRING_UNSET, IFCCHANGEACTIONENUM_NOCHANGE,
+                              IFC_STRING_UNSET, IFC_STRING_UNSET,  IFC_STRING_UNSET, timeStamp};
+  m_ownerHistory = m_writer->addEntity(owner_history);
 }
 
+void IFCConverter::initModel(const IfcReference projectRef) {
+  // create Site
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcsite.htm
+  IfcEntity site("IFCSITE");
+  site.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,                   // owner history
+      "Site",                           // Name
+      IFC_STRING_UNSET,                 // Description
+      IFC_STRING_UNSET,                 // Object Type
+      createPlacement(IfcReference{}),  // ObjectPlacement
+      IFC_REFERENCE_UNSET,              // Representation
+      IFC_STRING_UNSET,                 // LongName
+      IFCELEMENTCOMPOSITION_ELEMENT,    // CompositionType
+      IFC_STRING_UNSET,                 // RefLatitude
+      IFC_STRING_UNSET,                 // RefLongitude
+      IFC_STRING_UNSET,                 // RefElevation
+      IFC_STRING_UNSET,                 // LandTitleNumber
+      IFC_STRING_UNSET,                 // SiteAddress
+  };
+  IfcReference siteRef = m_writer->addEntity(site);
 
-void IFCConverter::initModel() {
+  // create Building
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuilding.htm
 
-    // create Site
-    shared_ptr<IfcSite> site( new IfcSite() );
-    site->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    site->m_OwnerHistory = m_owner_history;
-    site->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"Site" ) );
-    insertEntity(site);
+  auto buildingPlacement = createPlacement(IfcReference{});
+  m_placementStack.push(buildingPlacement);
 
-    // create Building
-    shared_ptr<IfcBuilding> building( new IfcBuilding() );
-    building->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    building->m_OwnerHistory = m_owner_history;
-    building->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"Building" ) );
-    insertEntity( building );
+  IfcEntity building("IFCBUILDING");
+  building.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,                 // owner history
+      "Building",                     // Name
+      IFC_STRING_UNSET,               // Description
+      IFC_STRING_UNSET,               // Object Type
+      m_placementStack.top(),         // ObjectPlacement
+      IFC_REFERENCE_UNSET,            // Representation
+      IFC_STRING_UNSET,               // LongName
+      IFCELEMENTCOMPOSITION_ELEMENT,  // CompositionType
+      IFC_STRING_UNSET,               // ElevationOfRefHeight
+      IFC_STRING_UNSET,               // ElevationOfTerrain
+      IFC_STRING_UNSET,               // BuildingAddress
+  };
+  m_buildingRef = m_writer->addEntity(building);
+  m_productChildStack.push(IfcReferenceList{});
 
-    // Relation project -> site
-    shared_ptr<IfcRelAggregates> rel_aggregates_project_site( new IfcRelAggregates() );
-    rel_aggregates_project_site->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    rel_aggregates_project_site->m_RelatingObject = m_model->getIfcProject();
-    rel_aggregates_project_site->m_RelatedObjects.push_back(site);
-    insertEntity(rel_aggregates_project_site);
+  // Relation project -> site
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcrelaggregates.htm
+  IfcEntity rel_aggregates_project_site("IFCRELAGGREGATES");
+  rel_aggregates_project_site.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,            // owner history
+      IFC_STRING_UNSET,          // Name
+      IFC_STRING_UNSET,          // Description
+      projectRef,                // RelatingObject
+      IfcReferenceList{siteRef}  // RelatedObjects
+  };
+  m_writer->addEntity(rel_aggregates_project_site);
 
-    // Relation project -> site
-    shared_ptr<IfcRelAggregates> rel_aggregates_site_building( new IfcRelAggregates() );
-    rel_aggregates_site_building->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    rel_aggregates_site_building->m_RelatingObject = site;
-    rel_aggregates_site_building->m_RelatedObjects.push_back(building);
-    insertEntity(rel_aggregates_site_building);
-
-    // Relation to child elements of building
-    pushParentRelation(building);
-
-    shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-    insertEntity(location);
-    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-
-    shared_ptr<IfcAxis2Placement3D> world_coordinate_system( new IfcAxis2Placement3D() );
-    insertEntity(world_coordinate_system);
-    world_coordinate_system->m_Location = location;
-    // world_coordinate_system->m_Axis = axis;
-    // world_coordinate_system->m_RefDirection = ref_direction;
-
-    // 3d representation context
-    m_context = shared_ptr<IfcGeometricRepresentationContext>( new IfcGeometricRepresentationContext() );
-    insertEntity(m_context);
-    m_context->m_ContextType = shared_ptr<IfcLabel>( new IfcLabel( L"Model" ) );
-    m_context->m_CoordinateSpaceDimension = shared_ptr<IfcDimensionCount>(new IfcDimensionCount( 3 ) );
-    m_context->m_WorldCoordinateSystem = world_coordinate_system;
-
-    m_model->getIfcProject()->m_RepresentationContexts.push_back(m_context);
-
-    // IfcUnitAssignment
-
-    // length unit [m]
-    shared_ptr<IfcSIUnit> si_unit( new IfcSIUnit() );
-    si_unit->m_UnitType = shared_ptr<IfcUnitEnum>( new IfcUnitEnum( IfcUnitEnum::ENUM_LENGTHUNIT ) );
-    si_unit->m_Name = shared_ptr<IfcSIUnitName>( new IfcSIUnitName( IfcSIUnitName::ENUM_METRE ) );
-    insertEntity(si_unit);
-
-    // plane unit [rad]
-    shared_ptr<IfcSIUnit> plane_angle_unit( new IfcSIUnit() );
-    plane_angle_unit->m_UnitType = shared_ptr<IfcUnitEnum>( new IfcUnitEnum( IfcUnitEnum::ENUM_PLANEANGLEUNIT ) );
-    plane_angle_unit->m_Name = shared_ptr<IfcSIUnitName>( new IfcSIUnitName( IfcSIUnitName::ENUM_RADIAN ) );
-    insertEntity(plane_angle_unit);
-
-    shared_ptr<IfcUnitAssignment> unitAssignment( new IfcUnitAssignment() );
-    unitAssignment->m_Units.push_back( si_unit );
-    unitAssignment->m_Units.push_back( plane_angle_unit );
-
-    insertEntity(unitAssignment);
-    m_model->getIfcProject()->m_UnitsInContext = unitAssignment;
-
+  // Relation site -> building
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifckernel/lexical/ifcrelaggregates.htm
+  IfcEntity rel_aggregates_site_building("IFCRELAGGREGATES");
+  rel_aggregates_site_building.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,                  // owner history
+      IFC_STRING_UNSET,                // Name
+      IFC_STRING_UNSET,                // Description
+      siteRef,                         // RelatingObject
+      IfcReferenceList{m_buildingRef}  // RelatedObjects
+  };
+  m_writer->addEntity(rel_aggregates_site_building);
 }
 
-void IFCConverter::pushParentRelation(shared_ptr<IfcObjectDefinition> parent) {
-    shared_ptr<IfcRelAggregates> child_relations( new IfcRelAggregates() );
-    child_relations->m_GlobalId = shared_ptr<IfcGloballyUniqueId>( new IfcGloballyUniqueId( CreateCompressedGuidString22() ) );
-    child_relations->m_RelatingObject = parent;
-    m_relationStack.push(child_relations);
+void IFCConverter::createParentChildRelation(const IfcReference parent, const IfcReferenceList& children) {
+  if (children.empty()) {
+    return;
+  }
+  IfcEntity child_relations = IfcEntity("IFCRELAGGREGATES");
+  child_relations.attributes = {
+      createBase64Uuid<char>(),
+      m_ownerHistory,    // owner history
+      IFC_STRING_UNSET,  // Name
+      IFC_STRING_UNSET,  // Description
+      parent,            // RelatingObject
+      children           // RelatedObjects
+  };
+  m_writer->addEntity(child_relations);
 }
 
+void IFCConverter::writeMesh(const Mesh& mesh, const std::array<float, 12>& m) {
+  Eigen::Matrix4f matrix = toEigenMatrix(m);
 
-void IFCConverter::writeMesh(const Mesh &mesh, const std::array<float, 12>& m) {
-    shared_ptr<IfcConnectedFaceSet> cfs (new IfcConnectedFaceSet() );
-    insertEntity(cfs);
+  IfcReferenceList faceSet;
+  // For each triangle
+  for (unsigned int i = 0; i < mesh.positionIndex.size() / 3; i++) {
+    IfcReferenceList vertexList;
+    for (unsigned int j = 0; j < 3; j++) {
+      unsigned long idx = mesh.positionIndex.at(i * 3 + j);
+      // Transform vertex
+      Vector3F v = mesh.positions.at(idx);
+      Eigen::Vector4f vertex(v.x(), v.y(), v.z(), 1.0f);
+      vertex = matrix * vertex;
 
-    Eigen::Matrix4f matrix = toEigenMatrix(m);
-
-    shared_ptr<IfcFaceBasedSurfaceModel> surfaceModel ( new IfcFaceBasedSurfaceModel() );
-    insertEntity(surfaceModel);
-    surfaceModel->m_FbsmFaces.push_back(cfs);
-
-    // For each triangle
-    for (unsigned int i = 0; i < mesh.positionIndex.size() / 3; i++) {
-        shared_ptr<IfcFace> face (new IfcFace() );
-        insertEntity(face);
-        // Add face to faceset
-        cfs->m_CfsFaces.push_back(face);
-
-        shared_ptr<IfcFaceBound> bound (new IfcFaceBound() );
-        insertEntity(bound);
-        bound->m_Orientation = false;
-        face->m_Bounds.push_back(bound);
-
-        shared_ptr<IfcPolyLoop> polygon (new IfcPolyLoop() );
-        insertEntity(polygon);
-
-        for (unsigned int j = 0; j < 3; j++) {
-            unsigned long idx = mesh.positionIndex.at(i*3+j);
-            // Transform vertex
-            Vector3F v = mesh.positions.at(idx);
-            Eigen::Vector4f vertex(v.x(), v.y(), v.z(), 1.0f);
-            vertex = matrix * vertex;
-
-            shared_ptr<IfcCartesianPoint> point (new IfcCartesianPoint() );
-            insertEntity(point);
-            point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex[0]) ) );
-            point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex[1]) ) );
-            point->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(vertex[2]) ) );
-            polygon->m_Polygon.push_back(point);
-        }
-        bound->m_Bound = polygon;
-
+      vertexList.push_back(addCartesianPoint(vertex.x(), vertex.y(), vertex.z()));
     }
-    addRepresentationToShape(surfaceModel, shared_ptr<IfcLabel>( new IfcLabel( L"SurfaceModel" ) ));
+    IfcEntity polygon("IFCPOLYLOOP");
+    polygon.attributes = {vertexList};
+    auto polygonRef = m_writer->addEntity(polygon);
+
+    IfcEntity bound("IFCFACEBOUND");
+    bound.attributes = {polygonRef, IFC_FALSE};
+    auto boundRef = m_writer->addEntity(bound);
+
+    IfcEntity face("IFCFACE");
+    face.attributes = {IfcReferenceList{boundRef}};
+    auto faceRef = m_writer->addEntity(face);
+
+    // Add face to faceset
+    faceSet.push_back(faceRef);
+  }
+
+  IfcEntity cfs("IFCCONNECTEDFACESET");
+  cfs.attributes = {faceSet};
+  auto csfRef = m_writer->addEntity(cfs);
+
+  IfcEntity surfaceModel("IFCFACEBASEDSURFACEMODEL");
+  surfaceModel.attributes = {IfcReferenceList{csfRef}};
+  auto surfaceModelRef = m_writer->addEntity(surfaceModel);
+
+  m_productRepresentationStack.top().push_back(surfaceModelRef);
+  addStyleToItem(surfaceModelRef);
 }
 
-void IFCConverter::addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type) {
-    shared_ptr<IfcObjectDefinition> parent = m_relationStack.top()->m_RelatingObject;
-    shared_ptr<IfcProduct> parentProduct = dynamic_pointer_cast<IfcProduct>(parent);
-    if(parentProduct) {
-        if(!parentProduct->m_Representation) {
-            shared_ptr<IfcProductDefinitionShape> shape( new IfcProductDefinitionShape() );
-            insertEntity(shape);
+void IFCConverter::addStyleToItem(IfcReference item) {
+  // Add style to the item
+  IfcEntity presentationStyleAssignment("IFCPRESENTATIONSTYLEASSIGNMENT");
+  presentationStyleAssignment.attributes = {IfcReferenceList{createSurfaceStyle(m_currentMaterial.top())}};
+  auto presentationStyleAssignmentRef = m_writer->addEntity(presentationStyleAssignment);
 
-            shared_ptr<IfcShapeRepresentation> shapeRepresentation( new IfcShapeRepresentation() );
-            insertEntity(shapeRepresentation);
-            shapeRepresentation->m_ContextOfItems = m_context;
-            shapeRepresentation->m_RepresentationIdentifier = shared_ptr<IfcLabel>( new IfcLabel( L"Building" ) );
-            shapeRepresentation->m_RepresentationType = type;
-
-            shape->m_Representations.push_back(shapeRepresentation);
-            parentProduct->m_Representation = shape;
-        }
-        parentProduct->m_Representation->m_Representations[0]->m_Items.push_back(item);
-
-        // Add style to the item
-        shared_ptr<IfcPresentationStyleAssignment> presentationStyleAssignment( new IfcPresentationStyleAssignment() );
-        insertEntity(presentationStyleAssignment);
-        presentationStyleAssignment->m_Styles.push_back(createSurfaceStyle(m_currentMaterial.top()));
-
-        shared_ptr<IfcStyledItem> styledItem( new IfcStyledItem() );
-        insertEntity(styledItem);
-        styledItem->m_Styles.push_back(presentationStyleAssignment);
-        styledItem->m_Item = item;
-
-
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-
-        shared_ptr<IfcAxis2Placement3D> relative_placement( new IfcAxis2Placement3D() );
-        relative_placement->m_Location = location;
-        insertEntity(relative_placement);
-
-        // Define a placement based on the relative placement defined above
-        // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm
-        // -
-        shared_ptr<IfcLocalPlacement> placement( new IfcLocalPlacement() );
-        insertEntity(placement);
-        placement->m_RelativePlacement = relative_placement;
-
-        // IfcProduct.WR1: A product with an representation requires a placement
-        parentProduct->m_ObjectPlacement = placement;
-
-    }
+  IfcEntity styledItem("IFCSTYLEDITEM");
+  styledItem.attributes = {item, IfcReferenceList{presentationStyleAssignmentRef}, IFC_STRING_UNSET};
+  m_writer->addEntity(styledItem);
 }
 
-void IFCConverter::insertEntity(shared_ptr<IfcPPEntity> e) {
-    if(e->m_id < 0) {
-        m_currentEntityId++;
-        e->m_id = m_currentEntityId;
-    }
-    m_model->insertEntity(e);
+IfcReference IFCConverter::createSurfaceStyle(int id) {
+  auto I = m_styles.find(id);
+  if (I != m_styles.end()) {
+    return (*I).second;
+  }
+
+  std::vector<float> colors = RVMColorHelper::color(id);
+
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpresentationresource/lexical/ifccolourrgb.htm
+  IfcEntity surfaceColor("IFCCOLOURRGB");
+  surfaceColor.attributes = {std::to_string(id), colors[0], colors[1], colors[2]};
+  auto surfaceColorRef = m_writer->addEntity(surfaceColor);
+
+  // Define the material proerties for rendering (only the surface color defined through RVM color mappings)
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpresentationappearanceresource/lexical/ifcsurfacestylerendering.htm
+  // -
+  IfcEntity surfaceStyleRendering("IFCSURFACESTYLERENDERING");
+  surfaceStyleRendering.attributes = {
+      surfaceColorRef,
+      0.0f,                                                 // Transparency
+      IfcSimpleValue("1.0", "IFCNORMALISEDRATIOMEASURE"),   // Diffuse Color (multiplicator)
+      IFC_STRING_UNSET,                                     // TransmissionColour
+      IFC_STRING_UNSET,                                     // DiffuseTransmissionColour
+      IFC_STRING_UNSET,                                     // ReflectionColour
+      IfcSimpleValue("0.25", "IFCNORMALISEDRATIOMEASURE"),  // Diffuse Color (multiplicator)
+      IFC_STRING_UNSET,                                     // SpecuarHighlight
+      IFCREFLECTANCEMETHOD_BLINN};
+  auto surfaceStyleRenderingRef = m_writer->addEntity(surfaceStyleRendering);
+
+  IfcEntity surfaceStyle("IFCSURFACESTYLE");
+  surfaceStyle.attributes = {"Material" + std::to_string(id) + "Style", IFCSURFACESIDE_BOTH,
+                             IfcReferenceList{surfaceStyleRenderingRef}};
+  auto surfaceStyleRef = m_writer->addEntity(surfaceStyle);
+
+  return surfaceStyleRef;
 }
 
-shared_ptr<IfcSurfaceStyle> IFCConverter::createSurfaceStyle(int id) {
-    std::map<int, shared_ptr<IfcSurfaceStyle>>::iterator I = m_styles.find(id);
-    if(I != m_styles.end()) {
-        return (*I).second;
-    }
+IfcReference IFCConverter::createMaterial(int id) {
+  auto I = m_materials.find(id);
+  if (I != m_materials.end()) {
+    return (*I).second;
+  }
 
-    std::vector<float> colors = RVMColorHelper::color(id);
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcmaterialresource/lexical/ifcmaterial.htm
+  IfcEntity material("IFCMATERIAL");
+  material.attributes = {"Material" + std::to_string(id)};
+  auto materialRef = m_writer->addEntity(material);
+  m_materials.insert(std::make_pair(id, materialRef));
 
-    shared_ptr<IfcColourRgb> surfaceColor( new IfcColourRgb() );
-    insertEntity(surfaceColor);
-    surfaceColor->m_Red = getNormalisedRatioMeasure(colors[0]);
-    surfaceColor->m_Green = getNormalisedRatioMeasure(colors[1]);
-    surfaceColor->m_Blue = getNormalisedRatioMeasure(colors[2]);
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpresentationappearanceresource/lexical/ifcpresentationstyleassignment.htm
+  IfcEntity presentationStyleAssignment("IFCPRESENTATIONSTYLEASSIGNMENT");
+  presentationStyleAssignment.attributes = {IfcReferenceList{createSurfaceStyle(id)}};
+  auto presentationStyleAssignmentRef = m_writer->addEntity(presentationStyleAssignment);
 
-    // Define the material proerties for rendering (only the surface color defined through RVM color mappings)
-    // http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/ifcpresentationappearanceresource/lexical/ifcsurfacestylerendering.htm
-    // -
-    shared_ptr<IfcSurfaceStyleRendering> surfaceStyleRendering( new IfcSurfaceStyleRendering() );
-    insertEntity(surfaceStyleRendering);
-    surfaceStyleRendering->m_SurfaceColour = surfaceColor;
-    surfaceStyleRendering->m_Transparency = getNormalisedRatioMeasure(0.0);
-    surfaceStyleRendering->m_DiffuseColour = getNormalisedRatioMeasure(1);
-    surfaceStyleRendering->m_SpecularColour = getNormalisedRatioMeasure(0.25);
-    surfaceStyleRendering->m_ReflectanceMethod = shared_ptr<IfcReflectanceMethodEnum>( new IfcReflectanceMethodEnum( IfcReflectanceMethodEnum::ENUM_BLINN ) );
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpresentationappearanceresource/lexical/ifcstyleditem.htm
+  IfcEntity styledItem("IFCSTYLEDITEM");
+  styledItem.attributes = {IFC_REFERENCE_UNSET, IfcReferenceList{presentationStyleAssignmentRef}, IFC_STRING_UNSET};
+  auto styledItemRef = m_writer->addEntity(styledItem);
 
-    shared_ptr<IfcSurfaceStyle> surfaceStyle( new IfcSurfaceStyle() );
-    insertEntity(surfaceStyle);
-    surfaceStyle->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"Material" + std::to_wstring(id) + L"Style"));
-    surfaceStyle->m_Side = shared_ptr<IfcSurfaceSide>( new IfcSurfaceSide( IfcSurfaceSide::ENUM_BOTH ));
-    surfaceStyle->m_Styles.push_back(surfaceStyleRendering);
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcrepresentationresource/lexical/ifcstyledrepresentation.htm
+  IfcEntity styledRepresentation("IFCSTYLEDREPRESENTATION");
+  styledRepresentation.attributes = {m_contextRef,
+                                     IFC_STRING_UNSET,  // RepresentationMap
+                                     IFC_STRING_UNSET,  // LayerAssignments
+                                     IfcReferenceList{styledItemRef}};
+  auto styledRepresentationRef = m_writer->addEntity(styledRepresentation);
 
-    return surfaceStyle;
+  // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcrepresentationresource/lexical/ifcmaterialdefinitionrepresentation.htm
+  IfcEntity materialDefinition("IFCMATERIALDEFINITIONREPRESENTATION");
+  materialDefinition.attributes = {IFC_STRING_UNSET,                           // Name
+                                   IFC_STRING_UNSET,                           // Description
+                                   IfcReferenceList{styledRepresentationRef},  // Representations
+                                   materialRef};
+  m_writer->addEntity(materialDefinition);
+
+  return materialRef;
 }
 
-shared_ptr<IfcMaterial> IFCConverter::createMaterial(int id) {
-    std::map<int, shared_ptr<IfcMaterial>>::iterator I = m_materials.find(id);
-    if(I != m_materials.end()) {
-        return (*I).second;
-    }
-    shared_ptr<IfcMaterial> material( new IfcMaterial() );
-    insertEntity(material);
-    material->m_Name = shared_ptr<IfcLabel>( new IfcLabel( L"Material" + std::to_wstring(id) ));
-    m_materials.insert(std::make_pair(id, material));
+void IFCConverter::addRevolvedAreaSolidToShape(IfcReference profileRef,
+                                               IfcReference axixRef,
+                                               float angle,
+                                               const Transform3f& transform) {
+  // Now define the axis for revolving
+  auto locationRef = addCartesianPoint(0, 0, 0);
 
-    shared_ptr<IfcPresentationStyleAssignment> presentationStyleAssignment( new IfcPresentationStyleAssignment() );
-    insertEntity(presentationStyleAssignment);
-    presentationStyleAssignment->m_Styles.push_back(createSurfaceStyle(id));
+  IfcEntity placement("IFCAXIS1PLACEMENT");
+  placement.attributes = {locationRef, axixRef};
+  auto placementRef = m_writer->addEntity(placement);
 
-    shared_ptr<IfcStyledItem> styledItem( new IfcStyledItem() );
-    insertEntity(styledItem);
-    styledItem->m_Styles.push_back(presentationStyleAssignment);
+  // Rotate the whole geometry (90 degree y-axis) because we defined it with y-up instead of z-up
+  IfcEntity solid("IFCREVOLVEDAREASOLID");
+  solid.attributes = {profileRef, createCoordinateSystem(transform, Eigen::Vector3f(0, 0, 0)), placementRef, angle};
+  auto solidRef = m_writer->addEntity(solid);
 
-
-    shared_ptr<IfcStyledRepresentation> styledRepresentation( new IfcStyledRepresentation() );
-    insertEntity(styledRepresentation);
-    styledRepresentation->m_ContextOfItems = m_context;
-    styledRepresentation->m_Items.push_back(styledItem);
-
-
-    shared_ptr<IfcMaterialDefinitionRepresentation> materialDefinition( new IfcMaterialDefinitionRepresentation() );
-    insertEntity(materialDefinition);
-    materialDefinition->m_RepresentedMaterial = material;
-    materialDefinition->m_Representations.push_back(styledRepresentation);
-
-    return material;
+  m_productRepresentationStack.top().push_back(solidRef);
+  // "SweptSolid"
+  addStyleToItem(solidRef);
 }
 
-void IFCConverter::messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> message) {
-    if (message->m_message_type == StatusCallback::MESSAGE_TYPE_PROGRESS_VALUE) {
-        IFCConverter* self = (IFCConverter*)obj_ptr;
-        static bool first = true;
-        if(first) {
-            std::cout << "Writing " << self->m_filename;
-            first = false;
-        } else {
-            std::cout << ".";
-        }
-    } else {
-        std::wcerr << message->m_message_text << std::endl;
-    }
+IfcReference IFCConverter::addCartesianPoint(float x, float y, float z, std::string entity) {
+  IfcEntity point(entity);
+  point.attributes = {IfcFloatList{x, y, z}};
+  return m_writer->addEntity(point);
 }
 
-
-
-void IFCConverter::addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform) {
-            // Now define the axis for revolving
-        shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-        insertEntity(location);
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-        location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-
-        shared_ptr<IfcAxis1Placement> placement (new IfcAxis1Placement() );
-        placement->m_Location = location;
-        placement->m_Axis = axis;
-        insertEntity(placement);
-
-        shared_ptr<IfcPlaneAngleMeasure> angleP (new IfcPlaneAngleMeasure() );
-        angleP->m_value = angle;
-
-        shared_ptr<IfcRevolvedAreaSolid> solid (new IfcRevolvedAreaSolid() );
-        insertEntity(solid);
-        solid->m_Axis = placement;
-        solid->m_Angle = angleP;
-        // Rotate the whole geometry (90° y-axis) because we defined it with y-up instead of z-up
-        solid->m_Position = getCoordinateSystem(transform, Eigen::Vector3f(0,0,0));
-        solid->m_SweptArea = profile;
-
-        addRepresentationToShape(solid, shared_ptr<IfcLabel>( new IfcLabel( L"SweptSolid" ) ));
+IfcReference IFCConverter::addCartesianPoint(float x, float y, std::string entity) {
+  IfcEntity point(entity);
+  point.attributes = {IfcFloatList{x, y}};
+  return m_writer->addEntity(point);
 }
 
-shared_ptr<IfcAxis2Placement3D> IFCConverter::getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
+IfcReference IFCConverter::createCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset) {
+  Eigen::Vector3f translation = matrix.translation() + matrix.rotation() * offset;
 
-    Eigen::Vector3f translation = matrix.translation() + matrix.rotation() * offset;
+  IfcReference locationRef = addCartesianPoint(translation.x(), translation.y(), translation.z());
 
-    shared_ptr<IfcCartesianPoint> location( new IfcCartesianPoint() );
-    insertEntity(location);
-    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.x()) ) );
-    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.y()) ) );
-    location->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(translation.z()) ) );
+  Eigen::Matrix3f rotation = matrix.rotation();
+  Eigen::Vector3f z_axis = rotation * Eigen::Vector3f(0, 0, 1);
+  Eigen::Vector3f x_axis = rotation * Eigen::Vector3f(1, 0, 0);
 
-    Eigen::Matrix3f rotation = matrix.rotation();
-    Eigen::Vector3f z_axis = rotation * Eigen::Vector3f(0,0,1);
-    Eigen::Vector3f x_axis = rotation * Eigen::Vector3f(1,0,0);
+  IfcReference directionRef = addCartesianPoint(z_axis.x(), z_axis.y(), z_axis.z(), "IFCDIRECTION");
+  IfcReference refDirectionRef = addCartesianPoint(x_axis.x(), x_axis.y(), x_axis.z(), "IFCDIRECTION");
 
-    shared_ptr<IfcDirection> axis (new IfcDirection() );
-    insertEntity(axis);
-    axis->m_DirectionRatios.push_back(z_axis.x());
-    axis->m_DirectionRatios.push_back(z_axis.y());
-    axis->m_DirectionRatios.push_back(z_axis.z());
-
-    shared_ptr<IfcDirection> refDirection (new IfcDirection() );
-    insertEntity(refDirection);
-    refDirection->m_DirectionRatios.push_back(x_axis.x());
-    refDirection->m_DirectionRatios.push_back(x_axis.y());
-    refDirection->m_DirectionRatios.push_back(x_axis.z());
-
-
-    shared_ptr<IfcAxis2Placement3D> coordinate_system( new IfcAxis2Placement3D() );
-    insertEntity(coordinate_system);
-    coordinate_system->m_Location = location;
-    coordinate_system->m_Axis = axis;
-    coordinate_system->m_RefDirection = refDirection;
-    return coordinate_system;
+  IfcEntity coordinate_system("IFCAXIS2PLACEMENT3D");
+  coordinate_system.attributes = {locationRef, directionRef, refDirectionRef};
+  return m_writer->addEntity(coordinate_system);
 };
 
-shared_ptr<IfcPlane> IFCConverter::createClippingPlane(double zPos, const Eigen::Vector3d &n) {
-    shared_ptr<IfcCartesianPoint> planeLocation( new IfcCartesianPoint() );
-    insertEntity(planeLocation);
-    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(0.0) ) );
-    planeLocation->m_Coordinates.push_back( shared_ptr<IfcLengthMeasure>(new IfcLengthMeasure(zPos) ) );
+IfcReference IFCConverter::createClippingPlane(float zPos, const Eigen::Vector3f& n) {
+  auto planeLocationRef = addCartesianPoint(0.0f, 0.0f, zPos);
+  auto planeNormalRef = addCartesianPoint(n.x(), n.y(), n.z(), "IFCDIRECTION");
 
+  // IFCAXIS2PLACEMENT3D
+  IfcEntity planePosition("IFCAXIS2PLACEMENT3D");
+  planePosition.attributes = {planeLocationRef, planeNormalRef, IFC_REFERENCE_UNSET};
+  auto planePositionRef = m_writer->addEntity(planePosition);
 
-    shared_ptr<IfcDirection> planeNormal (new IfcDirection() );
-    insertEntity(planeNormal);
-    planeNormal->m_DirectionRatios.push_back(n.x());
-    planeNormal->m_DirectionRatios.push_back(n.y());
-    planeNormal->m_DirectionRatios.push_back(n.z());
+  // IFCPLANE
+  IfcEntity plane("IFCPLANE");
+  plane.attributes = {planePositionRef};
 
-    // IFCAXIS2PLACEMENT3D
-    shared_ptr<IfcAxis2Placement3D> planePosition ( new IfcAxis2Placement3D() );
-    insertEntity(planePosition);
-    planePosition->m_Location = planeLocation;
-    planePosition->m_Axis = planeNormal;
-
-    // IFCPLANE(#44);
-    shared_ptr<IfcPlane> plane ( new IfcPlane() );
-    insertEntity(plane);
-    plane->m_Position = planePosition;
-
-    return plane;
+  return m_writer->addEntity(plane);
 }

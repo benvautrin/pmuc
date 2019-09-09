@@ -19,18 +19,13 @@ include_directories( external/OpenCOLLADA/COLLADABaseUtils/include )
 # Add XIOT dependencies
 add_subdirectory( external/xiot )
 
-# Add IfcPlusPlus dependencies
-set(BUILD_VIEWER_APPLICATION OFF)
-add_subdirectory( external/ifcplusplus/IfcPlusPlus )
-include_directories( external/ifcplusplus/IfcPlusPlus/src )
-
 # Add Eigen dependencies (headers only)
 set(EIGEN_INCLUDE_DIR external/eigen)
 find_package(EIGEN REQUIRED)
 include_directories( ${EIGEN_INCLUDE_DIR} )
 
 # Find Boost dependencies
-find_package(Boost 1.55.0 REQUIRED)
+find_package(Boost 1.65.1 REQUIRED)
 IF(Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS}) 
 ENDIF()
@@ -48,8 +43,9 @@ enable_testing()
 add_executable(${PROJECT_NAME} ${SRC_LIST} ${APISRC_LIST} ${COMMONSRC_LIST} ${CONVERTERSSRC_LIST})
 target_include_directories(${PROJECT_NAME} PUBLIC external/xiot/include )
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_BINARY_DIR}/external/xiot/src )
-target_link_libraries(${PROJECT_NAME} IfcPlusPlus)
 target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} OpenCOLLADAStreamWriter_static xiot)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
 
 add_test(NAME run_pmuc COMMAND ${PROJECT_NAME} --help)

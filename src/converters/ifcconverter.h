@@ -22,110 +22,106 @@
 #ifndef IFCCONVERTER_H
 #define IFCCONVERTER_H
 
-#include "../api/rvmreader.h"
 #include "../api/rvmmeshhelper.h"
-
-#include <ifcpp/model/IfcPPModel.h>
-#include <ifcpp/model/StatusCallback.h>
+#include "../api/rvmreader.h"
+#include "ifcwriter.h"
 
 #define EIGEN_DONT_VECTORIZE
 #define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
 #include <Eigen/Core>
-
+#include <map>
 #include <stack>
-
-class IfcOwnerHistory;
-class IfcRelAggregates;
-class IfcLocalPlacement;
-class IfcObjectDefinition;
-class IfcGeometricRepresentationContext;
-class IfcRepresentationItem;
-class IfcMaterial;
-class IfcPropertySet;
-class IfcLabel;
-class IfcSurfaceStyle;
-class IfcPPEntity;
-class IfcAxis2Placement3D;
-class IfcProfileDef;
-class IfcDirection;
-class IfcPlane;
 
 typedef Eigen::Transform<float, 3, Eigen::Affine> Transform3f;
 
-class IFCConverter : public RVMReader
-{
-    public:
-        IFCConverter(const std::string& filename, const std::string& schema);
-        virtual ~IFCConverter();
+class IFCConverter : public RVMReader {
+ public:
+  IFCConverter(const std::string& filename, const std::string& schema);
+  virtual ~IFCConverter();
 
-        virtual void startDocument();
-        virtual void endDocument();
+  virtual void startDocument();
+  virtual void endDocument();
 
-        virtual void startHeader(const std::string& banner, const std::string& fileNote, const std::string& date, const std::string& user, const std::string& encoding);
-        virtual void endHeader();
+  virtual void startHeader(const std::string& banner,
+                           const std::string& fileNote,
+                           const std::string& date,
+                           const std::string& user,
+                           const std::string& encoding);
+  virtual void endHeader();
 
-        virtual void startModel(const std::string& projectName, const std::string& name);
-        virtual void endModel();
+  virtual void startModel(const std::string& projectName, const std::string& name);
+  virtual void endModel();
 
-        virtual void startGroup(const std::string& name, const Vector3F& translation, const int& materialId);
-        virtual void endGroup();
+  virtual void startGroup(const std::string& name, const Vector3F& translation, const int& materialId);
+  virtual void endGroup();
 
-        virtual void startMetaData();
-        virtual void endMetaData();
+  virtual void startMetaData();
+  virtual void endMetaData();
 
-        virtual void startMetaDataPair(const std::string& name, const std::string& value);
-        virtual void endMetaDataPair();
+  virtual void startMetaDataPair(const std::string& name, const std::string& value);
+  virtual void endMetaDataPair();
 
-        virtual void createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params);
+  virtual void createPyramid(const std::array<float, 12>& matrix, const Primitives::Pyramid& params);
 
-        virtual void createBox(const std::array<float, 12>& matrix, const Primitives::Box& params);
+  virtual void createBox(const std::array<float, 12>& matrix, const Primitives::Box& params);
 
-        virtual void createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params);
+  virtual void createRectangularTorus(const std::array<float, 12>& matrix, const Primitives::RectangularTorus& params);
 
-        virtual void createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params);
+  virtual void createCircularTorus(const std::array<float, 12>& matrix, const Primitives::CircularTorus& params);
 
-        virtual void createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params);
+  virtual void createEllipticalDish(const std::array<float, 12>& matrix, const Primitives::EllipticalDish& params);
 
-        virtual void createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params);
+  virtual void createSphericalDish(const std::array<float, 12>& matrix, const Primitives::SphericalDish& params);
 
-        virtual void createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params);
+  virtual void createSnout(const std::array<float, 12>& matrix, const Primitives::Snout& params);
 
-        virtual void createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params);
+  virtual void createCylinder(const std::array<float, 12>& matrix, const Primitives::Cylinder& params);
 
-        virtual void createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params);
+  virtual void createSphere(const std::array<float, 12>& matrix, const Primitives::Sphere& params);
 
-        virtual void createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx);
+  virtual void createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx);
 
-        virtual void createFacetGroup(const std::array<float, 12>& matrix,  const FGroup& vertexes);
+  virtual void createFacetGroup(const std::array<float, 12>& matrix, const FGroup& vertexes);
 
-        static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
+ private:
+  std::string m_filename;
+  IFCStreamWriter* m_writer;
 
-    private:
-        shared_ptr<IfcPPModel>                          m_model;
-        shared_ptr<IfcOwnerHistory>                     m_owner_history;
-        shared_ptr<IfcGeometricRepresentationContext>   m_context;
-        std::string                                     m_filename;
-        std::stack<shared_ptr<IfcRelAggregates> >       m_relationStack;
-        std::map<int, shared_ptr<IfcMaterial> >         m_materials;
-        std::map<int, shared_ptr<IfcSurfaceStyle> >     m_styles;
-        shared_ptr<IfcPropertySet>                      m_propertySet;
-        int                                             m_currentEntityId;
-        std::stack<int>                                 m_currentMaterial;
+  IfcReference m_ownerHistory;
+  IfcReference m_contextRef;
+  IfcReference m_buildingRef;
 
-        shared_ptr<IfcOwnerHistory> createOwnerHistory(const std::string &name, const std::string &banner, int timeStamp);
-        shared_ptr<IfcMaterial> createMaterial(int id);
-        shared_ptr<IfcSurfaceStyle> createSurfaceStyle(int id);
-        void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
-        void insertEntity(shared_ptr<IfcPPEntity> e);
-        void initModel();
-        void pushParentRelation(shared_ptr<IfcObjectDefinition> parent);
-        void addRepresentationToShape(shared_ptr<IfcRepresentationItem> item, shared_ptr<IfcLabel> type);
-        void addRevolvedAreaSolidToShape(shared_ptr<IfcProfileDef> profile, shared_ptr<IfcDirection> axis, double angle, const Transform3f& transform);
+  IfcEntity* m_project;
 
-        void writeMesh(const Mesh &mesh, const std::array<float, 12>& matrix);
-        shared_ptr<IfcAxis2Placement3D> getCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f &offset);
-        shared_ptr<IfcPlane> createClippingPlane(double zPos, const Eigen::Vector3d &normal);
+  std::stack<IfcEntity*> m_productStack;
+  std::stack<IfcReferenceList> m_productMetaDataStack;
+  std::stack<IfcReferenceList> m_productChildStack;
+  std::stack<IfcReferenceList> m_productRepresentationStack;
+  std::stack<IfcReference> m_placementStack;
+  std::stack<int> m_currentMaterial;
+
+  std::map<int, IfcReference> m_materials;
+  std::map<int, IfcReference> m_styles;
+
+  void createOwnerHistory(const std::string& name, const std::string& banner, int timeStamp);
+  void createSlopedCylinder(const std::array<float, 12>& matrix, const Primitives::Snout& params);
+
+  void initModel(const IfcReference projectRef);
+  void createParentChildRelation(const IfcReference parent, const IfcReferenceList& children);
+  void addStyleToItem(IfcReference item);
+  void addRevolvedAreaSolidToShape(IfcReference profile, IfcReference axis, float angle, const Transform3f& transform);
+  void writeMesh(const Mesh& mesh, const std::array<float, 12>& matrix);
+
+  IfcReference createRepresentation();
+  IfcReference createMaterial(int id);
+  IfcReference createSurfaceStyle(int id);
+  IfcReference createCoordinateSystem(const Transform3f& matrix, const Eigen::Vector3f& offset);
+  IfcReference createClippingPlane(float zPos, const Eigen::Vector3f& n);
+  IfcReference addCartesianPoint(float x, float y, float z, std::string entity = "IFCCARTESIANPOINT");
+  IfcReference addCartesianPoint(float x, float y, std::string entity = "IFCCARTESIANPOINT");
+  IfcReference createPropertySet(IfcReference relatedObject);
+  IfcReference createPlacement(IfcReference parentPlacement);
 };
 
-#endif // IFCCONVERTER_H
+#endif  // IFCCONVERTER_H
