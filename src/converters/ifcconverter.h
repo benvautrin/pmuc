@@ -121,7 +121,7 @@ class IFCConverter : public RVMReader {
   IfcReference addCartesianPoint(float x, float y, float z, std::string entity = "IFCCARTESIANPOINT");
   IfcReference addCartesianPoint(float x, float y, std::string entity = "IFCCARTESIANPOINT");
   IfcReference createPropertySet(IfcReference relatedObject);
-  IfcReference createPlacement(IfcReference parentPlacement);
+  IfcReference createPlacement(IfcValue parentPlacement);
 };
 
 #endif  // IFCCONVERTER_H

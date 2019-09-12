@@ -131,9 +131,9 @@ void IFCConverter::startModel(const std::string& projectName, const std::string&
 
   IfcEntity world_coordinate_system("IFCAXIS2PLACEMENT3D");
   world_coordinate_system.attributes = {
-      locationRef,          // Location
-      IFC_REFERENCE_UNSET,  // Axis (Z)
-      IFC_REFERENCE_UNSET   // RefDirection (X)
+      locationRef,       // Location
+      IFC_STRING_UNSET,  // Axis (Z)
+      IFC_STRING_UNSET   // RefDirection (X)
   };
   IfcReference world_coordinate_systemRef = m_writer->addEntity(world_coordinate_system);
 
@@ -210,7 +210,7 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
   m_productMetaDataStack.push(IfcReferenceList{});
 }
 
-IfcReference IFCConverter::createPlacement(IfcReference parentPlacement) {
+IfcReference IFCConverter::createPlacement(IfcValue parentPlacement) {
   auto locationRef = addCartesianPoint(0.0f, 0.0f, 0.0f);
 
   IfcEntity relative_placement("IFCAXIS2PLACEMENT3D");
@@ -229,6 +229,10 @@ IfcReference IFCConverter::createPropertySet(IfcReference relatedObject) {
   assert(!m_productMetaDataStack.empty());
 
   auto metaData = m_productMetaDataStack.top();
+
+  if (metaData.empty()) {
+    return IFC_REFERENCE_UNSET;
+  }
 
   // Create a property set that holds all properties
   IfcEntity propertySet("IFCPROPERTYSET");
@@ -332,7 +336,7 @@ void IFCConverter::createBox(const std::array<float, 12>& matrix, const Primitiv
     auto locationRef = addCartesianPoint(0, 0);
 
     IfcEntity position("IFCAXIS2PLACEMENT2D");
-    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    position.attributes = {locationRef, IFC_STRING_UNSET};
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCRECTANGLEPROFILEDEF");
@@ -366,7 +370,7 @@ void IFCConverter::createRectangularTorus(const std::array<float, 12>& matrix,
     auto locationRef = addCartesianPoint(0.0f, params.rinside() * s + 0.5f * yExtend);
 
     IfcEntity position("IFCAXIS2PLACEMENT2D");
-    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    position.attributes = {locationRef, IFC_STRING_UNSET};
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCRECTANGLEPROFILEDEF");
@@ -394,7 +398,7 @@ void IFCConverter::createCircularTorus(const std::array<float, 12>& matrix, cons
     auto locationRef = addCartesianPoint(0.0f, params.offset() * s);
 
     IfcEntity position("IFCAXIS2PLACEMENT2D");
-    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    position.attributes = {locationRef, IFC_STRING_UNSET};
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCCIRCLEPROFILEDEF");
@@ -555,7 +559,7 @@ void IFCConverter::createSlopedCylinder(const std::array<float, 12>& matrix, con
     auto locationRef = addCartesianPoint(0.0, 0.0);
 
     IfcEntity position("IFCAXIS2PLACEMENT2D");
-    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    position.attributes = {locationRef, IFC_STRING_UNSET};
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCCIRCLEPROFILEDEF");
@@ -615,7 +619,7 @@ void IFCConverter::createCylinder(const std::array<float, 12>& matrix, const Pri
     auto locationRef = addCartesianPoint(0.0, 0.0);
 
     IfcEntity position("IFCAXIS2PLACEMENT2D");
-    position.attributes = {locationRef, IFC_REFERENCE_UNSET};
+    position.attributes = {locationRef, IFC_STRING_UNSET};
     auto positionRef = m_writer->addEntity(position);
 
     IfcEntity profile("IFCCIRCLEPROFILEDEF");
@@ -843,26 +847,26 @@ void IFCConverter::initModel(const IfcReference projectRef) {
   IfcEntity site("IFCSITE");
   site.attributes = {
       createBase64Uuid<char>(),
-      m_ownerHistory,                   // owner history
-      "Site",                           // Name
-      IFC_STRING_UNSET,                 // Description
-      IFC_STRING_UNSET,                 // Object Type
-      createPlacement(IfcReference{}),  // ObjectPlacement
-      IFC_REFERENCE_UNSET,              // Representation
-      IFC_STRING_UNSET,                 // LongName
-      IFCELEMENTCOMPOSITION_ELEMENT,    // CompositionType
-      IFC_STRING_UNSET,                 // RefLatitude
-      IFC_STRING_UNSET,                 // RefLongitude
-      IFC_STRING_UNSET,                 // RefElevation
-      IFC_STRING_UNSET,                 // LandTitleNumber
-      IFC_STRING_UNSET,                 // SiteAddress
+      m_ownerHistory,                     // owner history
+      "Site",                             // Name
+      IFC_STRING_UNSET,                   // Description
+      IFC_STRING_UNSET,                   // Object Type
+      createPlacement(IFC_STRING_UNSET),  // ObjectPlacement
+      IFC_REFERENCE_UNSET,                // Representation
+      IFC_STRING_UNSET,                   // LongName
+      IFCELEMENTCOMPOSITION_ELEMENT,      // CompositionType
+      IFC_STRING_UNSET,                   // RefLatitude
+      IFC_STRING_UNSET,                   // RefLongitude
+      IFC_STRING_UNSET,                   // RefElevation
+      IFC_STRING_UNSET,                   // LandTitleNumber
+      IFC_STRING_UNSET,                   // SiteAddress
   };
   IfcReference siteRef = m_writer->addEntity(site);
 
   // create Building
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuilding.htm
 
-  auto buildingPlacement = createPlacement(IfcReference{});
+  auto buildingPlacement = createPlacement(IFC_STRING_UNSET);
   m_placementStack.push(buildingPlacement);
 
   IfcEntity building("IFCBUILDING");
@@ -1115,7 +1119,7 @@ IfcReference IFCConverter::createClippingPlane(float zPos, const Eigen::Vector3f
 
   // IFCAXIS2PLACEMENT3D
   IfcEntity planePosition("IFCAXIS2PLACEMENT3D");
-  planePosition.attributes = {planeLocationRef, planeNormalRef, IFC_REFERENCE_UNSET};
+  planePosition.attributes = {planeLocationRef, planeNormalRef, IFC_STRING_UNSET};
   auto planePositionRef = m_writer->addEntity(planePosition);
 
   // IFCPLANE
