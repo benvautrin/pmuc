@@ -196,11 +196,11 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
   IfcEntity* buildingElement = new IfcEntity("IFCBUILDINGELEMENTPROXY");
   buildingElement->attributes = {
       createBase64Uuid<char>(),
-      m_ownerHistory,    // owner history
-      name,              // Name
-      IFC_STRING_UNSET,  // Description
-      IFC_STRING_UNSET,  // Object Type
-      placementRef,      // ObjectPlacement
+      m_ownerHistory,          // owner history
+      encodeSTEPString(name),  // Name
+      IFC_STRING_UNSET,        // Description
+      IFC_STRING_UNSET,        // Object Type
+      placementRef,            // ObjectPlacement
   };
 
   m_currentMaterial.push(materialId);
@@ -842,31 +842,32 @@ void IFCConverter::createOwnerHistory(const std::string& user, const std::string
 }
 
 void IFCConverter::initModel(const IfcReference projectRef) {
+  auto sitePlacement = createPlacement(IFC_STRING_UNSET);
   // create Site
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcsite.htm
   IfcEntity site("IFCSITE");
   site.attributes = {
       createBase64Uuid<char>(),
-      m_ownerHistory,                     // owner history
-      "Site",                             // Name
-      IFC_STRING_UNSET,                   // Description
-      IFC_STRING_UNSET,                   // Object Type
-      createPlacement(IFC_STRING_UNSET),  // ObjectPlacement
-      IFC_REFERENCE_UNSET,                // Representation
-      IFC_STRING_UNSET,                   // LongName
-      IFCELEMENTCOMPOSITION_ELEMENT,      // CompositionType
-      IFC_STRING_UNSET,                   // RefLatitude
-      IFC_STRING_UNSET,                   // RefLongitude
-      IFC_STRING_UNSET,                   // RefElevation
-      IFC_STRING_UNSET,                   // LandTitleNumber
-      IFC_STRING_UNSET,                   // SiteAddress
+      m_ownerHistory,                 // owner history
+      "Site",                         // Name
+      IFC_STRING_UNSET,               // Description
+      IFC_STRING_UNSET,               // Object Type
+      sitePlacement,                  // ObjectPlacement
+      IFC_STRING_UNSET,               // Representation
+      IFC_STRING_UNSET,               // LongName
+      IFCELEMENTCOMPOSITION_ELEMENT,  // CompositionType
+      IFC_STRING_UNSET,               // RefLatitude
+      IFC_STRING_UNSET,               // RefLongitude
+      IFC_STRING_UNSET,               // RefElevation
+      IFC_STRING_UNSET,               // LandTitleNumber
+      IFC_STRING_UNSET,               // SiteAddress
   };
   IfcReference siteRef = m_writer->addEntity(site);
 
   // create Building
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuilding.htm
 
-  auto buildingPlacement = createPlacement(IFC_STRING_UNSET);
+  auto buildingPlacement = createPlacement(sitePlacement);
   m_placementStack.push(buildingPlacement);
 
   IfcEntity building("IFCBUILDING");
@@ -877,7 +878,7 @@ void IFCConverter::initModel(const IfcReference projectRef) {
       IFC_STRING_UNSET,               // Description
       IFC_STRING_UNSET,               // Object Type
       m_placementStack.top(),         // ObjectPlacement
-      IFC_REFERENCE_UNSET,            // Representation
+      IFC_STRING_UNSET,               // Representation
       IFC_STRING_UNSET,               // LongName
       IFCELEMENTCOMPOSITION_ELEMENT,  // CompositionType
       IFC_STRING_UNSET,               // ElevationOfRefHeight
@@ -975,9 +976,10 @@ void IFCConverter::writeMesh(const Mesh& mesh, const std::array<float, 12>& m) {
 }
 
 void IFCConverter::addStyleToItem(IfcReference item) {
+  auto surfaceStyle = createSurfaceStyle(m_currentMaterial.top());
   // Add style to the item
   IfcEntity presentationStyleAssignment("IFCPRESENTATIONSTYLEASSIGNMENT");
-  presentationStyleAssignment.attributes = {IfcReferenceList{createSurfaceStyle(m_currentMaterial.top())}};
+  presentationStyleAssignment.attributes = {IfcReferenceList{surfaceStyle}};
   auto presentationStyleAssignmentRef = m_writer->addEntity(presentationStyleAssignment);
 
   IfcEntity styledItem("IFCSTYLEDITEM");
@@ -1041,7 +1043,7 @@ IfcReference IFCConverter::createMaterial(int id) {
 
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcpresentationappearanceresource/lexical/ifcstyleditem.htm
   IfcEntity styledItem("IFCSTYLEDITEM");
-  styledItem.attributes = {IFC_REFERENCE_UNSET, IfcReferenceList{presentationStyleAssignmentRef}, IFC_STRING_UNSET};
+  styledItem.attributes = {IFC_STRING_UNSET, IfcReferenceList{presentationStyleAssignmentRef}, IFC_STRING_UNSET};
   auto styledItemRef = m_writer->addEntity(styledItem);
 
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcrepresentationresource/lexical/ifcstyledrepresentation.htm
@@ -1060,6 +1062,7 @@ IfcReference IFCConverter::createMaterial(int id) {
                                    materialRef};
   m_writer->addEntity(materialDefinition);
 
+  m_materials[id] = materialRef;
   return materialRef;
 }
 
