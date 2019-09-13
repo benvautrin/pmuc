@@ -261,9 +261,14 @@ IfcReference IFCConverter::createPropertySet(IfcReference relatedObject) {
 
 void IFCConverter::endGroup() {
   auto buildingElement = m_productStack.top();
-  buildingElement->attributes.push_back(createRepresentation());  // Representation
-  buildingElement->attributes.push_back(IFC_STRING_UNSET);        // Tag
-  buildingElement->attributes.push_back(IFC_REFERENCE_UNSET);     // CompositionType
+  auto representation = createRepresentation();
+  if (representation.value == 0) {  // Representation
+    buildingElement->attributes.push_back(IFC_STRING_UNSET);
+  } else {
+    buildingElement->attributes.push_back(representation);
+  }
+  buildingElement->attributes.push_back(IFC_STRING_UNSET);     // Tag
+  buildingElement->attributes.push_back(IFC_REFERENCE_UNSET);  // CompositionType
 
   IfcReference buildingElementRef = m_writer->addEntity(*buildingElement);
   m_productStack.pop();
