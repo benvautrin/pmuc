@@ -210,11 +210,18 @@ void IFCConverter::startGroup(const std::string& name, const Vector3F& translati
   m_productMetaDataStack.push(IfcReferenceList{});
 }
 
-IfcReference IFCConverter::createPlacement(IfcValue parentPlacement) {
+IfcReference IFCConverter::createPlacement(IfcValue parentPlacement, bool fullDefiniton) {
+  IfcValue xAxis = IFC_STRING_UNSET;
+  IfcValue zAxis = IFC_STRING_UNSET;
+  if (fullDefiniton) {
+    xAxis = addCartesianPoint(1.0f, 0.0f, 0.0f, "IFCDIRECTION");
+    zAxis = addCartesianPoint(0.0f, 0.0f, 1.0f, "IFCDIRECTION");
+  }
+
   auto locationRef = addCartesianPoint(0.0f, 0.0f, 0.0f);
 
   IfcEntity relative_placement("IFCAXIS2PLACEMENT3D");
-  relative_placement.attributes = {locationRef, IFC_STRING_UNSET, IFC_STRING_UNSET};
+  relative_placement.attributes = {locationRef, zAxis, xAxis};
   auto relativePlacementRef = m_writer->addEntity(relative_placement);
 
   // Define a placement based on the relative placement defined above
@@ -847,7 +854,6 @@ void IFCConverter::createOwnerHistory(const std::string& user, const std::string
 }
 
 void IFCConverter::initModel(const IfcReference projectRef) {
-  auto sitePlacement = createPlacement(IFC_STRING_UNSET);
   // create Site
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcsite.htm
   IfcEntity site("IFCSITE");
@@ -857,7 +863,7 @@ void IFCConverter::initModel(const IfcReference projectRef) {
       "Site",                         // Name
       IFC_STRING_UNSET,               // Description
       IFC_STRING_UNSET,               // Object Type
-      sitePlacement,                  // ObjectPlacement
+      IFC_STRING_UNSET,               // ObjectPlacement
       IFC_STRING_UNSET,               // Representation
       IFC_STRING_UNSET,               // LongName
       IFCELEMENTCOMPOSITION_ELEMENT,  // CompositionType
@@ -872,8 +878,8 @@ void IFCConverter::initModel(const IfcReference projectRef) {
   // create Building
   // https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/FINAL/HTML/ifcproductextension/lexical/ifcbuilding.htm
 
-  auto buildingPlacement = createPlacement(sitePlacement);
-  m_placementStack.push(buildingPlacement);
+  auto basePlacement = createPlacement(IFC_STRING_UNSET, true);
+  m_placementStack.push(basePlacement);
 
   IfcEntity building("IFCBUILDING");
   building.attributes = {
