@@ -537,7 +537,7 @@ const Mesh RVMMeshHelper2::makeCylinder(const Primitives::Cylinder& cylinder, un
   // down (index: sides)
   normals.push_back(Vector3F(0, 0, -1));
   // up (index: sides + 1)
-  normals.push_back(Vector3F(0, 0, -1));
+  normals.push_back(Vector3F(0, 0, 1));
 
   for (unsigned long i = 0; i < sides; i++) {
     positionIndex.push_back(sides * 2);  // bottom
