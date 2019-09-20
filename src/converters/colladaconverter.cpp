@@ -655,7 +655,7 @@ void COLLADAConverter::writeMesh(const std::string& gid, const Mesh& mesh, const
   FloatSourceF positionSource(m_writer);
   positionSource.setId(gid + "C");
   positionSource.setArrayId(gid + "CA");
-  positionSource.setAccessorCount(mesh.positions.size());
+  positionSource.setAccessorCount(static_cast<unsigned long>(mesh.positions.size()));
   positionSource.setAccessorStride(3);
   positionSource.getParameterNameList().push_back("X");
   positionSource.getParameterNameList().push_back("Y");
@@ -668,7 +668,7 @@ void COLLADAConverter::writeMesh(const std::string& gid, const Mesh& mesh, const
     FloatSourceF normalSource(m_writer);
     normalSource.setId(gid + "N");
     normalSource.setArrayId(gid + "NA");
-    normalSource.setAccessorCount(mesh.normals.size());
+    normalSource.setAccessorCount(static_cast<unsigned long>(mesh.normals.size()));
     normalSource.setAccessorStride(3);
     normalSource.getParameterNameList().push_back("X");
     normalSource.getParameterNameList().push_back("Y");
@@ -684,15 +684,11 @@ void COLLADAConverter::writeMesh(const std::string& gid, const Mesh& mesh, const
   vertices.add();
 
   Triangles t(m_writer);
-  t.setCount(mesh.positionIndex.size() / 3);
+  t.setCount(static_cast<unsigned long>(mesh.positionIndex.size() / 3));
   t.setMaterial("geometryMaterial");
   t.getInputList().push_back(Input(InputSemantic::VERTEX, URI("#" + vertices.getId()), 0));
   if (hasNormals) {
-    if (hasNormalIndex) {
-      t.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 1));
-    } else {
-      t.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 0));
-    }
+    t.getInputList().push_back(Input(InputSemantic::NORMAL, URI("#" + gid + "N"), 1));
   }
   t.prepareToAppendValues();
   if (hasNormalIndex) {
@@ -701,8 +697,10 @@ void COLLADAConverter::writeMesh(const std::string& gid, const Mesh& mesh, const
       t.appendValues(mesh.normalIndex.at(i));
     }
   } else {
-    // Just use the position index
-    t.appendValues(mesh.positionIndex);
+    // We could use a single index, but some viewers (e.g. MeshLab) don't support it
+    for (auto index : mesh.positionIndex) {
+      t.appendValues(index, index);
+    }
   }
   t.finish();
 
