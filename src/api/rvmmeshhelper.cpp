@@ -85,9 +85,20 @@ void CALLBACK tessCombineData(GLdouble newVert[3],
   *outData = (void*)index;
 };
 
-const Mesh RVMMeshHelper2::makeBox(const Primitives::Box& box, const float& maxSideSize, const int& minSides) {
+const Mesh RVMMeshHelper2::makeBox(const Primitives::Box& inBox, const float& maxSideSize, const int& minSides) {
   vector<Vector3F> points;
   vector<Vector3F> normals;
+
+  Primitives::Box box;
+
+  for (int d = 0; d < 3; d++) {
+    if (std::fpclassify(inBox.len[d]) == FP_ZERO) {
+      box.len[d] = 0.01f;
+    } else {
+      box.len[d] = inBox.len[d];
+    }
+  }
+
   for (int i = 0; i < 24; i++) {
     Vector3F point, normal;
     point[0] = cube_positions[i * 3] * box.len[0] * 0.5f;
