@@ -698,8 +698,14 @@ void COLLADAConverter::writeMesh(const std::string& gid, const Mesh& mesh, const
     }
   } else {
     // We could use a single index, but some viewers (e.g. MeshLab) don't support it
-    for (auto index : mesh.positionIndex) {
-      t.appendValues(index, index);
+    if (hasNormals) {
+      for (auto index : mesh.positionIndex) {
+        t.appendValues(index, index);
+      }
+    } else {
+      for (auto index : mesh.positionIndex) {
+        t.appendValues(index);
+      }
     }
   }
   t.finish();
