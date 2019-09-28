@@ -1,5 +1,6 @@
 project(pmuc)
 cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0074 NEW)
 
 SET(CMAKE_MODULE_PATH "${pmuc_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
@@ -25,7 +26,12 @@ find_package(EIGEN REQUIRED)
 include_directories( ${EIGEN_INCLUDE_DIR} )
 
 # Find Boost dependencies
-find_package(Boost 1.65.1 REQUIRED)
+if (WIN)
+  find_package(Boost 1.69.0 REQUIRED)
+else()
+  find_package(Boost 1.65.1 REQUIRED)
+endif()
+
 IF(Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS}) 
 ENDIF()
@@ -52,13 +58,14 @@ add_test(NAME run_pmuc COMMAND ${PROJECT_NAME} --help)
 set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "usage")
 set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "--x3d")
 set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "--collada")
+set_tests_properties(run_pmuc PROPERTIES PASS_REGULAR_EXPRESSION "--stl")
 
 add_test(NAME pmuc_collada COMMAND ${PROJECT_NAME} --collada ${CMAKE_CURRENT_SOURCE_DIR}/data/plm-sample_11072013.rvm)
 add_test(NAME pmuc_x3d COMMAND ${PROJECT_NAME} --x3d ${CMAKE_CURRENT_SOURCE_DIR}/data/plm-sample_11072013.rvm)
 add_test(NAME pmuc_x3db COMMAND ${PROJECT_NAME} --x3db ${CMAKE_CURRENT_SOURCE_DIR}/data/plm-sample_11072013.rvm)
 add_test(NAME pmuc_ifc COMMAND ${PROJECT_NAME} --ifc ${CMAKE_CURRENT_SOURCE_DIR}/data/plm-sample_11072013.rvm)
 add_test(NAME pmuc_ifc_primitives COMMAND ${PROJECT_NAME} --ifc --primitives ${CMAKE_CURRENT_SOURCE_DIR}/data/plm-sample_11072013.rvm)
-
+add_test(NAME pmuc_stl COMMAND ${PROJECT_NAME} --stl ${CMAKE_CURRENT_SOURCE_DIR}/data/plm-sample_11072013.rvm)
 
 set_tests_properties(pmuc_collada pmuc_x3d pmuc_x3db pmuc_ifc pmuc_ifc_primitives PROPERTIES PASS_REGULAR_EXPRESSION "315 group")
 set_tests_properties(pmuc_collada pmuc_x3d pmuc_x3db pmuc_ifc pmuc_ifc_primitives PROPERTIES PASS_REGULAR_EXPRESSION "118 pyramid")
@@ -72,3 +79,4 @@ set_tests_properties(pmuc_collada pmuc_x3d pmuc_x3db pmuc_ifc pmuc_ifc_primitive
 set_tests_properties(pmuc_collada pmuc_x3d pmuc_x3db pmuc_ifc pmuc_ifc_primitives PROPERTIES PASS_REGULAR_EXPRESSION "  0 sphere")
 set_tests_properties(pmuc_collada pmuc_x3d pmuc_x3db pmuc_ifc pmuc_ifc_primitives PROPERTIES PASS_REGULAR_EXPRESSION "  12 line")
 set_tests_properties(pmuc_collada pmuc_x3d pmuc_x3db pmuc_ifc pmuc_ifc_primitives PROPERTIES PASS_REGULAR_EXPRESSION "  80 facet group")
+set_tests_properties(pmuc_stl PROPERTIES PASS_REGULAR_EXPRESSION "Facets: 189736")

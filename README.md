@@ -1,9 +1,9 @@
 # Plant Mock-Up Converter
 
 [![Build Status](https://api.travis-ci.org/Supporting/pmuc.svg?branch=master)](https://travis-ci.org/Supporting/pmuc)
-[![Build status](https://ci.appveyor.com/api/projects/status/pt0xdf8srhyui2gc/branch/master?svg=true)](https://ci.appveyor.com/project/Supporting/pmuc/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/sbuxou2rv8t2k662/branch/master?svg=true)](https://ci.appveyor.com/project/Supporting/pmuc/branch/master)
 
-Copyright © EDF 2013-2016
+Copyright © EDF 2013-2019
 
 ## About
 
@@ -12,7 +12,8 @@ This project contains a reading library for the RVM file format and a command li
 - [X3D](http://www.web3d.org/x3d/what-x3d) in XML and binary (FI) encoding,
 - [COLLADA](https://www.khronos.org/collada/) files,
 - DSL3D language commands, and
-- [IFC 2x3](http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/).
+- [IFC 2x3](http://www.buildingsmart-tech.org/ifc/IFC2x3/TC1/html/)
+- [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>)
 
 ## License (LGPL)
 
@@ -28,10 +29,10 @@ See the LICENSE.txt file for details.
 
 ### Prerequisites
 
-On Unix and Linux, a g++ compiler >= 4.8 is required.
-On Windows, you need at least Visual Studio 2012. Other platforms / compilers / IDEs have not been tested but are likely to work as well (please file an issue if not).
+PMUC uses the C++ 17 library feature `std::variant`, hence it requires a g++ compiler >= 7, MSVC 19.10 (Visual Studio 2017), or Clang 10.0 is required.
+Other platforms / compilers / IDEs have not been tested but are likely to work as well (please file an issue if not).
 
-Building requires a [cmake](http://www.cmake.org/) version >= 2.8.
+Building requires a [cmake](http://www.cmake.org/) version >= 3.12.
 
 ### Dependencies
 
@@ -40,7 +41,7 @@ Most dependencies are included in git submodules, namely [eigen](http://eigen.tu
     git submodule init
     git submodule update
 
-Soley [boost](http://www.boost.org/) needs to be provided externally. On Linux it is sufficient to install the boost development package, e.g.:
+Soley [boost](http://www.boost.org/) (on windows 1.69 is required, otherwise 1.65.1) needs to be provided externally. On Linux it is sufficient to install the boost development package, e.g.:
 
     sudo apt-get install libboost-all-dev
 
