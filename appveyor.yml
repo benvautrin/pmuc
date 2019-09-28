@@ -1,7 +1,7 @@
-version: '1.0.{build}'
+version: "1.2.{build}"
 
 image:
-- Visual Studio 2017
+  - Visual Studio 2017
 
 environment:
   BOOST_ROOT: C:\Libraries\boost_1_69_0
@@ -25,4 +25,3 @@ test_script:
 
 artifacts:
   - path: build\bin\$(CMAKE_BUILD_TYPE)
-
