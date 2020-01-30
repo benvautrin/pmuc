@@ -28,6 +28,7 @@
 #include <array>
 
 #include "vector3f.h"
+#include "lib_export.h"
 
 class RVMReader;
 
@@ -50,7 +51,7 @@ class RVMParser
          * @brief Constructs a parser ready to send data to the provided RVMReader
          * @param reader The reader object that will receive the data.
          */
-        RVMParser(RVMReader& reader);
+        DLL_PMUC_EXPORT RVMParser(RVMReader& reader);
 
         /**
          * @brief Reads from a file a parse its content.
@@ -58,26 +59,26 @@ class RVMParser
          *
          * @return true if the parsing was a success.
          */
-        bool readFile(const std::string& filename, bool ignoreAttributes);
+        DLL_PMUC_EXPORT bool readFile(const std::string& filename, bool ignoreAttributes);
         /**
          * @brief Reads from a series of files.
          * @param filenames a vector of filenames
          *
          * @return true if the parsing was a success.
          */
-        bool readFiles(const std::vector<std::string>& filenames, const std::string& name, bool ignoreAttributes);
+        DLL_PMUC_EXPORT bool readFiles(const std::vector<std::string>& filenames, const std::string& name, bool ignoreAttributes);
         /**
          * @brief Reads from a character buffer.
          * @param buffer the character buffer containing RVM data.
          * @return true if the parsing was a success.
          */
-        bool readBuffer(const char* buffer);
+        DLL_PMUC_EXPORT bool readBuffer(const char* buffer);
         /**
          * @brief Reads RVM data from an input stream
          * @param is the input stream of RVM data.
          * @return true if the parsing was a success.
          */
-        bool readStream(std::istream& is);
+        DLL_PMUC_EXPORT bool readStream(std::istream& is);
 
         /**
          * @brief Allow to filter the RVM data to one named object
@@ -95,7 +96,7 @@ class RVMParser
          * @brief In case of error, returns the last error that occured.
          * @return a string describing the error.
          */
-        const std::string lastError();
+        DLL_PMUC_EXPORT const std::string lastError();
 
         /**
          * @brief Statistics of the parsing: number of groups

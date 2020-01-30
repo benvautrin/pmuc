@@ -447,7 +447,9 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_objectName(""),
     m_objectFound(0),
     m_forcedColor(-1),
+    m_aggregation(false),
     m_scale(1.),
+    m_attributeStream(0),
     m_nbGroups(0),
     m_nbPyramids(0),
     m_nbBoxes(0),
@@ -460,9 +462,7 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
-    m_attributeStream(0),
-    m_attributes(0),
-    m_aggregation(false) {
+    m_attributes(0) {
 }
 
 bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
@@ -654,7 +654,8 @@ const string RVMParser::lastError()
 bool RVMParser::readGroup(std::istream& is)
 {
     skip_<2>(is); // Garbage ?
-    const unsigned int version = read_<unsigned int>(is);
+    //const unsigned int version =
+    read_<unsigned int>(is);
 
     string name;
     read_(is, name);
@@ -729,7 +730,8 @@ bool RVMParser::readGroup(std::istream& is)
 bool RVMParser::readPrimitive(std::istream& is)
 {
     skip_<2>(is); // Garbage ?
-    const unsigned int version = read_<unsigned int>(is);
+    //const unsigned int version =
+    read_<unsigned int>(is);
     const unsigned int primitiveKind = read_<unsigned int>(is);
 
     std::array<float, 12> matrix;
@@ -875,10 +877,11 @@ bool RVMParser::readPrimitive(std::istream& is)
 
 bool RVMParser::readColor(std::istream& is)
 {
-    const auto pos = int(is.tellg());
+    //const auto pos = int(is.tellg());
 
     skip_<2>(is); // Garbage ?
-    const unsigned int version = read_<unsigned int>(is);
+    //const unsigned int version =
+    read_<unsigned int>(is);
     const unsigned int index = read_<unsigned int>(is);
 
     std::array<std::uint8_t, 4> color;

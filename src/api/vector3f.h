@@ -22,6 +22,8 @@
 #ifndef Vector3F_H
 #define Vector3F_H
 
+#include "lib_export.h"
+
 #include <vector>
 #include <ostream>
 #include <cmath>
@@ -33,11 +35,11 @@
  */
 class Vector3F
 {
-    public:
-        Vector3F();
-        Vector3F(const float& x, const float& y, const float& z);
-        Vector3F(const Vector3F& v);
-        Vector3F(const std::vector<float>& v);
+public:
+        DLL_PMUC_EXPORT Vector3F();
+        DLL_PMUC_EXPORT Vector3F(const float& x, const float& y, const float& z);
+        DLL_PMUC_EXPORT Vector3F(const Vector3F& v);
+        DLL_PMUC_EXPORT Vector3F(const std::vector<float>& v);
 
         inline float& operator[](int i) {
             return m_values[i];
@@ -78,7 +80,7 @@ class Vector3F
             return 0.f;
         }
 
-        Vector3F cross(const Vector3F& y );
+        DLL_PMUC_EXPORT Vector3F cross(const Vector3F& y);
 
         inline bool equals(const Vector3F& v) const {
             return (m_values[0] == v[0]) && (m_values[1] == v[1]) && (m_values[2] == v[2]);
@@ -89,12 +91,12 @@ class Vector3F
             return *this;
         }
 
-        friend Vector3F operator-(const std::vector<float>& p1, const std::vector<float>& p2);
-        friend Vector3F operator-(const Vector3F& p1, const Vector3F& p2);
-        friend Vector3F operator+(const Vector3F& p1, const Vector3F& p2);
-        friend float operator*(const Vector3F& p1, const Vector3F& p2);
-        friend Vector3F operator*(const Vector3F& v, float f);
-        friend std::ostream& operator<<(std::ostream& out, const Vector3F& vec);
+        DLL_PMUC_EXPORT friend Vector3F operator-(const std::vector<float>& p1, const std::vector<float>& p2);
+        DLL_PMUC_EXPORT friend Vector3F operator-(const Vector3F& p1, const Vector3F& p2);
+        DLL_PMUC_EXPORT friend Vector3F operator+(const Vector3F& p1, const Vector3F& p2);
+        DLL_PMUC_EXPORT friend float operator*(const Vector3F& p1, const Vector3F& p2);
+        DLL_PMUC_EXPORT friend Vector3F operator*(const Vector3F& v, float f);
+        DLL_PMUC_EXPORT friend std::ostream& operator<<(std::ostream& out, const Vector3F& vec);
 
         friend bool operator!=(const Vector3F &a, const Vector3F &b) {
             return !(a==b);

@@ -65,7 +65,7 @@ static const unsigned long cube_index[] = {0,  1,  2,  2,  3,  0,  4,  7,  5,  5
 
 void CALLBACK tessVertexData(void* vertex_data, void* polygon_data) {
   Mesh* userData = (Mesh*)polygon_data;
-  userData->positionIndex.push_back((unsigned long)vertex_data);
+  userData->positionIndex.push_back(static_cast<unsigned long>(reinterpret_cast<size_t>(vertex_data)));
 }
 void CALLBACK tessEdgeFlag(GLboolean flag, void* polygon_data) {}
 
@@ -79,10 +79,10 @@ void CALLBACK tessCombineData(GLdouble newVert[3],
                               void** outData,
                               void* polygon_data) {
   Mesh* userData = (Mesh*)polygon_data;
-  unsigned long index = static_cast<unsigned long>(userData->positions.size());
+  size_t index = userData->positions.size();
   userData->positions.push_back(Vector3F(float(newVert[0]), float(newVert[1]), float(newVert[2])));
   userData->normals.push_back(Vector3F(0.0f, 1.0f, 0.0f));
-  *outData = (void*)index;
+  *outData = reinterpret_cast<void*>(index);
 };
 
 const Mesh RVMMeshHelper2::makeBox(const Primitives::Box& inBox, const float& maxSideSize, const int& minSides) {
@@ -875,8 +875,8 @@ const Mesh RVMMeshHelper2::makeSphericalDish(const Primitives::SphericalDish& sD
   return result;
 }
 
-pair<int, bool> createIndex(std::vector<Vertex>& references, const Vertex& newValue) {
-  unsigned int results = std::find(references.begin(), references.end(), newValue) - references.begin();
+pair<size_t, bool> createIndex(std::vector<Vertex>& references, const Vertex& newValue) {
+  size_t results = std::find(references.begin(), references.end(), newValue) - references.begin();
   if (results == references.size()) {
     references.push_back(newValue);
     return make_pair(results, true);
@@ -888,7 +888,7 @@ void RVMMeshHelper2::tesselateFacetGroup(const std::vector<std::vector<std::vect
                                          Mesh* userData) {
   GLUtesselator* tobj = gluNewTess();
   vector<Vertex> indexedVertices;
-  vector<unsigned long> indexArray;
+  vector<size_t> indexArray;
 
   gluTessCallback(tobj, GLU_TESS_EDGE_FLAG_DATA, (void(CALLBACK*)())tessEdgeFlag);
   gluTessCallback(tobj, GLU_TESS_VERTEX_DATA, (void(CALLBACK*)())tessVertexData);
@@ -900,7 +900,7 @@ void RVMMeshHelper2::tesselateFacetGroup(const std::vector<std::vector<std::vect
   for (unsigned int i = 0; i < vertices.size(); i++) {
     for (unsigned int j = 0; j < vertices[i].size(); j++) {
       for (unsigned int k = 0; k < vertices[i][j].size(); k++) {
-        pair<int, bool> res = createIndex(indexedVertices, vertices[i][j][k]);
+        pair<size_t, bool> res = createIndex(indexedVertices, vertices[i][j][k]);
         indexArray.push_back(res.first);
         if (res.second) {
           userData->positions.push_back(vertices[i][j][k].first);
@@ -923,7 +923,7 @@ void RVMMeshHelper2::tesselateFacetGroup(const std::vector<std::vector<std::vect
         coords[0] = vertex[0];
         coords[1] = vertex[1];
         coords[2] = vertex[2];
-        gluTessVertex(tobj, coords, (void*)indexArray[tessIndex]);
+        gluTessVertex(tobj, coords, reinterpret_cast<void*>(indexArray[tessIndex]));
         tessIndex++;
       }
       gluTessEndContour(tobj);
