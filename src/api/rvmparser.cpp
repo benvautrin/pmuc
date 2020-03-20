@@ -374,12 +374,16 @@ void readArray_(std::istream &in, T(&a)[size])
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Implementation of a skip function
 /// Surprisingly, multiple calling get() multiple times seems to be faster than seekg.
+/// We do not use seekg for the sake of supporting non-seekable streams.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<size_t numInts>
 inline void skip_(std::istream& in)
 {
-    in.seekg(sizeof(int) * numInts, in.cur);
+  for (size_t _ = 0; _ < numInts; ++_) 
+  {
+    skip_<1>(in);
+  }
 }
 
 template<>
@@ -449,7 +453,6 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_forcedColor(-1),
     m_aggregation(false),
     m_scale(1.),
-    m_attributeStream(0),
     m_nbGroups(0),
     m_nbPyramids(0),
     m_nbBoxes(0),
@@ -477,27 +480,28 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
     }
 
     // Try to find ATT companion file
-    m_attributeStream = 0;
+    std::istream* pAttributeStream = NULL;
+    std::istream attributeStream (NULL);
     filebuf afb;
     if (!ignoreAttributes) {
         string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
         if (afb.open(attfilename.data(), ios::in)) {
             cout << "Found attribute companion file: " << attfilename << endl;
-            m_attributeStream = new istream(&afb);
+            attributeStream.rdbuf (&afb);
+            pAttributeStream = &attributeStream;
         } else {
             attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
             if (afb.open(attfilename.data(), ios::in)) {
                 cout << "Found attribute companion file: " << attfilename << endl;
-                m_attributeStream = new istream(&afb);
+                attributeStream.rdbuf (&afb);
+                pAttributeStream = &attributeStream;
             }
         }
-        if (m_attributeStream && !m_attributeStream->eof()) {
-            std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-        }
+
     }
 
 
-    bool success = readStream(is);
+    bool success = readStream(is, pAttributeStream);
 
     is.close();
 
@@ -543,8 +547,13 @@ bool RVMParser::readBuffer(const char* buffer) {
     return success;
 }
 
-bool RVMParser::readStream(istream& is)
+bool RVMParser::readStream(istream& is, std::istream* attributeStream)
 {
+    // Read first line from file with attributes
+    if (attributeStream && !attributeStream->eof()) {
+      std::getline(*attributeStream, m_currentAttributeLine);
+    }
+
     Identifier id;
     if(!readUntilValidIdentifier(is, id))
     {
@@ -620,7 +629,7 @@ bool RVMParser::readStream(istream& is)
     while ((read_(is, id)) != "END")
     {
         if (id == "CNTB") {
-            if (!readGroup(is)) {
+            if (!readGroup(is, attributeStream)) {
                 return false;
             }
         } else if (id == "PRIM") {
@@ -651,7 +660,7 @@ const string RVMParser::lastError()
     return m_lastError;
 }
 
-bool RVMParser::readGroup(std::istream& is)
+bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream) 
 {
     skip_<2>(is); // Garbage ?
     //const unsigned int version =
@@ -674,18 +683,18 @@ bool RVMParser::readGroup(std::istream& is)
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
         // Attributes
-        if (m_attributeStream && !m_attributeStream->eof()) {
+        if (attributeStream && !attributeStream->eof()) {
             string p;
-            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!attributeStream->eof())) {
+                std::getline(*attributeStream, m_currentAttributeLine);
             }
             if (p == "NEW " + name ) {
                 m_reader.startMetaData();
                 size_t i;
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                std::getline(*attributeStream, m_currentAttributeLine);
                 p = trim(latin_to_utf8(m_currentAttributeLine));
                 std::string separator{":="};
-                while ((!m_attributeStream->eof()) && ((i = p.find(separator)) != string::npos)) {
+                while ((!attributeStream->eof()) && ((i = p.find(separator)) != string::npos)) {
                      string an = p.substr(0, i);
                      string av = p.substr(i + separator.size(), string::npos);
 
@@ -693,7 +702,7 @@ bool RVMParser::readGroup(std::istream& is)
                      m_reader.endMetaDataPair();
                      m_attributes++;
 
-                     std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
+                     std::getline(*attributeStream, m_currentAttributeLine);
                      p = trim(latin_to_utf8(m_currentAttributeLine));
                 }
                 m_reader.endMetaData();
@@ -705,7 +714,7 @@ bool RVMParser::readGroup(std::istream& is)
     Identifier id;
     while ((read_(is, id)) != "CNTE") {
         if (id == "CNTB") {
-            if (!readGroup(is)) {
+            if (!readGroup(is, attributeStream)) {
                 return false;
             }
         } else if (id == "PRIM") {

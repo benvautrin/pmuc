@@ -78,7 +78,7 @@ class RVMParser
          * @param is the input stream of RVM data.
          * @return true if the parsing was a success.
          */
-        DLL_PMUC_EXPORT bool readStream(std::istream& is);
+        DLL_PMUC_EXPORT bool readStream(std::istream& is, std::istream* attributeStream = NULL);
 
         /**
          * @brief Allow to filter the RVM data to one named object
@@ -165,7 +165,7 @@ class RVMParser
         const long& nbAttributes() { return m_attributes; }
 
     private:
-        bool readGroup(std::istream& is);
+        bool readGroup(std::istream& is, std::istream* attributeStream);
         bool readPrimitive(std::istream& is);
         bool readColor(std::istream& is);
 
@@ -181,7 +181,6 @@ class RVMParser
         int             m_forcedColor;
         bool            m_aggregation;
         float           m_scale;
-        std::istream*   m_attributeStream;
 
         int             m_nbGroups;
         int             m_nbPyramids;
