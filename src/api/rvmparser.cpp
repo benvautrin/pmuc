@@ -684,9 +684,10 @@ bool RVMParser::readGroup(std::istream& is)
                 size_t i;
                 std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
                 p = trim(latin_to_utf8(m_currentAttributeLine));
-                while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
+                std::string separator{":="};
+                while ((!m_attributeStream->eof()) && ((i = p.find(separator)) != string::npos)) {
                      string an = p.substr(0, i);
-                     string av = p.substr(i+4, string::npos);
+                     string av = p.substr(i + separator.size(), string::npos);
 
                      m_reader.startMetaDataPair(an, av);
                      m_reader.endMetaDataPair();
