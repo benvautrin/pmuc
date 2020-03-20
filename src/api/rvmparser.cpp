@@ -465,7 +465,8 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
-    m_attributes(0) {
+    m_attributes(0),
+    m_brokenByUser(false) {
 }
 
 bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
@@ -616,7 +617,9 @@ bool RVMParser::readStream(istream& is, std::istream* attributeStream)
         return false;
     }
 
-    skip_<2>(is); // Garbage ?
+    m_reader.updateProgress(read_<unsigned int>(is));
+
+    skip_<1>(is); // Garbage ?
     version = read_<unsigned int>(is);
 
     string projectName, name;
@@ -626,7 +629,7 @@ bool RVMParser::readStream(istream& is, std::istream* attributeStream)
     if (!m_aggregation)
         m_reader.startModel(projectName, name);
 
-    while ((read_(is, id)) != "END")
+    while ((read_(is, id)) != "END" && m_brokenByUser == false)
     {
         if (id == "CNTB") {
             if (!readGroup(is, attributeStream)) {
@@ -646,6 +649,10 @@ bool RVMParser::readStream(istream& is, std::istream* attributeStream)
         }
     }
 
+    if (m_brokenByUser) {
+      return false;
+    }
+
     if (!m_aggregation) {
         m_reader.endModel();
         // Garbage data ??
@@ -662,7 +669,9 @@ const string RVMParser::lastError()
 
 bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream) 
 {
-    skip_<2>(is); // Garbage ?
+    m_reader.updateProgress(read_<unsigned int>(is));
+
+    skip_<1>(is); // Garbage ?
     //const unsigned int version =
     read_<unsigned int>(is);
 
@@ -712,7 +721,7 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
 
     // Children
     Identifier id;
-    while ((read_(is, id)) != "CNTE") {
+    while ((read_(is, id)) != "CNTE" && m_brokenByUser == false) {
         if (id == "CNTB") {
             if (!readGroup(is, attributeStream)) {
                 return false;
@@ -732,6 +741,10 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
     if (m_objectFound) {
         m_reader.endGroup();
         m_objectFound--;
+    }
+
+    if (m_brokenByUser) {
+      return false;
     }
 
     return true;

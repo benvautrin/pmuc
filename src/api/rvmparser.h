@@ -163,6 +163,11 @@ class RVMParser
          * @return the number of attributes found in the source.
          */
         const long& nbAttributes() { return m_attributes; }
+       
+        /**
+         * @brief Stop reading file/stream by user
+         */
+        DLL_PMUC_EXPORT void Break() { m_brokenByUser = true; }
 
     private:
         bool readGroup(std::istream& is, std::istream* attributeStream);
@@ -195,6 +200,8 @@ class RVMParser
         int             m_nbLines;
         int             m_nbFacetGroups;
         long            m_attributes;
+
+        bool            m_brokenByUser;
 };
 
 #endif // RVMPARSER_H

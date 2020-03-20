@@ -226,6 +226,15 @@ class RVMReader
         }
 
         /**
+         * Set progress of reading rvm file/stream.
+         *
+         * @param progress - The number of read bytes.
+         */
+        DLL_PMUC_EXPORT virtual void updateProgress(std::size_t progress) {
+          (void)progress;
+        }
+
+        /**
          * @brief Sets the maximum size for a side of a primitive when tesselating.
          * @param size
          */
