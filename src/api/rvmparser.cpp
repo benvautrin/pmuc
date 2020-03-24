@@ -548,11 +548,75 @@ bool RVMParser::readBuffer(const char* buffer) {
     return success;
 }
 
-bool RVMParser::readStream(istream& is, std::istream* attributeStream)
-{
+void RVMParser::readArttributes(std::istream& stream) {
+  size_t position{};
+  std::string separator{":="};
+
+  TAttributeContainer temporaryContainer;
+  std::string temporaryName;
+
+  m_groupAttributes.clear();
+
+  while (!stream.eof()) {
+    std::string line;
+    std::getline(stream, line);
+
+    line = trim(latin_to_utf8(line));
+
+    if (line == "END") {
+      // Warning after std::move(temporaryContainer) this container will be an empty, also as a group
+      m_groupAttributes.emplace(std::make_pair(std::move(temporaryName), std::move(temporaryContainer)));
+    } else if (isFound(line, "NEW", position)) {
+      // + 3 - it is skip strlen ("NEW")
+      temporaryName = trim(line.substr(position + 3, string::npos));
+    } else if (isFound(line, separator, position)) {
+      string name = line.substr(0, position);
+      string value = trim(line.substr(position + separator.size(), string::npos));
+
+      temporaryContainer.emplace_back(name, value);
+    } else {
+      // Skip other lines
+    }
+  }
+}
+
+void RVMParser::insertAttributes(const std::string& name, bool ignoreAttributes) {
+  if (ignoreAttributes) {
+    return;
+  }
+
+  auto it = m_groupAttributes.find(name);
+
+  if (it != m_groupAttributes.end()) {
+    const TAttributeContainer& attributes = it->second;
+
+    m_reader.startMetaData();
+
+    for (const TAttributePair& attribute : attributes) {
+      m_reader.startMetaDataPair(attribute.first, attribute.second);
+      m_reader.endMetaDataPair();
+      m_attributes++;
+    }
+    m_reader.endMetaData();
+  }
+}
+
+bool RVMParser::isFound(const std::string& line, const std::string& substring, size_t& position) {
+  bool found = false;
+
+  position = line.find(substring);
+
+  if (position != std::string::npos) {
+    found = true;
+  }
+
+  return found;
+}
+
+bool RVMParser::readStream(istream& is, std::istream* attributeStream) {
     // Read first line from file with attributes
-    if (attributeStream && !attributeStream->eof()) {
-      std::getline(*attributeStream, m_currentAttributeLine);
+    if (attributeStream && (*attributeStream) && !attributeStream->eof()) {
+      readArttributes(*attributeStream);
     }
 
     Identifier id;
@@ -659,6 +723,8 @@ bool RVMParser::readStream(istream& is, std::istream* attributeStream)
         m_reader.endDocument();
     }
 
+    m_groupAttributes.clear();
+
     return true;
 }
 
@@ -692,31 +758,7 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
         // Attributes
-        if (attributeStream && !attributeStream->eof()) {
-            string p;
-            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!attributeStream->eof())) {
-                std::getline(*attributeStream, m_currentAttributeLine);
-            }
-            if (p == "NEW " + name ) {
-                m_reader.startMetaData();
-                size_t i;
-                std::getline(*attributeStream, m_currentAttributeLine);
-                p = trim(latin_to_utf8(m_currentAttributeLine));
-                std::string separator{":="};
-                while ((!attributeStream->eof()) && ((i = p.find(separator)) != string::npos)) {
-                     string an = p.substr(0, i);
-                     string av = p.substr(i + separator.size(), string::npos);
-
-                     m_reader.startMetaDataPair(an, av);
-                     m_reader.endMetaDataPair();
-                     m_attributes++;
-
-                     std::getline(*attributeStream, m_currentAttributeLine);
-                     p = trim(latin_to_utf8(m_currentAttributeLine));
-                }
-                m_reader.endMetaData();
-            }
-        }
+        insertAttributes(name, attributeStream == nullptr);
     }
 
     // Children

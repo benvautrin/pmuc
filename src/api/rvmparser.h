@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <map>
+#include <list>
 
 #include "vector3f.h"
 #include "lib_export.h"
@@ -173,6 +175,10 @@ class RVMParser
         bool readGroup(std::istream& is, std::istream* attributeStream);
         bool readPrimitive(std::istream& is);
         bool readColor(std::istream& is);
+        void readArttributes(std::istream& stream);
+        void insertAttributes(const std::string& name, bool ignoreAttributes);
+        bool isFound(const std::string& line, const std::string& substring, size_t& after);
+
 
         void readMatrix(std::istream& is, std::array<float, 12>& matrix);
 
@@ -180,7 +186,6 @@ class RVMParser
         std::string     m_encoding;
         std::string     m_lastError;
 
-        std::string     m_currentAttributeLine;
         std::string     m_objectName;
         int             m_objectFound;
         int             m_forcedColor;
@@ -202,6 +207,11 @@ class RVMParser
         long            m_attributes;
 
         bool            m_brokenByUser;
+
+        using TAttributePair  = std::pair<std::string, std::string>;
+        using TAttributeContainer = std::list<TAttributePair>;
+
+        std::map<std::string, TAttributeContainer> m_groupAttributes;
 };
 
 #endif // RVMPARSER_H
