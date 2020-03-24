@@ -680,7 +680,7 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
 
     Vector3F translation;
     readArray_(is, translation.m_values);
-    translation *= 0.001f;
+    translation *= 0.001f * m_scale;
 
     const unsigned int materialId = read_<unsigned int>(is);
 
