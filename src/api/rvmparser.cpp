@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <array>
 #include <stdint.h>
+#include <string.h>
 
 #include "rvmreader.h"
 
@@ -106,6 +107,16 @@ struct Identifier
         return std::string(chrs, chrs + 4);
     }
 
+    inline Identifier(const char source[5]) 
+        : chrs { source[0], source[1], source[2], source[3] }
+    {
+    }
+
+    inline Identifier()
+        : chrs { '0', '0', '0', '0' }
+    {
+    }
+
     char        chrs[4];
 };
 
@@ -173,6 +184,24 @@ inline Identifier& read_<Identifier>(std::istream& in, Identifier& res)
     }
 
     return res;
+}
+
+size_t readUntil(std::istream& in, const Identifier& identifier)
+{
+    size_t counter = 0;
+    char charPtr[16]{};
+
+    do 
+    {
+        ++counter;
+        memcpy(charPtr + 0, charPtr + 1, 15);
+        charPtr[15] = in.get();
+    } while (charPtr[3] != identifier.chrs[0] ||
+             charPtr[7] != identifier.chrs[1] ||
+             charPtr[11] != identifier.chrs[2] ||
+             charPtr[15] != identifier.chrs[3]);
+
+    return counter;
 }
 
 template<>
@@ -437,8 +466,8 @@ namespace {
     }
 
     static void scaleMatrix(std::array<float, 12>& matrix, float factor) {
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (size_t i = 0; i < 4; i++) {
+            for (size_t j = 0; j < 3; j++) {
                 matrix[i*3+j] *= factor;
             }
         }
@@ -738,7 +767,7 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
     m_reader.updateProgress(read_<unsigned int>(is));
 
     skip_<1>(is); // Garbage ?
-    //const unsigned int version =
+    const unsigned int version =
     read_<unsigned int>(is);
 
     string name;
@@ -749,6 +778,13 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
     translation *= 0.001f * m_scale;
 
     const unsigned int materialId = read_<unsigned int>(is);
+
+
+    if (version == 3)
+    {
+        //const unsigned int last = 
+        read_<unsigned int>(is);
+    }
 
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
         m_objectFound++;
@@ -772,8 +808,49 @@ bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream)
             if (!readPrimitive(is)) {
                 return false;
             }
+        } else if (id == "OBST") {
+            //unsigned int offset  =  
+            read_<unsigned int>(is);
+            //unsigned int skiped  =
+            read_<unsigned int>(is);  // Garbage ?
+            //unsigned int version = 
+            read_<unsigned int>(is);
+
+            readUntil(is, "CNTE");
+            break;
         } else {
-            m_lastError = "Unknown or invalid identifier found.";
+            std::stringstream stream;
+
+            stream << "Unknown or invalid identifier {";
+            stream << " 1: " << ((unsigned int)((unsigned char)id.chrs[0]));
+            if (id.chrs[0] != 0)
+            {
+                stream << " / '" << id.chrs[0] << "'";
+            }
+            stream << ", ";
+            stream << " 2: " << ((unsigned int)((unsigned char)id.chrs[1]));
+            if (id.chrs[1] != 0)
+            {
+                stream << " / '" << id.chrs[1] << "'";
+            }
+            stream << ", ";
+            stream << " 3: " << ((unsigned int)((unsigned char)id.chrs[2]));
+            if (id.chrs[2] != 0) 
+            {
+                stream << " / '" << id.chrs[2] << "'";
+            }
+            stream << ", ";
+            stream << " 4: " << ((unsigned int)((unsigned char)id.chrs[3]));
+            if (id.chrs[3] != 0) 
+            {
+                stream << " / '" << id.chrs[3] << "'";
+            }
+            stream << " } found. { 1 }, position of stream is { ";
+            stream << "10: " << is.tellg() << ", ";
+            stream << "16 (Hex): " << std::hex << is.tellg();
+            stream << " }";
+
+            m_lastError = stream.str();
             return false;
         }
     }
