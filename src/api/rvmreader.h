@@ -26,6 +26,8 @@
 #include <vector>
 #include <array>
 
+#include "lib_export.h"
+
 #include "vector3f.h"
 #include "rvmprimitive.h"
 
@@ -46,11 +48,12 @@ class RVMReader
         /**
          * @brief Default constructor. Initializes variables.
          */
-        RVMReader();
+        DLL_PMUC_EXPORT RVMReader();
+        
         /**
          * @brief Pure virtual destructor
          */
-        virtual ~RVMReader() = 0;
+        DLL_PMUC_EXPORT virtual ~RVMReader();
 
         /**
          * @brief Signals the start of the document.
@@ -217,7 +220,19 @@ class RVMReader
          * @param index - The index of the entry in the color map.
          * @param color - The new color values to be set.
          */
-        virtual void updateColorPalette(std::uint32_t index, const std::array<std::uint8_t, 4> &color) {}
+        virtual void updateColorPalette(std::uint32_t index, const std::array<std::uint8_t, 4>& color) {
+          (void)index;
+          (void)color;
+        }
+
+        /**
+         * Set progress of reading rvm file/stream.
+         *
+         * @param progress - The number of read bytes.
+         */
+        DLL_PMUC_EXPORT virtual void updateProgress(std::size_t progress) {
+          (void)progress;
+        }
 
         /**
          * @brief Sets the maximum size for a side of a primitive when tesselating.

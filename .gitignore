@@ -22,4 +22,4 @@ CMakeList.txt.user*
 /bin
 /bii
 .vscode
-build
+build*

@@ -22,10 +22,10 @@
 #include "rvmreader.h"
 
 RVMReader::RVMReader() :
-    m_primitives(false),
-    m_split(false),
     m_minSides(16),
-    m_maxSideSize(10) {
+    m_maxSideSize(10),
+    m_split(false),
+    m_primitives(false) {
 }
 
 RVMReader::~RVMReader() {

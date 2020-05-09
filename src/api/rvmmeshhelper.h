@@ -29,6 +29,8 @@
 #include "vector3f.h"
 #include "rvmprimitive.h"
 
+#include "lib_export.h"
+
 struct Mesh {
  std::vector<unsigned long>  positionIndex;
  std::vector<unsigned long>  normalIndex;
@@ -54,10 +56,11 @@ enum PrimitiveTypes {
 
 typedef std::pair<Vector3F, Vector3F> Vertex;
 
+
 class RVMMeshHelper2
 {
     public:
-        RVMMeshHelper2();
+        DLL_PMUC_EXPORT RVMMeshHelper2();
 
     public:
         /**
@@ -67,7 +70,7 @@ class RVMMeshHelper2
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const Mesh makePyramid(const Primitives::Pyramid& inP, const float& maxSideSize, const int& minSides);
+        DLL_PMUC_EXPORT static const Mesh makePyramid(const Primitives::Pyramid& inP, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up indexed coordinates for the described box
@@ -78,7 +81,7 @@ class RVMMeshHelper2
          * @param minSides not used here. For consistency with the other methods.
          * @return vertexes coordinates and their index.
          */
-        static const Mesh makeBox(const Primitives::Box& box, const float& maxSideSize, const int& minSides);
+        DLL_PMUC_EXPORT static const Mesh makeBox(const Primitives::Box& box, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief Builds up a sphere with the given radius
@@ -87,7 +90,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return coordinates and normals with their indexes.
          */
-        static const Mesh makeSphere(const Primitives::Sphere &sphere, const float& maxSideSize, const int& minSides);
+        DLL_PMUC_EXPORT static const Mesh makeSphere(const Primitives::Sphere& sphere, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCylinder
@@ -97,7 +100,7 @@ class RVMMeshHelper2
          *
          * @return Returns a mesh object.
          */
-        static const Mesh makeCylinder(const Primitives::Cylinder &cylinder, unsigned long sides);
+        DLL_PMUC_EXPORT static const Mesh makeCylinder(const Primitives::Cylinder& cylinder, unsigned long sides);
 
         /**
          * @brief makeRectangularTorus
@@ -106,7 +109,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeRectangularTorus(const Primitives::RectangularTorus& rt, const float& maxSideSize, const int& minSides);
+        DLL_PMUC_EXPORT static const Mesh makeRectangularTorus(const Primitives::RectangularTorus& rt, const float& maxSideSize, const int& minSides);
 
         /**
          * @brief makeCircularTorus
@@ -117,7 +120,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeCircularTorus(const Primitives::CircularTorus& cTorus, unsigned long tsides, unsigned long csides);
+        DLL_PMUC_EXPORT static const Mesh makeCircularTorus(const Primitives::CircularTorus& cTorus, unsigned long tsides, unsigned long csides);
 
         /**
          * @brief makeSnout
@@ -130,7 +133,7 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeSnout(const Primitives::Snout& snout, unsigned long sides);
+        DLL_PMUC_EXPORT static const Mesh makeSnout(const Primitives::Snout& snout, unsigned long sides);
 
         /**
          * @brief makeEllipticalDish
@@ -140,7 +143,7 @@ class RVMMeshHelper2
          * @param csides
          * @return
          */
-        static const Mesh makeEllipticalDish(const Primitives::EllipticalDish& eDish, unsigned long sides, unsigned long csides);
+        DLL_PMUC_EXPORT static const Mesh makeEllipticalDish(const Primitives::EllipticalDish& eDish, unsigned long sides, unsigned long csides);
 
         /**
          * @brief makeSphericalDish
@@ -150,10 +153,10 @@ class RVMMeshHelper2
          * @param minSides
          * @return
          */
-        static const Mesh makeSphericalDish(const Primitives::SphericalDish& sDish , const float& maxSideSize, const int& minSides);
+        DLL_PMUC_EXPORT static const Mesh makeSphericalDish(const Primitives::SphericalDish& sDish, const float& maxSideSize, const int& minSides);
 
 
-        static void tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, Mesh* meshData);
+        DLL_PMUC_EXPORT static void tesselateFacetGroup(const std::vector<std::vector<std::vector<Vertex> > >& vertices, Mesh* meshData);
 
         /**
          * @param cylinder The cylinder primitive data.
@@ -163,11 +166,11 @@ class RVMMeshHelper2
          * @return Returns the number of sides of the cylinder.
          */
 
-        static unsigned long infoCylinderNumSides(const Primitives::Cylinder &cylinder, float maxSideSize, unsigned long minSides);
-        static unsigned long infoSnoutNumSides(const Primitives::Snout &snout, float maxSideSize, unsigned long minSides);
+        DLL_PMUC_EXPORT static unsigned long infoCylinderNumSides(const Primitives::Cylinder& cylinder, float maxSideSize, unsigned long minSides);
+        DLL_PMUC_EXPORT static unsigned long infoSnoutNumSides(const Primitives::Snout& snout, float maxSideSize, unsigned long minSides);
 
-        static std::pair<unsigned long, unsigned long> infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides);
-        static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides);
+        DLL_PMUC_EXPORT static std::pair<unsigned long, unsigned long> infoCircularTorusNumSides(const Primitives::CircularTorus& cTorus, float maxSideSize, unsigned long minSides);
+        DLL_PMUC_EXPORT static std::pair<unsigned long, unsigned long> infoEllipticalDishNumSides(const Primitives::EllipticalDish& eDish, float maxSideSize, unsigned long minSides);
 };
 
 #endif // RVMMESHHELPER_H

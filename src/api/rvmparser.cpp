@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <array>
 #include <stdint.h>
+#include <string.h>
 
 #include "rvmreader.h"
 
@@ -106,6 +107,16 @@ struct Identifier
         return std::string(chrs, chrs + 4);
     }
 
+    inline Identifier(const char source[5]) 
+        : chrs { source[0], source[1], source[2], source[3] }
+    {
+    }
+
+    inline Identifier()
+        : chrs { '0', '0', '0', '0' }
+    {
+    }
+
     char        chrs[4];
 };
 
@@ -173,6 +184,24 @@ inline Identifier& read_<Identifier>(std::istream& in, Identifier& res)
     }
 
     return res;
+}
+
+size_t readUntil(std::istream& in, const Identifier& identifier)
+{
+    size_t counter = 0;
+    char charPtr[16]{};
+
+    do 
+    {
+        ++counter;
+        memcpy(charPtr + 0, charPtr + 1, 15);
+        charPtr[15] = in.get();
+    } while (charPtr[3] != identifier.chrs[0] ||
+             charPtr[7] != identifier.chrs[1] ||
+             charPtr[11] != identifier.chrs[2] ||
+             charPtr[15] != identifier.chrs[3]);
+
+    return counter;
 }
 
 template<>
@@ -374,12 +403,16 @@ void readArray_(std::istream &in, T(&a)[size])
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Implementation of a skip function
 /// Surprisingly, multiple calling get() multiple times seems to be faster than seekg.
+/// We do not use seekg for the sake of supporting non-seekable streams.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<size_t numInts>
 inline void skip_(std::istream& in)
 {
-    in.seekg(sizeof(int) * numInts, in.cur);
+  for (size_t _ = 0; _ < numInts; ++_) 
+  {
+    skip_<1>(in);
+  }
 }
 
 template<>
@@ -433,8 +466,8 @@ namespace {
     }
 
     static void scaleMatrix(std::array<float, 12>& matrix, float factor) {
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (size_t i = 0; i < 4; i++) {
+            for (size_t j = 0; j < 3; j++) {
                 matrix[i*3+j] *= factor;
             }
         }
@@ -447,6 +480,7 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_objectName(""),
     m_objectFound(0),
     m_forcedColor(-1),
+    m_aggregation(false),
     m_scale(1.),
     m_nbGroups(0),
     m_nbPyramids(0),
@@ -460,9 +494,8 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
-    m_attributeStream(0),
     m_attributes(0),
-    m_aggregation(false) {
+    m_brokenByUser(false) {
 }
 
 bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
@@ -477,27 +510,28 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
     }
 
     // Try to find ATT companion file
-    m_attributeStream = 0;
+    std::istream* pAttributeStream = NULL;
+    std::istream attributeStream (NULL);
     filebuf afb;
     if (!ignoreAttributes) {
         string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
         if (afb.open(attfilename.data(), ios::in)) {
             cout << "Found attribute companion file: " << attfilename << endl;
-            m_attributeStream = new istream(&afb);
+            attributeStream.rdbuf (&afb);
+            pAttributeStream = &attributeStream;
         } else {
             attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
             if (afb.open(attfilename.data(), ios::in)) {
                 cout << "Found attribute companion file: " << attfilename << endl;
-                m_attributeStream = new istream(&afb);
+                attributeStream.rdbuf (&afb);
+                pAttributeStream = &attributeStream;
             }
         }
-        if (m_attributeStream && !m_attributeStream->eof()) {
-            std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-        }
+
     }
 
 
-    bool success = readStream(is);
+    bool success = readStream(is, pAttributeStream);
 
     is.close();
 
@@ -543,8 +577,77 @@ bool RVMParser::readBuffer(const char* buffer) {
     return success;
 }
 
-bool RVMParser::readStream(istream& is)
-{
+void RVMParser::readArttributes(std::istream& stream) {
+  size_t position{};
+  std::string separator{":="};
+
+  TAttributeContainer temporaryContainer;
+  std::string temporaryName;
+
+  m_groupAttributes.clear();
+
+  while (!stream.eof()) {
+    std::string line;
+    std::getline(stream, line);
+
+    line = trim(latin_to_utf8(line));
+
+    if (line == "END") {
+      // Warning after std::move(temporaryContainer) this container will be an empty, also as a group
+      m_groupAttributes.emplace(std::make_pair(std::move(temporaryName), std::move(temporaryContainer)));
+    } else if (isFound(line, "NEW", position)) {
+      // + 3 - it is skip strlen ("NEW")
+      temporaryName = trim(line.substr(position + 3, string::npos));
+    } else if (isFound(line, separator, position)) {
+      string name = line.substr(0, position);
+      string value = trim(line.substr(position + separator.size(), string::npos));
+
+      temporaryContainer.emplace_back(name, value);
+    } else {
+      // Skip other lines
+    }
+  }
+}
+
+void RVMParser::insertAttributes(const std::string& name, bool ignoreAttributes) {
+  if (ignoreAttributes) {
+    return;
+  }
+
+  auto it = m_groupAttributes.find(name);
+
+  if (it != m_groupAttributes.end()) {
+    const TAttributeContainer& attributes = it->second;
+
+    m_reader.startMetaData();
+
+    for (const TAttributePair& attribute : attributes) {
+      m_reader.startMetaDataPair(attribute.first, attribute.second);
+      m_reader.endMetaDataPair();
+      m_attributes++;
+    }
+    m_reader.endMetaData();
+  }
+}
+
+bool RVMParser::isFound(const std::string& line, const std::string& substring, size_t& position) {
+  bool found = false;
+
+  position = line.find(substring);
+
+  if (position != std::string::npos) {
+    found = true;
+  }
+
+  return found;
+}
+
+bool RVMParser::readStream(istream& is, std::istream* attributeStream) {
+    // Read first line from file with attributes
+    if (attributeStream && (*attributeStream) && !attributeStream->eof()) {
+      readArttributes(*attributeStream);
+    }
+
     Identifier id;
     if(!readUntilValidIdentifier(is, id))
     {
@@ -607,7 +710,9 @@ bool RVMParser::readStream(istream& is)
         return false;
     }
 
-    skip_<2>(is); // Garbage ?
+    m_reader.updateProgress(read_<unsigned int>(is));
+
+    skip_<1>(is); // Garbage ?
     version = read_<unsigned int>(is);
 
     string projectName, name;
@@ -617,10 +722,10 @@ bool RVMParser::readStream(istream& is)
     if (!m_aggregation)
         m_reader.startModel(projectName, name);
 
-    while ((read_(is, id)) != "END")
+    while ((read_(is, id)) != "END" && m_brokenByUser == false)
     {
         if (id == "CNTB") {
-            if (!readGroup(is)) {
+            if (!readGroup(is, attributeStream)) {
                 return false;
             }
         } else if (id == "PRIM") {
@@ -637,11 +742,17 @@ bool RVMParser::readStream(istream& is)
         }
     }
 
+    if (m_brokenByUser) {
+      return false;
+    }
+
     if (!m_aggregation) {
         m_reader.endModel();
         // Garbage data ??
         m_reader.endDocument();
     }
+
+    m_groupAttributes.clear();
 
     return true;
 }
@@ -651,19 +762,29 @@ const string RVMParser::lastError()
     return m_lastError;
 }
 
-bool RVMParser::readGroup(std::istream& is)
+bool RVMParser::readGroup(std::istream& is, std::istream* attributeStream) 
 {
-    skip_<2>(is); // Garbage ?
-    const unsigned int version = read_<unsigned int>(is);
+    m_reader.updateProgress(read_<unsigned int>(is));
+
+    skip_<1>(is); // Garbage ?
+    const unsigned int version =
+    read_<unsigned int>(is);
 
     string name;
     read_(is, name);
 
     Vector3F translation;
     readArray_(is, translation.m_values);
-    translation *= 0.001f;
+    translation *= 0.001f * m_scale;
 
     const unsigned int materialId = read_<unsigned int>(is);
+
+
+    if (version == 3)
+    {
+        //const unsigned int last = 
+        read_<unsigned int>(is);
+    }
 
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
         m_objectFound++;
@@ -673,45 +794,63 @@ bool RVMParser::readGroup(std::istream& is)
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
         // Attributes
-        if (m_attributeStream && !m_attributeStream->eof()) {
-            string p;
-            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-            }
-            if (p == "NEW " + name ) {
-                m_reader.startMetaData();
-                size_t i;
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                p = trim(latin_to_utf8(m_currentAttributeLine));
-                while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
-                     string an = p.substr(0, i);
-                     string av = p.substr(i+4, string::npos);
-
-                     m_reader.startMetaDataPair(an, av);
-                     m_reader.endMetaDataPair();
-                     m_attributes++;
-
-                     std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                     p = trim(latin_to_utf8(m_currentAttributeLine));
-                }
-                m_reader.endMetaData();
-            }
-        }
+        insertAttributes(name, attributeStream == nullptr);
     }
 
     // Children
     Identifier id;
-    while ((read_(is, id)) != "CNTE") {
+    while ((read_(is, id)) != "CNTE" && m_brokenByUser == false) {
         if (id == "CNTB") {
-            if (!readGroup(is)) {
+            if (!readGroup(is, attributeStream)) {
                 return false;
             }
         } else if (id == "PRIM") {
             if (!readPrimitive(is)) {
                 return false;
             }
+        } else if (id == "OBST") {
+            //unsigned int offset  =  
+            read_<unsigned int>(is);
+            //unsigned int skiped  =
+            read_<unsigned int>(is);  // Garbage ?
+            //unsigned int version = 
+            read_<unsigned int>(is);
+
+            readUntil(is, "CNTE");
+            break;
         } else {
-            m_lastError = "Unknown or invalid identifier found.";
+            std::stringstream stream;
+
+            stream << "Unknown or invalid identifier {";
+            stream << " 1: " << ((unsigned int)((unsigned char)id.chrs[0]));
+            if (id.chrs[0] != 0)
+            {
+                stream << " / '" << id.chrs[0] << "'";
+            }
+            stream << ", ";
+            stream << " 2: " << ((unsigned int)((unsigned char)id.chrs[1]));
+            if (id.chrs[1] != 0)
+            {
+                stream << " / '" << id.chrs[1] << "'";
+            }
+            stream << ", ";
+            stream << " 3: " << ((unsigned int)((unsigned char)id.chrs[2]));
+            if (id.chrs[2] != 0) 
+            {
+                stream << " / '" << id.chrs[2] << "'";
+            }
+            stream << ", ";
+            stream << " 4: " << ((unsigned int)((unsigned char)id.chrs[3]));
+            if (id.chrs[3] != 0) 
+            {
+                stream << " / '" << id.chrs[3] << "'";
+            }
+            stream << " } found. { 1 }, position of stream is { ";
+            stream << "10: " << is.tellg() << ", ";
+            stream << "16 (Hex): " << std::hex << is.tellg();
+            stream << " }";
+
+            m_lastError = stream.str();
             return false;
         }
     }
@@ -723,13 +862,18 @@ bool RVMParser::readGroup(std::istream& is)
         m_objectFound--;
     }
 
+    if (m_brokenByUser) {
+      return false;
+    }
+
     return true;
 }
 
 bool RVMParser::readPrimitive(std::istream& is)
 {
     skip_<2>(is); // Garbage ?
-    const unsigned int version = read_<unsigned int>(is);
+    //const unsigned int version =
+    read_<unsigned int>(is);
     const unsigned int primitiveKind = read_<unsigned int>(is);
 
     std::array<float, 12> matrix;
@@ -875,10 +1019,11 @@ bool RVMParser::readPrimitive(std::istream& is)
 
 bool RVMParser::readColor(std::istream& is)
 {
-    const auto pos = int(is.tellg());
+    //const auto pos = int(is.tellg());
 
     skip_<2>(is); // Garbage ?
-    const unsigned int version = read_<unsigned int>(is);
+    //const unsigned int version =
+    read_<unsigned int>(is);
     const unsigned int index = read_<unsigned int>(is);
 
     std::array<std::uint8_t, 4> color;
